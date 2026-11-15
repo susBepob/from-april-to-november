@@ -1,0 +1,510 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Term Ladder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a 6-rung ladder across the top, the working card on the left, a mastery grid on the right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:68ch}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.prompt{font-size:1.2rem;line-height:1.5}
+.prompt .lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+mark{background:var(--key);color:var(--key-ink);border-radius:3px;padding:0 3px}
+.hook{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem}
+.hook .lbl{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);display:block}
+pre.code{font-family:var(--f-mono);font-size:.95rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+pre.code mark{padding:0 1px}
+.opts{display:grid;gap:8px}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px}
+.opt.term{font-weight:700;font-size:1.05rem}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:6px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb .ex{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font:inherit;font-size:1.1rem;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);width:100%;box-sizing:border-box}
+input[type=text]:focus-visible{outline:3px solid var(--accent)}
+/* matching */
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.mrows{display:grid;gap:8px;min-width:0}
+.mrow{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}
+.mrow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .res{font-family:var(--f-mono);font-size:.8rem;white-space:nowrap}
+.mrow .res.ok{color:var(--good)} .mrow .res.no{color:var(--bad)}
+.mrow .hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:4px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+/* mastery */
+aside .card{gap:12px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.chip{font-size:.8rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.cl{margin-top:14px}
+.cl h4{margin:0 0 6px;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cl dl{margin:0;display:grid;grid-template-columns:140px minmax(0,1fr);gap:4px 14px}
+.cl dt{font-weight:700} .cl dd{margin:0}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.mrow{grid-template-columns:64px minmax(0,1fr)}.mrow .res{grid-column:2}.cl dl{grid-template-columns:1fr}.cl dd{margin-bottom:6px}.card{padding:16px}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Term Ladder</h1>
+    <p>30 programming-language terms from HW1.1.1. Each rung takes away a crutch. Pass a rung to unlock the next; rung 6 is harder than the real homework.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Term mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div class="mgrid" id="mgrid"></div>
+        <p class="small">Weak terms get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>Study sheet (grouped by look-alikes)</summary>
+    <div id="sheetBody"></div>
+  </details>
+</div>
+
+<script>
+const T = [
+ {t:"binding",c:"data",d:"the association between a name and the thing it refers to, or between an operator and its operands",k:["association","operator and its operands"],h:"Binding = a link. A name is tied to a thing; an operator is tied to its operands.",ex:"int x;   // the name x is bound to a memory location",near:["associativity","precedence","assignment","declaration"],trap:"the process of storing a new value into a name, replacing whatever it held before"},
+ {t:"argument",c:"func",d:"value supplied as input to a function call",k:["value supplied","function call"],h:"ARGument = the Actual value you pass when you CALL: f(7) → 7.",ex:"area(3, 4);   // 3 and 4 are arguments",near:["parameter","value","literal","operand"],trap:"value supplied as input in a function definition"},
+ {t:"keyword",c:"text",d:"words that have a pre-defined meaning in a programming language and cannot be used as identifiers",k:["pre-defined meaning","cannot be used as identifiers"],h:"Reserved words: int, while, return. You can't name a variable `while`.",ex:"int  if  while  return",near:["identifier","token","symbol","literal"],trap:"words chosen by the programmer that have a pre-defined meaning and are used as identifiers"},
+ {t:"value",c:"data",d:"a single data element; the result of evaluating an expression",k:["single data element","result of evaluating"],h:"What comes OUT: 2 + 3 evaluates to the value 5.",ex:"2 + 3   →   5",near:["literal","variable","evaluation","operand","expression"],trap:"a named storage location; the input to evaluating an expression"},
+ {t:"parameter",c:"func",d:"variable declared in a function definition that receives the input value of a function call",k:["variable declared in a function definition","receives"],h:"Parameter = Placeholder in the definition: int sq(int n) → n.",ex:"int sq(int n) { return n*n; }   // n is a parameter",near:["argument","variable","declaration","identifier"],trap:"value supplied in a function call that receives the variable of a function definition"},
+ {t:"type",c:"data",d:"determines the size, structure, and interpretation of a value stored in a variable or produced by an expression",k:["size, structure, and interpretation"],h:"int vs double vs char: how many bytes, and how to read them.",ex:"int  double  char  bool",near:["cast","coercion","value","declaration","semantics"],trap:"an operator that changes the size of a value by converting it to a new interpretation"},
+ {t:"variable",c:"data",d:"a named data object or storage location that may be used as an operand in expressions",k:["named","storage location"],h:"A labelled box in memory: count, total.",ex:"int count = 0;  count + 1",near:["identifier","operand","value","parameter","binding"],trap:"a name given to a storage location that cannot appear in expressions"},
+ {t:"operand",c:"ops",d:"token or expression representing a value that is acted on by an operator",k:["acted on by an operator"],h:"The thing operated ON: in a + b, a and b are operands.",ex:"a + b   // a and b are operands",near:["operator","argument","value","variable","expression"],trap:"symbol that acts on a value to perform a basic computation"},
+ {t:"assignment",c:"store",d:"storing or updating a value in an object, typically as a side effect of expression evaluation",k:["storing or updating","side effect"],h:"= stores into an existing object: x = x + 1.",ex:"x = x + 1;",near:["initialization","declaration","binding","evaluation"],trap:"declaration which provides the very first value for a newly declared object"},
+ {t:"cast",c:"conv",d:"an operator that explicitly converts a value to a specified type",k:["explicitly"],h:"You write it yourself: (double)n. Cast = explicit.",ex:"(double)n    static_cast<double>(n)",near:["coercion","type","operator"],trap:"automatic conversion performed by the compiler to a specified type"},
+ {t:"operator",c:"ops",d:"symbol that represents a basic computation and can be used to form expressions",k:["symbol","basic computation"],h:"The verbs: + - * / == &&.",ex:"+   -   *   /   ==   &&",near:["operand","symbol","token","keyword","cast"],trap:"token representing a value that a basic computation is performed on"},
+ {t:"coercion",c:"conv",d:"automatic conversion of a value to match the type required by an operator; also called implicit conversion",k:["automatic","implicit conversion"],h:"The compiler does it silently: in 3 + 2.5, the 3 becomes 3.0. Coercion = automatic.",ex:"double d = 3 + 2.5;   // 3 is coerced to 3.0",near:["cast","type","assignment"],trap:"explicit conversion written by the programmer to match the type required by an operator"},
+ {t:"identifier",c:"text",d:"name assigned to a variable, function, or type",k:["name assigned"],h:"Any name YOU invent: total, getArea, Point.",ex:"total   getArea   Point",near:["keyword","variable","symbol","token","declaration"],trap:"reserved name assigned by the language to a variable, function, or type"},
+ {t:"expression",c:"gram",d:"sequence of operands and operators that describes a computation resulting in a value",k:["operands and operators","resulting in a value"],h:"Produces a value: price * qty. No semicolon.",ex:"price * qty",near:["statement","evaluation","value","block","operand"],trap:"sequence of tokens that describes a complete executable instruction ending in a semicolon"},
+ {t:"statement",c:"gram",d:"sequence of tokens that describes a complete executable instruction in a program",k:["complete executable instruction"],h:"A full sentence of code, usually ends with ; → total = price * qty;",ex:"total = price * qty;",near:["expression","block","syntax","token"],trap:"sequence of operands and operators that is always evaluated to produce a value"},
+ {t:"syntax",c:"gram",d:"rules for how words and groups of words may be arranged to form meaningful statements",k:["rules","arranged"],h:"Grammar / form. A missing ; is a syntax error.",ex:"int x = 5     // error: expected ';'",near:["semantics","statement","keyword"],trap:"rules describing what a correctly arranged statement means when executed"},
+ {t:"token",c:"text",d:"smallest well-defined term or symbol in a programming language",k:["smallest","programming language"],h:"The program's 'words': int x = 5; is 5 tokens.",ex:"int x = 5;   →   int | x | = | 5 | ;",near:["symbol","keyword","identifier","literal","operator"],trap:"smallest unit of any written language, such as a single letter"},
+ {t:"symbol",c:"text",d:"smallest unit of a written language",k:["written language"],h:"Generic, not programming-specific: one letter, digit or mark.",ex:"a   7   +   ;",near:["token","operator","identifier","keyword"],trap:"smallest well-defined term in a programming language"},
+ {t:"whitespace",c:"text",d:"characters that separate tokens but are otherwise meaningless, including spaces, tabs, and newlines",k:["separate tokens","spaces, tabs, and newlines"],h:"Invisible separators.",ex:"int␣x␣=␣5;⏎",near:["comment","token","symbol","syntax"],trap:"characters that separate tokens and change the meaning of the program, including spaces and tabs"},
+ {t:"initialization",c:"store",d:"declaration which also provides an initial value for the declared object",k:["declaration which also provides an initial value"],h:"Declare + first value in one line: int x = 5;",ex:"int x = 5;",near:["declaration","assignment","binding"],trap:"statement which updates the value of an object that was declared earlier"},
+ {t:"function",c:"func",d:"procedure which also produces an output value so it may be called as an expression",k:["produces an output value","called as an expression"],h:"Returns something, so it fits in an expression: y = sq(4) + 1;",ex:"int sq(int n) { return n*n; }",near:["procedure","expression","block","statement"],trap:"procedure which produces no output value and so cannot be used inside an expression"},
+ {t:"declaration",c:"store",d:"introduces an identifier and specifies its meaning and properties in a program",k:["introduces an identifier"],h:"Announces a name and its type: int x;",ex:"int x;     double area(double r);",near:["initialization","identifier","assignment","type","binding"],trap:"introduces an identifier and always gives it its first value"},
+ {t:"evaluation",c:"data",d:"the process of computing the value of an expression",k:["process of computing"],h:"The ACT of working it out: 2 + 3 ⇒ 5.",ex:"(2 + 3) * 4   ⇒   20",near:["expression","value","assignment","statement"],trap:"the value that results from computing an expression"},
+ {t:"procedure",c:"func",d:"named, reusable block of code that may accept input values and performs a specific task",k:["named, reusable block of code","specific task"],h:"Does a job: void printLine(). Function = procedure that also returns a value.",ex:"void printLine() { cout << \"----\\n\"; }",near:["function","block","statement","parameter"],trap:"unnamed group of statements enclosed in braces that performs a specific task"},
+ {t:"block",c:"gram",d:"group of statements enclosed in braces; also called a compound statement",k:["enclosed in braces","compound statement"],h:"{ … } groups statements.",ex:"{ a = 1; b = 2; }",near:["statement","procedure","function","expression"],trap:"named, reusable group of statements enclosed in braces"},
+ {t:"semantics",c:"gram",d:"describes the meaning of words and statements in a language",k:["meaning"],h:"Meaning, not form. if (x = 5) compiles but means the wrong thing.",ex:"if (x = 5)   // valid syntax, wrong meaning",near:["syntax","statement","evaluation"],trap:"rules for how words may be arranged to form meaningful statements"},
+ {t:"associativity",c:"ops",d:"sequential order for binding operands to operators of the same precedence; may be left-to-right or right-to-left",k:["same precedence","left-to-right or right-to-left"],h:"Tie-breaker between equal-rank operators: a - b - c = (a - b) - c.",ex:"a - b - c   ⇒   (a - b) - c",near:["precedence","binding","evaluation"],trap:"priority order for binding operands to operators of different precedence"},
+ {t:"precedence",c:"ops",d:"priority order for binding operands to operators in a mixed expression",k:["priority order","mixed expression"],h:"Rank: * before +. a + b * c = a + (b * c).",ex:"a + b * c   ⇒   a + (b * c)",near:["associativity","binding","evaluation","operator"],trap:"left-to-right order for binding operands to operators of the same priority"},
+ {t:"literal",c:"text",d:"fixed value written directly as a token in source code",k:["fixed value","written directly"],h:"A value typed straight into the code: 42, 3.14, 'a', \"hi\".",ex:"42   3.14   'a'   \"hi\"",near:["value","token","keyword","variable","identifier"],trap:"named value stored in a variable that can change while the program runs"},
+ {t:"comment",c:"text",d:"descriptive text in source code that is not part of the program and is ignored by the compiler or interpreter",k:["ignored by the compiler"],h:"Notes for humans: // like this.",ex:"// compute tax",near:["whitespace","token","statement"],trap:"descriptive text in source code that the compiler checks and executes"}
+];
+const BY = Object.fromEntries(T.map(x=>[x.t,x]));
+const CLUSTERS = {text:"Pieces of source text",gram:"Form vs meaning, units of code",func:"Functions and their inputs",data:"Values and storage",ops:"Operators and grouping",conv:"Type conversion",store:"Naming and storing"};
+const ALIAS = {coercion:["implicit conversion"],block:["compound statement"]};
+
+// [[ ]] marks the highlighted part of a snippet
+const CODE = [
+ {a:"declaration",code:"[[int x;]]",q:"The highlighted line gives x no value. It is a…"},
+ {a:"initialization",code:"[[int x = 5;]]",q:"This line introduces x and gives it a starting value at once. It is a(n)…"},
+ {a:"assignment",code:"int x = 5;\n[[x = x + 1;]]",q:"Updating x after it already exists is…"},
+ {a:"cast",code:"double avg = [[(double)]]sum / n;",q:"The highlighted part is a…"},
+ {a:"coercion",code:"double d = [[3]] + 2.5;",q:"The int 3 is silently turned into 3.0 by the compiler. That conversion is…"},
+ {a:"parameter",code:"int sq(int [[n]]) { return n * n; }",q:"n here is a…"},
+ {a:"argument",code:"int y = sq([[7]]);",q:"In this call, 7 plays the role of a(n)…"},
+ {a:"literal",code:"string s = [[\"hello\"]];",q:"\"hello\" typed directly into the source is a…"},
+ {a:"keyword",code:"[[while]] (i < 10) i++;",q:"while is a…"},
+ {a:"comment",code:"[[// convert to Celsius]]\nc = (f - 32) * 5 / 9;",q:"The highlighted line is a…"},
+ {a:"block",code:"if (ok) [[{ a = 1; b = 2; }]]",q:"The highlighted part is a…"},
+ {a:"associativity",code:"r = a - b - c;     // means (a - b) - c",q:"Both operators are '-'. The rule that groups them left-to-right is…"},
+ {a:"precedence",code:"r = a + b * c;     // means a + (b * c)",q:"The rule that makes * bind before + is…"},
+ {a:"identifier",code:"int [[totalCost]] = 0;",q:"totalCost, as a name the programmer invented, is an…"},
+ {a:"expression",code:"total = [[price * qty]];",q:"The highlighted part (no semicolon) is an…"},
+ {a:"statement",code:"[[total = price * qty;]]",q:"The highlighted complete instruction is a…"},
+ {a:"operator",code:"total = price [[*]] qty;",q:"* is an…"},
+ {a:"operand",code:"total = [[price]] * qty;",q:"Relative to *, price is an…"},
+ {a:"token",code:"int x = 5;     →   int | x | = | 5 | ;",q:"Each of the 5 pieces the compiler splits this line into is a…"},
+ {a:"syntax",code:"int x = 5      // error: expected ';'",q:"This error breaks the language's…"},
+ {a:"semantics",code:"if (x = 5) { … }   // compiles, but assigns instead of compares",q:"The code is well-formed but does the wrong thing. That is a problem of…"},
+ {a:"type",code:"[[double]] price;",q:"double decides how many bytes price uses and how they're read. It is price's…"},
+ {a:"evaluation",code:"(2 + 3) * 4    ⇒    20",q:"The act of working this out to get 20 is called…"},
+ {a:"value",code:"(2 + 3) * 4    ⇒    [[20]]",q:"20 is the resulting…"},
+ {a:"function",code:"int sq(int n) { return n * n; }\nint y = sq(4) + 1;",q:"sq returns a result, so it can sit inside an expression. sq is a…"},
+ {a:"procedure",code:"void printLine() { cout << \"-----\\n\"; }",q:"printLine performs a task and returns nothing. In this course's terms it is a…"},
+ {a:"whitespace",code:"int[[ ]]x[[ ]]=[[ ]]5;",q:"The highlighted spaces are…"},
+ {a:"binding",code:"int count;    // the name count now refers to a memory location",q:"That link between the name and the location is a…"},
+ {a:"variable",code:"int [[count]] = 0;\ncount = count + 1;",q:"As a named storage location that holds 0, then 1, count is a…"},
+ {a:"symbol",code:"c  o  u  n  t      // the characters of the word count",q:"Each single character, as a unit of written language, is a…"}
+];
+
+const STAGES = [
+ {name:"Spoon-fed",kind:"mc",len:12,opts:3,near:0,key:true,hook:true,hint:null,pass:.8,retry:true,
+  blurb:"Key words are highlighted and the memory hook is shown. 3 choices, none of them look-alikes. Misses come back later in the round."},
+ {name:"Guided",kind:"mc",len:15,opts:4,near:1,key:true,hook:false,hint:"hook",pass:.85,retry:true,
+  blurb:"Key words still highlighted. The hook is behind a hint button (using it means the item doesn't count). 4 choices, one is a look-alike."},
+ {name:"Bare",kind:"mc",len:15,opts:5,near:4,key:false,hook:false,hint:"key",pass:.9,retry:false,
+  blurb:"Plain definition, 5 choices, all look-alikes. The hint highlights key words but counts as a miss."},
+ {name:"Mini match",kind:"match",rows:6,bank:9,hint:"key",pass:5/6,
+  blurb:"The real format, smaller: 6 definitions, 9 terms. Per-row hint highlights key words (that row counts as wrong)."},
+ {name:"Exam replica",kind:"match",rows:12,bank:15,hint:null,pass:1,
+  blurb:"Same as HW1.1.1: 12 definitions, 15 terms, one submit, no hints. Unused terms are look-alikes. Pass = 12/12."},
+ {name:"Beyond",kind:"mix",len:15,pass:.9,
+  blurb:"Harder than the homework: type the term from memory, pick the true definition from near-miss fakes, and name the highlighted part of real code."}
+];
+
+/* ---------- storage ---------- */
+const SKEY = "term-ladder-v1";
+function load(){ try{ const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; }catch(e){} return {m:{},seen:{},passed:{},best:{},unlocked:1}; }
+function save(){ try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} }
+let S = load();
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const mOf = t => S.m[t] || 0;
+function pickWeighted(pool, k){
+  const out = [], p = pool.slice();
+  while(out.length < k && p.length){
+    const w = p.map(t => (S.seen[t] ? 6 - mOf(t) : 7));
+    let r = Math.random() * w.reduce((a,b)=>a+b,0), i = 0;
+    while((r -= w[i]) > 0) i++;
+    out.push(p.splice(Math.min(i,p.length-1),1)[0]);
+  }
+  return out;
+}
+function defHTML(term, highlight){
+  let s = esc(BY[term].d);
+  if(highlight) for(const k of BY[term].k){ s = s.replace(esc(k), "<mark>"+esc(k)+"</mark>"); }
+  return s;
+}
+function codeHTML(c){ return esc(c).replace(/\[\[([\s\S]*?)\]\]/g, "<mark>$1</mark>"); }
+function distractors(term, n, nearCount){
+  const near = shuffle(BY[term].near).slice(0, nearCount);
+  const far = shuffle(T.map(x=>x.t).filter(t => t!==term && !near.includes(t) && !BY[term].near.includes(t)));
+  return near.concat(far).slice(0, n);
+}
+function record(term, ok){
+  S.seen[term] = 1;
+  S.m[term] = ok ? Math.min(5, mOf(term) + 1) : Math.max(1, mOf(term) - 2);
+  save(); renderMastery();
+}
+function lev(a,b){
+  const d = Array.from({length:a.length+1},(_,i)=>[i]);
+  for(let j=1;j<=b.length;j++) d[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++)
+    d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[a.length][b.length];
+}
+function typedMatch(input, term){
+  const n = input.toLowerCase().replace(/[^a-z ]/g,"").trim().replace(/\s+/g," ");
+  const accepted = [term].concat(ALIAS[term]||[]);
+  if(accepted.includes(n)) return "exact";
+  if(accepted.some(a => a.length >= 6 && lev(n,a) <= 1)) return "typo";
+  return null;
+}
+
+/* ---------- ladder + mastery ---------- */
+let cur = null; // current stage index
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st,i) => {
+    const locked = i+1 > S.unlocked, passed = S.passed[i];
+    const best = S.best[i] != null ? "best "+Math.round(S.best[i]*100)+"%" : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur===i?"on":""} ${locked?"locked":""} ${passed?"passed":""}" data-i="${i}" type="button">
+      <span class="n">Rung ${i+1}</span><span class="nm">${st.name}</span><span class="st">${passed?"passed · ":""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  const col = t => S.seen[t] ? `var(--m${mOf(t)})` : "var(--m0)";
+  $("mgrid").innerHTML = T.map(x => `<div class="chip" style="background:${col(x.t)}" title="${esc(x.d)}">${x.t}</div>`).join("");
+}
+function renderSheet(){
+  $("sheetBody").innerHTML = Object.entries(CLUSTERS).map(([c,label]) =>
+    `<div class="cl"><h4>${label}</h4><dl>${T.filter(x=>x.c===c).map(x=>`<dt>${x.t}</dt><dd>${defHTML(x.t,true)}<br><span class="small">${esc(x.h)}</span></dd>`).join("")}</dl></div>`).join("");
+}
+
+/* ---------- stage intro ---------- */
+function openStage(i){
+  cur = i; renderLadder();
+  const st = STAGES[i], locked = i+1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} of 6</span><span>Pass mark: <b>${Math.round(st.pass*100)}%</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${locked ? `<p class="small">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked?"Start anyway":"Start round"}</button>
+    <span class="small">Keys: 1–5 to answer, Enter for next.</span></div>`;
+  $("go").onclick = () => start(i);
+  $("go").focus();
+}
+function start(i){
+  const st = STAGES[i];
+  if(st.kind === "match") return startMatch(i);
+  return startMC(i);
+}
+
+/* ---------- multiple-choice / typed rounds ---------- */
+let R = null;
+function buildItem(kind, term, st){
+  if(kind === "def"){
+    const opts = shuffle([term].concat(distractors(term, st.opts-1, st.near)));
+    return {kind, term, opts, ans: opts.indexOf(term)};
+  }
+  if(kind === "rev"){
+    const sib = shuffle(BY[term].near).slice(0,2).map(t => BY[t].d);
+    const opts = shuffle([BY[term].d, BY[term].trap].concat(sib));
+    return {kind, term, opts, ans: opts.indexOf(BY[term].d)};
+  }
+  if(kind === "code"){
+    const c = CODE.find(c => c.a === term);
+    const opts = shuffle([term].concat(distractors(term, 4, 4)));
+    return {kind, term, code:c.code, q:c.q, opts, ans: opts.indexOf(term)};
+  }
+  return {kind:"type", term};
+}
+function startMC(i){
+  const st = STAGES[i];
+  const terms = pickWeighted(T.map(x=>x.t), st.len);
+  let queue;
+  if(st.kind === "mix"){
+    const kinds = shuffle(Array(5).fill("type").concat(Array(5).fill("rev"), Array(5).fill("code")));
+    queue = terms.map((t,j) => buildItem(kinds[j], t, st));
+  } else queue = terms.map(t => buildItem("def", t, st));
+  R = {i, st, queue, pos:0, total:queue.length, clean:0, misses:[], answered:false, hinted:false};
+  showItem();
+}
+function showItem(){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false;
+  const firstCount = R.queue.slice(0,R.pos).filter(q=>!q.retry).length;
+  let body = "";
+  if(it.kind === "def"){
+    body = `<div class="prompt"><span class="lbl">${it.retry?"Again: ":""}Which term matches?</span>${defHTML(it.term, st.key)}</div>`;
+    if(st.hook) body += `<div class="hook"><span class="lbl">Hook</span>${esc(BY[it.term].h)}</div>`;
+  } else if(it.kind === "rev"){
+    body = `<div class="prompt"><span class="lbl">Which definition is correct for</span><b style="font-family:var(--f-display);font-size:1.5rem">${it.term}</b></div>
+      <p class="small" style="margin:0">One option is a fake that differs by a word or two. Read all of them.</p>`;
+  } else if(it.kind === "code"){
+    body = `<pre class="code">${codeHTML(it.code)}</pre><div class="prompt" style="font-size:1.1rem">${esc(it.q)}</div>`;
+  } else {
+    body = `<div class="prompt"><span class="lbl">Type the term</span>${esc(BY[it.term].d)}</div>
+      <input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="term…">`;
+  }
+  let opts = "";
+  if(it.kind !== "type"){
+    const isTerm = it.kind !== "rev";
+    opts = `<div class="opts" id="opts">${it.opts.map((o,j)=>`<button class="opt ${isTerm?"term":""}" data-j="${j}" type="button"><span class="k">${j+1}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+  }
+  const hintBtn = (st.hint && it.kind==="def") ? `<button class="btn ghost" id="hint" type="button">Hint${st.hint==="key"?" (counts as miss)":""}</button>` : "";
+  const submit = it.kind === "type" ? `<button class="btn" id="check" type="button">Check</button>` : "";
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i+1} · ${st.name}</span><span><b>${firstCount}</b> / ${R.total} · clean <b>${R.clean}</b></span></div>
+    <div class="bar"><i style="width:${firstCount/R.total*100}%"></i></div>
+    ${body}${opts}
+    <div class="row">${submit}${hintBtn}</div>
+    <div id="fb"></div>`;
+  if(it.kind === "type"){
+    $("typed").focus();
+    $("check").onclick = () => answer($("typed").value);
+    $("typed").onkeydown = e => { if(e.key==="Enter"){ e.preventDefault(); e.stopPropagation(); if(!R.answered) answer($("typed").value); else next(); } };
+  } else {
+    $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.j));
+  }
+  if($("hint")) $("hint").onclick = () => {
+    R.hinted = true; $("hint").disabled = true;
+    if(st.hint === "hook") $("hint").insertAdjacentHTML("afterend", `<div class="hook" style="flex-basis:100%"><span class="lbl">Hook</span>${esc(BY[it.term].h)}</div>`);
+    else document.querySelector(".prompt").innerHTML = `<span class="lbl">Which term matches?</span>${defHTML(it.term,true)}`;
+  };
+}
+function answer(choice){
+  if(R.answered) return;
+  const it = R.queue[R.pos], st = R.st;
+  let ok, note = "";
+  if(it.kind === "type"){
+    const m = typedMatch(choice, it.term);
+    ok = !!m; if(m === "typo") note = ` (accepted with a typo, the spelling is <b>${it.term}</b>)`;
+    $("typed").disabled = true; $("check").disabled = true;
+  } else {
+    ok = choice === it.ans;
+    document.querySelectorAll(".opt").forEach((b,j) => { b.disabled = true; if(j===it.ans) b.classList.add("right"); else if(j===choice) b.classList.add("wrong"); });
+  }
+  if($("hint")) $("hint").disabled = true;
+  R.answered = true;
+  const clean = ok && !R.hinted;
+  if(!it.retry){
+    if(clean) R.clean++; else R.misses.push(it.term);
+    record(it.term, clean);
+  }
+  if(!ok && st.retry){
+    const again = Object.assign({}, buildItem("def", it.term, st), {retry:true});
+    R.queue.splice(Math.min(R.pos+3, R.queue.length), 0, again);
+  }
+  const x = BY[it.term];
+  let picked = "";
+  if(!ok && it.kind === "rev" && it.opts[choice] === x.trap) picked = `<div class="small">You picked the fake. It changes the meaning: “${esc(x.trap)}”.</div>`;
+  else if(!ok && it.kind !== "type" && it.kind !== "rev" && BY[it.opts[choice]]) picked = `<div class="small"><b>${it.opts[choice]}</b> is: ${esc(BY[it.opts[choice]].d)}</div>`;
+  else if(!ok && it.kind === "type") picked = `<div class="small">You typed “${esc(choice)||"(nothing)"}”.</div>`;
+  $("fb").innerHTML = `<div class="fb ${ok?"":"bad"}">
+    <h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}: ${x.t}${note}</h3>
+    <div>${defHTML(x.t,true)}</div>
+    <div class="small">${esc(x.h)}</div>
+    <div class="ex">${esc(x.ex)}</div>${picked}
+    ${!ok && st.retry ? `<div class="small">This one will come back in a few questions.</div>` : ""}
+  </div><div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next;
+  if(it.kind !== "type") $("next").focus();
+}
+function next(){
+  R.pos++;
+  if(R.pos >= R.queue.length) finish(R.i, R.clean/R.total, R.misses);
+  else showItem();
+}
+
+/* ---------- matching rounds ---------- */
+let M = null;
+function startMatch(i){
+  const st = STAGES[i];
+  const terms = pickWeighted(T.map(x=>x.t), st.rows);
+  const extra = shuffle([...new Set(terms.flatMap(t=>BY[t].near))].filter(t=>!terms.includes(t)));
+  const fill = shuffle(T.map(x=>x.t).filter(t=>!terms.includes(t)&&!extra.includes(t)));
+  const bank = shuffle(terms.concat(extra.concat(fill).slice(0, st.bank - st.rows)));
+  M = {i, st, rows: shuffle(terms), bank, hinted:new Set(), done:false};
+  const opt = `<option value="">—</option>` + bank.map((_,j)=>`<option value="${j}">${j+1}</option>`).join("");
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} · ${st.name}</span><span>${st.rows} definitions · ${st.bank} terms · not all terms are used</span></div>
+    <div class="match">
+      <div class="mrows">${M.rows.map((t,r)=>`<div class="mrow">
+        <select id="sel${r}" aria-label="Term number for definition ${r+1}">${opt}</select>
+        <div class="d" id="d${r}">${defHTML(t,false)}</div>
+        <div class="res" id="res${r}">${st.hint?`<button class="hintb" data-r="${r}" type="button">hint</button>`:""}</div></div>`).join("")}</div>
+      <ol class="bank">${bank.map((t,j)=>`<li><b>${j+1}.</b><span>${t}</span></li>`).join("")}</ol>
+    </div>
+    <div class="row"><button class="btn" id="grade" type="button">Save &amp; grade</button><span class="small" id="gmsg"></span></div>
+    <div id="fb"></div>`;
+  document.querySelectorAll(".hintb").forEach(b => b.onclick = () => {
+    const r = +b.dataset.r; M.hinted.add(r); $("d"+r).innerHTML = defHTML(M.rows[r], true); b.remove();
+  });
+  $("grade").onclick = gradeMatch;
+  $("sel0").focus();
+}
+function gradeMatch(){
+  if(M.done) return;
+  const empty = M.rows.filter((_,r)=>$("sel"+r).value==="").length;
+  if(empty && $("gmsg").dataset.warned !== "1"){ $("gmsg").textContent = `${empty} left blank. Press again to grade anyway.`; $("gmsg").dataset.warned="1"; return; }
+  M.done = true;
+  let clean = 0; const misses = [];
+  M.rows.forEach((t,r) => {
+    const v = $("sel"+r).value, picked = v===""?null:M.bank[+v];
+    const ok = picked === t, c = ok && !M.hinted.has(r);
+    $("sel"+r).disabled = true;
+    $("res"+r).innerHTML = ok ? `<span class="res ok">✓ ${M.hinted.has(r)?"(hint)":""}</span>` : `<span class="res no">✗ ${M.bank.indexOf(t)+1}. ${t}</span>`;
+    if(c) clean++; else misses.push(t);
+    record(t, c);
+  });
+  $("grade").disabled = true;
+  $("fb").innerHTML = `<div class="row"><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(M.i, clean/M.rows.length, misses);
+  $("next").focus();
+}
+
+/* ---------- results ---------- */
+function finish(i, score, misses){
+  const st = STAGES[i], passed = score >= st.pass - 1e-9;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(6, i+2)); }
+  save(); renderLadder();
+  const uniq = [...new Set(misses)];
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} · ${st.name} · round over</span><span>Pass mark ${Math.round(st.pass*100)}%</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${Math.round(score*100)}%</span>
+      <span class="pill ${passed?"ok":"no"}">${passed ? (i<5 ? "Passed · rung "+(i+2)+" unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${uniq.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Review these</h3><ul class="missl">${uniq.map(t=>`<li><b>${t}</b>: ${defHTML(t,true)} <span class="small">· ${esc(BY[t].h)}</span></li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">
+      ${passed && i<5 ? `<button class="btn" id="nx" type="button">Go to rung ${i+2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>`
+                      : `<button class="btn" id="again" type="button">${passed?"Play again":"Try again"}</button>`}
+    </div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i+1);
+  ($("nx")||$("again")).focus();
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener("keydown", e => {
+  if(e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if(R && $("opts") && !R.answered && /^[1-5]$/.test(e.key)){
+    const b = document.querySelector(`.opt[data-j="${+e.key-1}"]`); if(b){ e.preventDefault(); b.click(); }
+  } else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = {m:{},seen:{},passed:{},best:{},unlocked:1}; save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+
+renderMastery(); renderSheet();
+openStage(Math.min(S.unlocked, 6) - 1);
+</script>
+
+</body></html>

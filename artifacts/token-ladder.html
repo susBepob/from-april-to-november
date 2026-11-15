@@ -1,0 +1,512 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Token Ladder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* Layout: a 6-rung ladder across the top, the working card on the left, a rule-mastery grid on the right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+code,.mono{font-family:var(--f-mono)}
+/* JetBrains Mono draws != as ≠ and -> as an arrow; tokens must show their real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tokwrap{display:grid;gap:6px;justify-items:start}
+.tok{font-family:var(--f-mono);font-weight:700;font-size:2rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:6px 16px;white-space:pre;max-width:100%;overflow-x:auto}
+mark{background:var(--key);color:var(--key-ink);border-radius:3px;padding:0 3px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em}
+.tree{margin:0;padding-left:1.3em;display:grid;gap:4px;font-size:.92rem}
+.tree code{background:var(--code-bg);border-radius:4px;padding:0 4px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:6px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+/* matching */
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre;max-width:100%;overflow-x:auto}
+.mrow .res{font-size:.85rem}
+.mrow .res.ok{color:var(--good)} .mrow .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px;justify-self:start}
+/* mastery */
+aside .card{gap:12px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.8rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink);display:flex;justify-content:space-between;gap:8px}
+.chip span:last-child{font-family:var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
+.extab{overflow-x:auto}
+.extab table{border-collapse:collapse;font-size:.88rem;width:100%}
+.extab td{border-bottom:1px solid var(--line);padding:4px 8px;vertical-align:top}
+.extab td:first-child{font-family:var(--f-mono);white-space:pre}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.missl code{background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:0 5px;white-space:pre}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.mrow{grid-template-columns:1fr}.card{padding:16px}.tok{font-size:1.6rem}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Token Ladder</h1>
+    <p>HW1.1.2 practice: decide whether a C token is a keyword, identifier, literal, operator or syntax error. Tokens are generated fresh from the rules every round, so you learn the rules instead of memorizing a list. Rung 6 is harder than the homework.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Rule mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div class="mgrid" id="mgrid"></div>
+        <p class="small">Weak rules get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>Rule sheet</summary>
+    <div id="sheetBody"></div>
+  </details>
+</div>
+
+<script>
+/* ---------- C lexical rules ---------- */
+const KW = new Set("auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while _Bool _Complex _Imaginary".split(" "));
+const OPNAME = {"+":"addition","-":"subtraction","*":"multiplication","/":"division","%":"remainder","++":"increment","--":"decrement","==":"equal to","!=":"not equal to","<":"less than",">":"greater than","<=":"less or equal",">=":"greater or equal","&&":"logical AND","||":"logical OR","!":"logical NOT","&":"bitwise AND","|":"bitwise OR","^":"bitwise XOR","~":"bitwise NOT","<<":"left shift",">>":"right shift","=":"assignment","+=":"add-assign","-=":"subtract-assign","*=":"multiply-assign","/=":"divide-assign","%=":"remainder-assign","&=":"AND-assign","|=":"OR-assign","^=":"XOR-assign","<<=":"shift-left-assign",">>=":"shift-right-assign","->":"member access through pointer"};
+const FAKE = {"=>":"C has >= (greater or equal). => doesn't exist in C.","=<":"C writes <=, never =<.","<>":"Not-equal in C is !=. <> comes from other languages.","**":"C has no power operator (use pow()).","===":"C only has ==.","!==":"C only has !=.",":=":"C assigns with plain =.","<=>":"<=> is C++20, not C.",">>>":"C has >> but no >>>.","&&=":"There is no &&= in C.","||=":"There is no ||= in C.","^^":"C has no logical XOR operator.","=!":"Not-equal is !=. =! is not one token.","><":"Not an operator in C.","=+":"Add-assign is +=. =+ is not one token.","<<<":"C has << but no <<<.","+++":"C has ++ but no +++."};
+const INT_SUF = /^(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?$/;
+
+function oddBackslashBefore(s, i){ let n = 0; while(i-1-n >= 0 && s[i-1-n] === "\\") n++; return n % 2 === 1; }
+function err(subs, why){ return {cls:"Syntax error", subs, why}; }
+function lit(sub, why){ return {cls:"Literal", subs:[sub], why}; }
+
+function classifyNumber(s){
+  let m = s.match(/^0[xX](.*)$/);
+  if(m){
+    const d = (m[1].match(/^[0-9a-fA-F]+/) || [""])[0], suf = m[1].slice(d.length);
+    if(!d) return err(["number"], `0x must be followed by at least one hex digit (0–9, a–f).${suf ? ` "${suf[0]}" is not a hex digit.` : ""}`);
+    if(INT_SUF.test(suf)) return lit("integer", `Hex integer: 0x then hex digits ${d}${suf ? `, then the integer suffix ${suf}` : ""}.${suf && /[a-fA-F]$/.test(d) ? " The hex digits stop where the u/l letters start." : ""}`);
+    if(/^[g-zG-Z]/.test(suf) && !/^[uUlL]/.test(suf)) return err(["number"], `"${suf[0]}" is not a hex digit${/[oO]/.test(suf[0]) ? " (it's the letter O, not the digit 0)" : ""}. Hex digits are only 0–9 and a–f.`);
+    return err(["number"], `The hex digits stop at ${d}. What's left, "${suf}", is not a valid integer suffix (u, l, ll and combinations like ul, ull).`);
+  }
+  const fm = s.match(/^(?:(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)/);
+  if(fm){
+    const rest = s.slice(fm[0].length);
+    if(/^[fFlL]?$/.test(rest)) return lit("floating", `Floating-point: it has ${/[.]/.test(fm[0]) ? "a decimal point" : "an exponent"}${/[eE]/.test(fm[0]) && /[.]/.test(fm[0]) ? " and an exponent" : ""}${rest ? `, and ${rest} is a valid float suffix (only f/F/l/L are)` : ""}.`);
+    if(/^[eE]/.test(rest)) return err(["number"], `The exponent is incomplete: e must be followed by digits (like 2.5e3 or 2.5e-3).`);
+    return err(["number"], `A floating-point literal only takes f, F, l or L as a suffix. "${rest}" is not allowed${/[uU]/.test(rest) ? " (u is for integers only)" : ""}.`);
+  }
+  const d = s.match(/^\d+/)[0], suf = s.slice(d.length);
+  if(/^[eE][+-]?\d*[fFlL]?$/.test(suf) || /^[eE][+-]/.test(suf)) return err(["number"], `The exponent is incomplete: e must be followed by digits (like 1e5 or 1e-5).`);
+  if(d.length > 1 && d[0] === "0" && /[89]/.test(d)) return err(["number"], `A leading 0 makes it octal, and octal digits are only 0–7. ${d} contains ${d.match(/[89]/)[0]}.`);
+  if(INT_SUF.test(suf)){
+    const kind = d.length > 1 && d[0] === "0" ? "Octal integer (leading 0, digits 0–7)" : "Decimal integer";
+    return lit("integer", `${kind}${suf ? `, with the valid suffix ${suf}` : ""}.${/l/.test(suf) ? " The last l is the letter l (long), not the digit 1." : ""}`);
+  }
+  if(/^[fF]$/.test(suf)) return err(["number"], `f only goes on floating-point literals. ${d} has no decimal point or exponent, so it's an integer and f is invalid (${d}.0f would work).`);
+  if(/[lL]/.test(suf) && /^[uUlL]+$/.test(suf)) return err(["number"], `"${suf}" is not a valid integer suffix. Allowed: u, l, ll (both letters the same case) and one u, in either order: ul, lu, ull, llu.`);
+  return err(["number","name"], `Starts with a digit, so it can't be a name. As a number, "${suf}" is not a valid suffix.`);
+}
+
+function classify(s){
+  if(KW.has(s)) return {cls:"Keyword", subs:[], why:`${s} is one of C's reserved words.`};
+  if(/^[A-Za-z_][A-Za-z0-9_]*$/.test(s)){
+    const low = s.toLowerCase();
+    let why = "Starts with a letter or _, then only letters, digits and _, and it isn't a reserved word.";
+    if(KW.has(low)) why = `C is case-sensitive. ${low} is a keyword, but ${s} is a different word, so it's a name.`;
+    else if(/^[lOI]/.test(s) && /[0-9lOIxX]/.test(s.slice(1))) why = `The first character is the letter ${s[0]}, not the digit ${s[0] === "O" ? "0" : "1"}, so this is a name, not a number.`;
+    else if(["type","string","then","function","print","main","printf","null","begin","end","boolean","foreach","elsif","println","number","real","integer","var","new","class","this","elif","include","define"].includes(s)) why = `${s} is not one of C's 32 keywords (it may be one in another language), so it's an ordinary name.`;
+    else if([...KW].some(k => k.length > 1 && s.includes(k))) why = `A keyword has to match the whole token exactly. ${s} only contains one, so it's an ordinary name.`;
+    return {cls:"Identifier", subs:[], why};
+  }
+  if(OPNAME[s]) return {cls:"Operator", subs:[], why:`${s} is a C operator (${OPNAME[s]}).`};
+  const c = s[0];
+  if(c === '"'){
+    if(/^"(?:[^"\\\n]|\\[ntr0abfv\\'"?])*"$/.test(s)) return lit("string", `Text between double quotes is a string literal${KW.has(s.slice(1,-1)) ? `. A keyword inside quotes is just text` : ""}.`);
+    if(s.length < 2 || !s.endsWith('"')) return err(["quote"], "The string is never closed. It needs a closing \".");
+    if(oddBackslashBefore(s, s.length-1)) return err(["quote"], "Read it left to right: the first \" opens the string. A backslash means \"treat the next character as plain text\", so \\\" is a quote inside the string, not the end of it. Nothing is left to close it, so the string never ends. A backslash on its own is written \"\\\\\", a quote inside is \"\\\"\".");
+    return err(["quote"], "A \" inside the string ends it early. An inner quote must be written \\\".");
+  }
+  if(c === "'"){
+    if(/^'(?:[^'\\\n]|\\[ntr0abfv\\'"?])'$/.test(s)) return lit("character", `Single quotes around exactly one character${s[1] === "\\" ? " (an escape sequence like \\n counts as one)" : ""} make a character literal.`);
+    if(s === "''") return err(["quote"], "Empty character literal. '' must hold exactly one character.");
+    if(s.length < 2 || !s.endsWith("'")) return err(["quote"], "The character literal is never closed. It needs a closing '.");
+    if(oddBackslashBefore(s, s.length-1)) return err(["quote"], "Read it left to right: the first ' opens it. A backslash means \"treat the next character as plain text\", so \\' is a quote character inside, not the closing quote. Nothing closes it. A backslash character is written '\\\\', a quote character is '\\''.");
+    return err(["quote"], "A ' inside must be escaped. The single-quote character is written '\\''.");
+  }
+  if(/^[0-9]/.test(s) || /^\.[0-9]/.test(s)) return classifyNumber(s);
+  if(/^[A-Za-z_]/.test(s)) return err(["name"], `Names may only contain letters, digits and _. "${s.replace(/[A-Za-z0-9_]/g,"")[0]}" is not allowed.`);
+  return err(["operator"], FAKE[s] || `${s} is not one of C's operators.`);
+}
+function branch(s){
+  if(s[0] === "'" || s[0] === '"') return "quote";
+  if(/^[0-9]/.test(s) || /^\.[0-9]/.test(s)) return "number";
+  if(/^[A-Za-z_]/.test(s)) return "name";
+  return "symbol";
+}
+
+/* ---------- token generators (one per rule) ---------- */
+const r = a => a[Math.floor(Math.random()*a.length)];
+const ri = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const KWG = "auto break case char const continue default do double else enum extern float for goto if int long register return short signed static struct switch typedef union unsigned void volatile while".split(" ");
+const HEXW = ["deadface","DEADFACE","cafe","BEEF","f00d","C0FFEE","bad","1f","7F","ff","abc","10","A5","dead","FACE","2b","0"];
+const RULES = {
+ kw:{lv:1,label:"Keywords",gen:()=>r(KWG)},
+ kwcase:{lv:1,label:"Keyword with a capital",gen:()=>{const k=r(KWG); return Math.random()<.65 ? k[0].toUpperCase()+k.slice(1) : k.toUpperCase();}},
+ id:{lv:1,label:"Plain names",gen:()=>r(["count","total","each","G4","x1","myVar","_temp","value2","sum_all","i","n","TOTAL","data_7","__x","rate","maxSize","tmp","foo_bar","Q","speed2","_","a1b2","price","k9"])},
+ op:{lv:1,label:"Operators",gen:()=>r(Object.keys(OPNAME))},
+ opfake:{lv:1,label:"Fake operators",gen:()=>r(Object.keys(FAKE))},
+ intdec:{lv:1,label:"Decimal integers",gen:()=>String(r([0,7,42,100,255,1000,ri(1,99999),ri(100000,99999999)]))},
+ flt:{lv:1,label:"Plain floats",gen:()=>r(["3.14","0.5",".5","5.","2.718","0.0","100.25","1.0",".75","12.5"])},
+ chr:{lv:1,label:"Char literals",gen:()=>r(["'a'","'Z'","'7'","'\\n'","'\\t'","'\\''","'\\\\'","'\\0'","'\"'","' '","'+'"])},
+ str:{lv:1,label:"String literals",gen:()=>r(['"return"','"while"','"hello world"','""','"say \\"hi\\""','"C:\\\\temp"','"x"','"int"',"\"'\"",'"3.14"','"\\n"','"if"'])},
+ idlike:{lv:2,label:"Keyword look-alike names",gen:()=>r(["signed_long","int32","returnValue","forEach","do_it","_int","ifelse","unsigned2","main","printf","include","define","string","integer","then","elif","function","var","new","class","this","whileTrue","char_t","long_long","elseif","Switch_","float2","_if","type","print","boolean","null","begin","end","foreach","elsif","println","number","real","then"])},
+ idbad:{lv:2,label:"Illegal names",gen:()=>r(["2nd","9lives","3d_point","1st_place","4ever","7up","my@var","x@y","2x","9to5","user@home","1_total"])},
+ inthex:{lv:2,label:"Hex integers",gen:()=>r(["0x","0X","0x"])+r(HEXW)},
+ intsuf:{lv:2,label:"Integer suffixes (valid)",gen:()=>(Math.random()<.6 ? String(ri(1,99999)) : "0x"+r(HEXW)) + r(["u","U","l","L","ul","UL","lu","LU","ll","LL","ull","ULL","llu","LLU","uLL","Lu"])},
+ intsufbad:{lv:2,label:"Integer suffixes (invalid)",gen:()=>String(ri(1,99999999)) + r(["uc","uu","lul","lL","Ll","ulu","UUL","LLL","s","lll","uul","LUL","LlU"])},
+ fltexp:{lv:2,label:"Exponent floats",gen:()=>r(["1e5","6.02e23","4e2f","1.5E-3","8.66e2","2e+10","3E8","1.0e-9","7e0","5e-2F","9.1E2"])},
+ fltsuf:{lv:2,label:"Float suffixes (valid)",gen:()=>r(["3.14f","2.5F","1e3L","0.5f",".5F","9.81f","6.0l","2e-3f","1.L"])},
+ fltbad:{lv:2,label:"Broken floats (4f, 1e)",gen:()=>r(["1e","2.5e+","3e-f","4f","10F","7E","1.2e","0f","6e+"])},
+ strbad:{lv:2,label:"Broken strings",gen:()=>r(['"abc','"a\\"','"say "hi""','"return','"\\"','"x"y"'])},
+ intoct:{lv:3,label:"Octal integers",gen:()=>r(["017","0755","0123","00","012","0644","0777u","010L"])},
+ octbad:{lv:3,label:"Bad octal (08, 09)",gen:()=>r(["089","08","0798","09","0128","0900L"])},
+ hexbad:{lv:3,label:"Bad hex (0x, 0xG)",gen:()=>r(["0x","0xG5","0x1g","0xZZ","0X","0xfg","0xBADGE"])},
+ fltsufbad:{lv:3,label:"Float suffixes (invalid)",gen:()=>r(["8.66e2UL","3.14u","1.5LL","2.0ff","6e2uf","1.0d","3.5U","2.5e3ul","9.0lf","4.2e1LL"])},
+ chrbad:{lv:3,label:"Broken chars",gen:()=>r(["''","'''","'\\'","'a","'\\n"])},
+ lookalike:{lv:3,label:"Lookalikes (O/0, l/1)",gen:()=>r(["l0","lO","l23","O1","OxFF","Ox1F","O0","Il1","l1","1l","10l","1O","0xFOOD","0xF00D","0xC0DE","0xCODE","lOO","100l","0l","Ol"])}
+};
+const TAGS = Object.keys(RULES);
+
+const CLASSES = ["Keyword","Identifier","Literal","Operator","Syntax error"];
+const SUBS = {
+ "Literal":[["integer","Integer"],["floating","Floating-point"],["character","Character"],["string","String"]],
+ "Syntax error":[["number","Broken number (digits, suffix or exponent)"],["quote","Broken quote or escape"],["operator","Not a real C operator"],["name","Illegal name"]]
+};
+const SUBNAME = Object.fromEntries(Object.values(SUBS).flat());
+
+const CARDS = {
+ quote:{title:"Starts with ' or \"",html:`It is trying to be a <b>character or string literal</b>. <code>' '</code> holds exactly one character or one escape (<code>'a'</code> <code>'\\n'</code> <code>'\\''</code> <code>'\\\\'</code>). <code>" "</code> holds any text, but a <code>"</code> inside must be written <code>\\"</code>. A backslash turns the next character into plain text, so <code>\\"</code> never closes a string and <code>'\\'</code> never closes a char. Properly closed → <b>Literal</b>, otherwise → <b>Syntax error</b>. A keyword inside quotes is just text: <code>"return"</code> is a Literal.`},
+ number:{title:"Starts with a digit (or . then a digit)",html:`It is trying to be a <b>number</b>, so it's a Literal or a Syntax error. Names can never start with a digit.<br><b>Integer:</b> <code>42</code>, hex <code>0x1F</code> (digits 0–9, a–f), octal <code>017</code> (leading 0 → digits 0–7 only). Suffixes: <code>u</code>, <code>l</code>, <code>ll</code>/<code>LL</code>, one u in either order: <code>10u 10UL 10llu</code>.<br><b>Float:</b> needs a <code>.</code> or an exponent: <code>3.14 .5 5. 1e5 2.5E-3</code>. Suffix: only <code>f</code> or <code>l</code>.<br><b>Traps:</b> <code>4f</code> ✗ (no . or e) · <code>1.5UL</code> ✗ (u on a float) · <code>1e</code> ✗ (exponent needs digits) · <code>089</code> ✗ (octal) · <code>0xBEEFLL</code> ✓ (hex digits, then LL).`},
+ name:{title:"Starts with a letter or _",html:`It is a <b>name</b>. Exactly one of C's lowercase reserved words (<code>int</code> <code>signed</code> <code>switch</code> <code>if</code> <code>while</code> <code>return</code>…) → <b>Keyword</b>. Otherwise, if it uses only letters, digits and <code>_</code> → <b>Identifier</b>. Case matters: <code>Char</code> and <code>IF</code> are identifiers. Containing a keyword doesn't count: <code>signed_long</code> is an identifier. Any other character (like <code>@</code>) → <b>Syntax error</b>.<br><b>All 32 keywords:</b> basic types <code>char int float double void</code> · modifiers <code>short long signed unsigned</code> · storage/qualifiers <code>const volatile static extern auto register</code> · custom types <code>struct union enum typedef</code> · control flow <code>if else switch case default for while do break continue goto return</code> · <code>sizeof</code>.<br><b>Not keywords</b> (from other languages): <code>type string then function print main printf null begin end</code>.<br><b>Lookalikes:</b> check whether the first character is the letter <code>l</code>/<code>O</code> or the digit <code>1</code>/<code>0</code>: <code>l0</code> is a name, <code>10</code> is a number.`},
+ symbol:{title:"Only symbols",html:`It must be <b>exactly one C operator</b>: <code>+ - * / % ++ --</code> <code>= += -= *= /= %=</code> <code>== != &lt; &gt; &lt;= &gt;=</code> <code>&amp;&amp; || !</code> <code>&amp; | ^ ~ &lt;&lt; &gt;&gt;</code> <code>&lt;&lt;= &gt;&gt;= &amp;= |= ^= -&gt;</code>. Look-alikes from other languages (<code>=&gt;</code> <code>=&lt;</code> <code>&lt;&gt;</code> <code>**</code> <code>===</code> <code>:=</code>) → <b>Syntax error</b>.`}
+};
+const TREE = `<ol class="tree">
+ <li>Starts with <code>'</code> or <code>"</code>? → closed correctly = Literal, else Syntax error.</li>
+ <li>Starts with a digit? → valid number form + suffix = Literal, else Syntax error.</li>
+ <li>Starts with a letter or <code>_</code>? → exact lowercase reserved word = Keyword, other clean name = Identifier.</li>
+ <li>Only symbols? → exactly one C operator = Operator, else Syntax error.</li></ol>`;
+
+const STAGES = [
+ {name:"Spoon-fed",kind:"mc",len:12,lv:1,narrow:true,card:true,hint:null,pass:.8,retry:true,
+  blurb:"Easy tokens only. The rule for the token's first character is shown, and you only choose between the 2–3 classes that rule allows. Misses come back later in the round."},
+ {name:"Guided",kind:"mc",len:15,lv:2,tree:true,hint:"card",pass:.85,retry:true,
+  blurb:"All 5 classes. The 4-step checklist stays on screen, and the full rule card is behind a hint (a hinted answer doesn't count). Adds hex, suffixes, look-alike names."},
+ {name:"Bare",kind:"mc",len:15,lv:3,hint:"branch",pass:.9,retry:false,
+  blurb:"No checklist. Every rule is in play, including octal, bad hex and broken chars. The hint names the first-character branch, and counts as a miss."},
+ {name:"Mini set",kind:"match",rows:10,lv:3,hint:true,pass:.9,
+  blurb:"The homework format, half size: 10 tokens with dropdowns. Each row has a hint that shows the rule card (that row counts as wrong)."},
+ {name:"Exam replica",kind:"match",rows:20,lv:3,hint:false,pass:1,
+  blurb:"Same as HW1.1.2: 20 tokens, one submit, no hints. Pass = 20/20."},
+ {name:"Beyond",kind:"mc",len:15,lv:3,boost:true,sub:true,hint:null,pass:.9,retry:false,
+  blurb:"Harder than the homework: the trap rules show up twice as often, and every Literal or Syntax error needs a second answer. Which kind of literal is it, or which rule did it break? Both answers must be right."}
+];
+
+/* ---------- storage ---------- */
+const SKEY = "token-ladder-v1";
+function fresh(){ return {m:{},seen:{},passed:{},best:{},unlocked:1}; }
+function load(){ try{ const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; }catch(e){} return fresh(); }
+function save(){ try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} }
+let S = load();
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const mOf = t => S.m[t] || 0;
+function pickTags(n, lv, boost){
+  const pool = TAGS.filter(t => RULES[t].lv <= lv);
+  const w = pool.map(t => (S.seen[t] ? 6 - mOf(t) : 7) * (boost && RULES[t].lv >= 2 ? 2 : 1));
+  const total = w.reduce((a,b)=>a+b,0), out = [];
+  for(let k=0;k<n;k++){
+    let x = Math.random()*total, i = 0;
+    while((x -= w[i]) > 0 && i < pool.length-1) i++;
+    if(out.length >= 2 && out[out.length-1] === pool[i] && out[out.length-2] === pool[i]) { k--; continue; }
+    out.push(pool[i]);
+  }
+  return out;
+}
+function makeItem(tag, used){
+  let tok, tries = 0;
+  do { tok = RULES[tag].gen(); } while(used.has(tok) && ++tries < 25);
+  used.add(tok);
+  return Object.assign({tag, tok, br:branch(tok)}, classify(tok));
+}
+function record(tag, ok){
+  S.seen[tag] = 1;
+  S.m[tag] = ok ? Math.min(5, mOf(tag) + 1) : Math.max(1, mOf(tag) - 2);
+  save(); renderMastery();
+}
+function cardHTML(br){ return `<div class="rule"><span class="lbl">Rule · ${CARDS[br].title}</span><div>${CARDS[br].html}</div></div>`; }
+function answerLabel(it){ return it.cls + (it.cls === "Literal" ? ` (${SUBNAME[it.subs[0]].toLowerCase()})` : ""); }
+
+/* ---------- ladder + mastery + sheet ---------- */
+let cur = null;
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st,i) => {
+    const locked = i+1 > S.unlocked, passed = S.passed[i];
+    const best = S.best[i] != null ? "best "+Math.round(S.best[i]*100)+"%" : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur===i?"on":""} ${locked?"locked":""} ${passed?"passed":""}" data-i="${i}" type="button">
+      <span class="n">Rung ${i+1}</span><span class="nm">${st.name}</span><span class="st">${passed?"passed · ":""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  $("mgrid").innerHTML = TAGS.map(t => `<div class="chip" style="background:${S.seen[t] ? `var(--m${mOf(t)})` : "var(--m0)"}"><span>${RULES[t].label}</span><span>L${RULES[t].lv}</span></div>`).join("");
+}
+function renderSheet(){
+  const groups = {quote:["chr","str","chrbad","strbad"],number:["intdec","inthex","intoct","intsuf","flt","fltexp","fltsuf","intsufbad","fltbad","octbad","hexbad","fltsufbad"],name:["kw","kwcase","id","idlike","idbad","lookalike"],symbol:["op","opfake"]};
+  $("sheetBody").innerHTML = `<div style="margin-top:12px">${TREE}</div><div class="sheetgrid">` + Object.entries(groups).map(([br,tags]) => {
+    const used = new Set(), rows = [];
+    for(const t of tags) for(let k=0;k<2;k++){ const it = makeItem(t, used); if(!rows.some(x=>x.tok===it.tok)) rows.push(it); }
+    return `<div>${cardHTML(br)}<div class="extab"><table>${rows.map(it=>`<tr><td>${esc(it.tok)}</td><td class="${it.cls==="Syntax error"?"no-t":"ok-t"}">${answerLabel(it)}</td><td class="small">${esc(it.why)}</td></tr>`).join("")}</table></div></div>`;
+  }).join("") + `</div><p class="small">Examples are regenerated each time the page loads.</p>`;
+}
+
+/* ---------- stage intro ---------- */
+function openStage(i){
+  cur = i; renderLadder();
+  const st = STAGES[i], locked = i+1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} of 6</span><span>Pass mark: <b>${Math.round(st.pass*100)}%</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${i===0 ? `<div class="rule"><span class="lbl">The whole method</span>${TREE}<div class="small">Always look at the first character first. It tells you which rule to apply.</div></div>` : ""}
+    ${locked ? `<p class="small">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked?"Start anyway":"Start round"}</button>
+    <span class="small">Keys: 1–5 to answer, Enter for next.</span></div>`;
+  $("go").onclick = () => start(i);
+  $("go").focus();
+}
+function start(i){ return STAGES[i].kind === "match" ? startMatch(i) : startMC(i); }
+
+/* ---------- one-at-a-time rounds ---------- */
+let R = null;
+const NARROW = {quote:["Literal","Syntax error"],number:["Literal","Syntax error"],name:["Keyword","Identifier","Syntax error"],symbol:["Operator","Syntax error"]};
+function startMC(i){
+  const st = STAGES[i], used = new Set();
+  const queue = pickTags(st.len, st.lv, st.boost).map(t => makeItem(t, used));
+  R = {i, st, queue, used, pos:0, total:queue.length, clean:0, misses:[], answered:false, hinted:false, phase:"cls"};
+  showItem();
+}
+function optsHTML(list, id, wide){
+  return `<div class="opts ${wide?"wide":""}" id="${id}">${list.map((o,j)=>`<button class="opt" data-j="${j}" type="button"><span class="k">${j+1}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+}
+function showItem(){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false; R.phase = "cls";
+  R.opts = st.narrow ? NARROW[it.br] : CLASSES;
+  const firstCount = R.queue.slice(0,R.pos).filter(q=>!q.retry).length;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i+1} · ${st.name}</span><span><b>${firstCount}</b> / ${R.total} · clean <b>${R.clean}</b></span></div>
+    <div class="bar"><i style="width:${firstCount/R.total*100}%"></i></div>
+    <div class="tokwrap"><span class="lbl">${it.retry?"Again, a new token for the same rule: ":""}Classify this C token</span><code class="tok">${esc(it.tok)}</code></div>
+    ${st.card ? cardHTML(it.br) : ""}${st.tree ? `<div class="rule"><span class="lbl">Checklist</span>${TREE}</div>` : ""}
+    ${optsHTML(R.opts, "opts")}
+    <div id="subq"></div>
+    <div class="row">${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint${st.hint==="branch"?" (counts as miss)":""}</button>` : ""}<div id="hintout" style="flex-basis:100%"></div></div>
+    <div id="fb"></div>`;
+  $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => answerCls(+b.dataset.j));
+  if($("hint")) $("hint").onclick = () => {
+    R.hinted = true; $("hint").disabled = true;
+    $("hintout").innerHTML = st.hint === "card" ? cardHTML(it.br) : `<div class="rule"><span class="lbl">Hint</span>First character → branch: <b>${CARDS[it.br].title}</b>.</div>`;
+  };
+}
+function answerCls(j){
+  if(R.answered || R.phase !== "cls") return;
+  const it = R.queue[R.pos], chosen = R.opts[j], ok = chosen === it.cls;
+  $("opts").querySelectorAll(".opt").forEach((b,k) => { b.disabled = true; if(R.opts[k] === it.cls) b.classList.add("right"); else if(k === j) b.classList.add("wrong"); });
+  if(ok && R.st.sub && SUBS[it.cls]){
+    R.phase = "sub";
+    $("subq").innerHTML = `<span class="lbl" style="margin-bottom:6px">${it.cls === "Literal" ? "Right. Which kind of literal?" : "Right. Which rule does it break?"}</span>${optsHTML(SUBS[it.cls].map(x=>x[1]), "subopts", true)}`;
+    $("subopts").querySelectorAll(".opt").forEach(b => b.onclick = () => answerSub(+b.dataset.j));
+    return;
+  }
+  finalize(ok, ok ? "" : `You picked <b>${chosen}</b>.`);
+}
+function answerSub(j){
+  if(R.answered || R.phase !== "sub") return;
+  const it = R.queue[R.pos], list = SUBS[it.cls], ok = it.subs.includes(list[j][0]);
+  $("subopts").querySelectorAll(".opt").forEach((b,k) => { b.disabled = true; if(it.subs.includes(list[k][0])) b.classList.add("right"); else if(k === j) b.classList.add("wrong"); });
+  finalize(ok, ok ? "" : `The class was right, but the second answer was ${esc(list[j][1].toLowerCase())}.`);
+}
+function finalize(ok, note){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = true;
+  if($("hint")) $("hint").disabled = true;
+  const clean = ok && !R.hinted;
+  if(!it.retry){ if(clean) R.clean++; else R.misses.push(it); record(it.tag, clean); }
+  if(!ok && st.retry){
+    const again = Object.assign(makeItem(it.tag, R.used), {retry:true});
+    R.queue.splice(Math.min(R.pos+3, R.queue.length), 0, again);
+  }
+  $("fb").innerHTML = `<div class="fb ${ok?"":"bad"}">
+    <h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}: ${answerLabel(it)}</h3>
+    <div>${esc(it.why)}</div>
+    ${note ? `<div class="small">${note}</div>` : ""}
+    <div class="small">Branch: ${CARDS[it.br].title}${!ok && st.retry ? " · A new token with this rule will come back in a few questions." : ""}</div>
+  </div><div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next;
+  $("next").focus();
+}
+function next(){
+  R.pos++;
+  if(R.pos >= R.queue.length) finish(R.i, R.clean/R.total, R.misses);
+  else showItem();
+}
+
+/* ---------- homework-format rounds ---------- */
+let M = null;
+function startMatch(i){
+  const st = STAGES[i], used = new Set();
+  const items = pickTags(st.rows, st.lv).map(t => makeItem(t, used));
+  M = {i, st, items, hinted:new Set(), done:false};
+  const opt = `<option value=""></option>` + CLASSES.map(c=>`<option>${c}</option>`).join("");
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} · ${st.name}</span><span>${st.rows} tokens</span></div>
+    <p style="margin:0">Classify each of the following tokens as a valid C <b>keyword</b>, <b>identifier</b>, <b>literal</b>, or <b>operator</b>. Tokens which are not valid C syntax should be classified as <b>syntax error</b>.</p>
+    <div class="mrows">${items.map((it,r)=>`<div class="mrow">
+      <select id="sel${r}" aria-label="Class for token ${r+1}">${opt}</select>
+      <div class="t"><code>${esc(it.tok)}</code>${st.hint?`<button class="hintb" data-r="${r}" type="button">hint</button>`:""}<div class="res" id="res${r}"></div></div></div>`).join("")}</div>
+    <div class="row"><button class="btn" id="grade" type="button">Save &amp; grade</button><span class="small" id="gmsg"></span></div>
+    <div id="fb"></div>`;
+  document.querySelectorAll(".hintb").forEach(b => b.onclick = () => {
+    const r = +b.dataset.r; M.hinted.add(r); b.outerHTML = cardHTML(M.items[r].br);
+  });
+  $("grade").onclick = gradeMatch;
+  $("sel0").focus();
+}
+function gradeMatch(){
+  if(M.done) return;
+  const empty = M.items.filter((_,r)=>$("sel"+r).value==="").length;
+  if(empty && $("gmsg").dataset.warned !== "1"){ $("gmsg").textContent = `${empty} left blank. Press again to grade anyway.`; $("gmsg").dataset.warned = "1"; return; }
+  M.done = true;
+  let clean = 0; const misses = [];
+  M.items.forEach((it,r) => {
+    const v = $("sel"+r).value, ok = v === it.cls, c = ok && !M.hinted.has(r);
+    $("sel"+r).disabled = true;
+    $("res"+r).className = "res " + (ok ? "ok" : "no");
+    $("res"+r).innerHTML = ok ? `✓ ${M.hinted.has(r) ? "(hinted, not counted)" : ""}` : `✗ ${answerLabel(it)}: ${esc(it.why)}`;
+    if(c) clean++; else misses.push(it);
+    record(it.tag, c);
+  });
+  $("grade").disabled = true;
+  $("fb").innerHTML = `<div class="row"><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(M.i, clean/M.items.length, misses);
+  $("next").focus();
+}
+
+/* ---------- results ---------- */
+function finish(i, score, misses){
+  const st = STAGES[i], passed = score >= st.pass - 1e-9;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(6, i+2)); }
+  save(); renderLadder();
+  const byTag = {};
+  misses.forEach(it => (byTag[it.tag] = byTag[it.tag] || []).push(it));
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i+1} · ${st.name} · round over</span><span>Pass mark ${Math.round(st.pass*100)}%</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${Math.round(score*100)}%</span>
+      <span class="pill ${passed?"ok":"no"}">${passed ? (i<5 ? "Passed · rung "+(i+2)+" unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${misses.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Rules to review</h3><ul class="missl">${Object.entries(byTag).map(([t,its])=>`<li><b>${RULES[t].label}</b><br>${its.map(it=>`<code>${esc(it.tok)}</code> → ${answerLabel(it)}. <span class="small">${esc(it.why)}</span>`).join("<br>")}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">
+      ${passed && i<5 ? `<button class="btn" id="nx" type="button">Go to rung ${i+2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>`
+                      : `<button class="btn" id="again" type="button">${passed?"Play again":"Try again"}</button>`}
+    </div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i+1);
+  ($("nx")||$("again")).focus();
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener("keydown", e => {
+  if(e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  if(R && !R.answered && /^[1-5]$/.test(e.key)){
+    const group = R.phase === "sub" ? $("subopts") : $("opts");
+    const b = group && group.querySelector(`.opt[data-j="${+e.key-1}"]`);
+    if(b && !b.disabled){ e.preventDefault(); b.click(); }
+  } else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+
+renderMastery(); renderSheet();
+openStage(Math.min(S.unlocked, 6) - 1);
+</script>
+
+</body></html>

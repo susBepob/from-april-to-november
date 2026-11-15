@@ -1,0 +1,1761 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C Exam 2 Ladder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+
+/* Same layout as the Term and Token ladders: rungs on top, working card left, skill mastery right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+/* JetBrains Mono draws != and -> as ligatures; code must show its real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+code,.mono{font-family:var(--f-mono)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:1.15rem;line-height:1.5}
+.prompt code,.inl{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:pre}
+pre.code{font-family:var(--f-mono);font-size:.98rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+.formula{font-size:1.05rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em;white-space:pre}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700;min-width:0}
+.opts.wide .opt span:last-child{font-family:var(--f-mono);font-weight:400;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:8px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb ol,.fb ul{margin:0;padding-left:1.3em;display:grid;gap:3px;font-size:.93rem}
+.fb code{font-family:var(--f-mono);font-size:.9em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+input[type=text]:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent)}
+input.ok{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good)} input.no{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:170px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4}
+/* exam layout */
+.q{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.q > h3{margin:0;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:1rem;padding:8px 14px;display:flex;justify-content:space-between;gap:10px}
+.q > .qb{padding:14px;display:grid;gap:12px}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:minmax(0,260px) minmax(0,220px) minmax(0,1fr);gap:10px;align-items:center}
+.part .ex{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:pre;overflow-x:auto}
+.part .res{font-size:.88rem}
+.res.ok{color:var(--good)} .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select,.trow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre}
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.trow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:3px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+table.tests{border-collapse:collapse;font-size:.88rem;width:100%}
+table.tests td,table.tests th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+table.tests td.mono{font-family:var(--f-mono);font-size:.85rem;word-break:break-all}
+.tw{overflow-x:auto}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+/* mastery */
+aside .card{gap:10px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgroup{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.82rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink)}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.qscore{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.qscore div{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .res{grid-column:1/-1}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.part,.mrow{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+.ladder{grid-template-columns:repeat(4,minmax(0,1fr))}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:190px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4;box-sizing:border-box}
+.tests{display:grid;gap:4px;font-family:var(--f-mono);font-size:.85rem}
+.tests .t{border-left:3px solid var(--bad);padding:2px 8px}
+.topic{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:none;color:inherit;font:inherit;text-align:left;width:100%}
+.topic.done{border-color:var(--good)}
+.topic .num{font-family:var(--f-mono);color:var(--muted)}
+.lesson{display:grid;gap:8px;max-width:75ch}
+.lesson ul{margin:0;padding-left:20px}
+.anim{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px}
+.anim-stage{min-height:150px;display:grid;gap:10px;align-content:start}
+.anim-cap{font-size:1rem;min-height:2.6em}
+.anim-ctl .btn{padding:6px 12px}
+.arow{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.acells{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0 2px}
+.acell{display:grid;justify-items:center;min-width:44px;transition:transform .35s}
+.acell .av{display:grid;place-items:center;min-width:44px;height:44px;border:2px solid var(--line);border-radius:9px;font-family:var(--f-mono);font-weight:700;font-size:1.05rem;background:var(--code-bg);transition:background .35s,border-color .35s}
+.acell .ai{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.acell .ap{font-family:var(--f-mono);font-size:.72rem;color:var(--accent);min-height:1em;white-space:nowrap}
+.acell.hi{transform:translateY(-4px)}
+.acell.hi .av{border-color:var(--accent)}
+.acell.good .av{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--code-bg))}
+.acell.bad .av{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--code-bg))}
+.avars{display:flex;gap:8px;flex-wrap:wrap}
+.avar{display:grid;border:1px solid var(--line);border-radius:9px;padding:5px 10px;background:var(--code-bg);min-width:58px}
+.avar span{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.avar b{font-family:var(--f-mono);font-size:1.05rem}
+pre.acode{font-family:var(--f-mono);font-size:.9rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0;overflow-x:auto;white-space:pre}
+pre.acode span{display:inline-block;min-width:100%;border-radius:4px;transition:background .3s}
+pre.acode span.on{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+pre.acode span.bad{background:color-mix(in srgb,var(--bad) 24%,transparent)}
+.aexpr{font-family:var(--f-mono);font-size:1.15rem;line-height:1.9;overflow-x:auto}
+.aexpr .tk{border-radius:6px;padding:2px 5px}
+.aexpr .tk.l1,.aexpr .tk.l2,.aexpr .tk.l3,.aexpr .tk.l4,.aexpr .tk.l5{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.aexpr .tk.v{background:color-mix(in srgb,var(--good) 22%,transparent);font-weight:700}
+.aexpr .tk.big{font-size:2rem}
+.apipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.apb{border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-weight:700;font-size:.85rem;transition:background .35s,border-color .35s}
+.apb.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.apb.past{border-color:var(--good)}
+.apst{font-size:.78rem;color:var(--muted);font-family:var(--f-mono)}
+.apst.on{color:var(--accent);font-weight:700}
+.aline{display:flex;gap:3px;flex-wrap:wrap}
+.at{min-width:30px;text-align:center;font-family:var(--f-mono);font-size:.85rem;border-bottom:3px solid var(--line);padding:4px 0}
+.at.in{border-bottom-color:var(--accent)}
+.at.dot{background:var(--accent);color:var(--accent-ink);border-radius:999px;font-weight:700}
+.hook{border:2px solid var(--accent);border-radius:12px;padding:10px 14px;display:grid;gap:4px}
+.hook .hk{font-family:var(--f-display);font-size:1.25rem}
+.recall{display:grid;gap:6px}
+@media (prefers-reduced-motion: reduce){.acell,.acell .av,.apb,pre.acode span{transition:none}}
+.pipe{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt .code-o{font-family:var(--f-mono);font-weight:400;font-size:.88rem;white-space:pre;overflow-x:auto}
+.radio{display:grid;gap:4px}
+.radio label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.radio label.okc{color:var(--good);font-weight:700} .radio label.noc{color:var(--bad);text-decoration:line-through}
+.calls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
+.call{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center}
+.call code{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:pre}
+.rows5{display:grid;gap:6px}
+.r5{display:grid;grid-template-columns:minmax(0,300px) 110px minmax(0,1fr);gap:10px;align-items:center}
+.r5 code{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:pre;overflow-x:auto}
+@media (max-width:900px){.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.two,.calls{grid-template-columns:1fr}.r5{grid-template-columns:1fr 1fr}.r5 .res{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>C Exam 2 Ladder</h1>
+    <p>CIS 1057 Exam 2, start to finish: learn each topic from a worked example, drill Q1–Q5 (build process, compile defects, digit-loop tracing, relational and logical values), then write the real HW2.2 / HW2.3 functions in the browser. A built-in C interpreter runs your code against fresh tests, like PrairieLearn does. Goal: 100%.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Skill mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div id="mgrid"></div>
+        <p class="small" style="margin:0">Weak skills get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>Rule sheet</summary>
+    <div class="sheetgrid" id="sheetBody"></div>
+  </details>
+</div>
+
+<script>
+/* ================= helpers ================= */
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const numbered = lines => lines.map((l, i) => `${String(i + 1).padStart(2)}  ${l}`).join("\n");
+
+/* ================= skills ================= */
+const G = {b:"Build process (Q1, Q3)", d:"Compile defects (Q2)", t:"Loop tracing (Q4)", r:"Relational & logical (Q5)", a:"Array bugs (spot the wrong version)", c:"Writing functions (Q6–Q9)"};
+const SK = {
+  b_io:{label:"Each stage's input and output"},
+  b_task:{label:"Which stage does which job"},
+  d_semi:{label:"Missing semicolon"},
+  d_brace:{label:"Missing closing brace"},
+  d_undecl:{label:"Undeclared variable"},
+  d_ret:{label:"Invalid return statement"},
+  t_neg:{label:"Negative n: / and % keep the sign"},
+  t_zero:{label:"while vs do-while on n = 0"},
+  t_trace:{label:"Plain digit loops"},
+  r_chain:{label:"a < b < c is (a < b) < c"},
+  r_eqrel:{label:"< > before == !="},
+  r_logic:{label:"&& before ||"},
+  r_arith:{label:"+ - before < >"},
+  r_not:{label:"! grabs one operand"},
+  r_val:{label:"Comparisons give 0 or 1"},
+  a_init:{label:"Right starting value"},
+  a_bounds:{label:"Indexes 0 to n-1"},
+  a_inplace:{label:"In place: don't overwrite what you need"},
+  a_pairs:{label:"Each pair once: j = i + 1"},
+  a_early:{label:"Return only when certain"},
+  a_float:{label:"1 / n is 0: use 1.0 / n"},
+  a_spec:{label:"Follow the spec exactly"},
+  c_cond:{label:"Conditionals (HW2.2.1–6)"},
+  c_loop:{label:"Loops (HW2.2.7–11)"},
+  c_red:{label:"Reductions (HW2.3.1–7)"},
+  c_stat:{label:"Maps + reductions (HW2.3.8–14)"},
+  c_pred:{label:"Predicates, in place (HW2.3.15–17)"}
+};
+Object.keys(SK).forEach(k => SK[k].g = G[k[0]]);
+const DRILL = Object.keys(SK).filter(k => k[0] !== "c");
+const GW = {b:1.2, d:1, t:1.3, r:1.2, a:.6};
+const PIPE = `source code → <b>preprocessor</b> → translation unit code → <b>compiler</b> → assembly code → <b>assembler</b> → object code → <b>linker</b> → executable code`;
+const CARDS = {
+  b_io:`<b>Each stage turns one kind of code into the next:</b><br><span class="pipe">${PIPE}</span><br>Bytecode is not part of the C build process.`,
+  b_task:`<b>Preprocessor:</b> <code>#include</code>, <code>#define</code> macros, removes comments. <b>Compiler:</b> checks syntax and types, optimizes, turns the translation unit into assembly. <b>Assembler:</b> assembly → machine (object) code. <b>Linker:</b> combines object files, connects calls across files and libraries, decides the address of every function and static object, outputs the executable.`,
+  d_semi:`<b>Every statement ends with <code>;</code>:</b> declarations, assignments, <code>return</code> lines, the statement after <code>if</code> / <code>else</code>, and <code>} while (...);</code>. The <code>for (...)</code> header and lines ending in <code>{</code> or <code>}</code> don't take one.`,
+  d_brace:`<b>Count the braces.</b> Every <code>{</code> needs a <code>}</code>. Match them by indentation: function, loops, ifs, do-while. A missing <code>}</code> usually shows as the function's last <code>}</code> closing an inner block instead.`,
+  d_undecl:`<b>Every name must be declared before use, in a scope that's still open.</b> Check each variable against the parameters and the declarations. A variable from <code>for (int i …)</code> dies when the loop ends.`,
+  d_ret:`<b>void function:</b> only <code>return;</code> with no value. <b>int function:</b> every <code>return</code> needs a value. <code>if (n &lt; 1) return;</code> in a void function is valid, and <code>return -1;</code> in an int function is valid.`,
+  t_neg:`<b>Negative n:</b> / and % keep the sign. -1238 % 10 = -8 and -1238 / 10 = -123. So <code>while (n &gt; 0)</code> never runs, while <code>while (n)</code> keeps going and adds negative digits.`,
+  t_zero:`<b><code>while</code> checks BEFORE the body.</b> With n = 0, <code>while (n)</code> runs 0 times, so count = 0. <b><code>do { } while</code> checks AFTER:</b> the body always runs once, so count = 1.`,
+  t_trace:`<b>Trace step by step:</b> write n, the accumulator, then the condition after each <code>n /= 10</code>. Stop as soon as the condition is false.`,
+  r_chain:`<b><code>a &lt; b &lt; c</code> is <code>(a &lt; b) &lt; c</code>.</b> The first comparison becomes 0 or 1, and THAT is compared with c. 2 &lt; -5 &lt; 7 → 0 &lt; 7 → 1. The same goes for <code>a != b != c</code>.`,
+  r_eqrel:`<b>&lt; &lt;= &gt; &gt;= go before == !=.</b> <code>d &lt; b != b &gt;= a</code> is <code>(d &lt; b) != (b &gt;= a)</code>.`,
+  r_logic:`<b>&amp;&amp; goes before ||.</b> <code>x || y &amp;&amp; z</code> is <code>x || (y &amp;&amp; z)</code>. Any nonzero value is true, and &amp;&amp; / || give 0 or 1.`,
+  r_arith:`<b>Arithmetic first:</b> * / %, then + -, then comparisons, then == !=, then &amp;&amp;, then ||. <code>d &lt; c + 3</code> is <code>d &lt; (c + 3)</code>.`,
+  r_not:`<b>! grabs only the next operand:</b> <code>!b &lt; b</code> is <code>(!b) &lt; b</code>. !x is 1 if x is 0, else 0.`,
+  r_val:`<b>Every comparison and logical operator gives the int 0 or 1,</b> and you can do arithmetic with it: <code>(d &lt; c) + 3</code> is 4 or 3.`,
+  a_init:`<b>Start at the right value:</b> min / max at <code>arr[0]</code> (never 0), sum at 0, product at 1, count at 0. An index search keeps an index, so compare <code>arr[i]</code> with <code>arr[best]</code>.`,
+  a_bounds:`<b>Valid indexes are 0 … n-1.</b> <code>i &lt;= n</code>, <code>arr[i + 1]</code> at i = n-1 and <code>arr[i - 1]</code> at i = 0 all go out of bounds. The mirror of i is <code>n - 1 - i</code>.`,
+  a_inplace:`<b>In place: never read a value you already overwrote.</b> A running difference goes from the back, a running sum from the front, a swap needs a temp, and reversing stops at n / 2.`,
+  a_pairs:`<b>Compare every pair once:</b> <code>for i</code>, then <code>for (j = i + 1 …)</code>. Starting j at 0 compares an element with itself.`,
+  a_early:`<b>Return inside the loop only when the answer is already certain</b> (a duplicate was found). "Sorted", "min" and "range" need the whole loop first.`,
+  a_float:`<b><code>1 / n</code> is int division</b> (0 for n &gt; 1). Write <code>1.0 / n</code>, and accumulate means in double.`,
+  a_spec:`<b>Read the spec literally:</b> what to return, the empty-array value, the order of a subtraction, and where the 1/N goes.`,
+  c_cond:`<b>One return per case:</b> handle the special cases first with <code>if (…) return …;</code>, and let the last line be the "otherwise". Absolute value without abs(): <code>if (d &lt; 0) d = -d;</code>. Divisible by k: <code>x % k == 0</code>. Logic: <code>!x</code> turns any value into 0 or 1, so xor is <code>!x != !y</code>. Doubles: <code>3/2</code> is 1 in C, so write <code>1.5</code> or <code>3.0 / 2</code>.`,
+  c_loop:`<b>Accumulator loop:</b> start at the identity (product 1, sum 0), loop the right number of times, update, and return after the loop. k times: <code>for (int i = 0; i &lt; k; i++)</code>. Guard special cases first (<code>k &lt; 0</code>, a zero input). Two-value recurrences (Fibonacci): <code>next = prev + cur; prev = cur; cur = next;</code>. Euclid: <code>while (b != 0) { r = a % b; a = b; b = r; }</code>. A helper function goes ABOVE the function that calls it.`,
+  c_red:`<b>Reduction = one running value across the array.</b> sum 0, product 1, count 0, min / max <code>arr[0]</code> (never 0), index <code>best = 0</code> compared through <code>arr[best]</code>. Loop <code>i &lt; n</code> (start at 1 when you started from arr[0]). Return after the loop, never inside it.`,
+  c_stat:`<b>Map = change each element; reduction = combine into one value.</b> Multi-step problems: reduce first (mean, min / max), then map with it. Use <code>double</code> accumulators, and write <code>1.0 / n</code>, never <code>1 / n</code>. In place: a running sum goes forward (it needs the NEW previous value), a running difference goes backward (it needs the ORIGINAL previous value). σ = <code>sqrt(var / n)</code>, with the /n inside the root.`,
+  c_pred:`<b>"Any" questions</b> (is there a duplicate?): <code>return 1</code> as soon as you find one, <code>return 0</code> after the loop. <b>"All" questions</b> (is it sorted?): start with a flag of 1, set it to 0 on a counterexample, decide after the loop. Pairs: <code>j = i + 1</code>. Neighbours: <code>arr[i]</code> vs <code>arr[i - 1]</code> with i from 1. Reverse in place: swap i with <code>n - 1 - i</code> for <code>i &lt; n / 2</code>, using a temp.`
+};
+
+/* ================= Q1 / Q3: build process ================= */
+const BS = {
+  pre:{name:"C preprocessor", in:"source code", out:"translation unit code", tasks:["find and replace <code>#define</code> macros","paste the contents of <code>#include</code> files into the source","remove comments and extra whitespace"]},
+  comp:{name:"compiler", in:"translation unit code", out:"assembly code", tasks:["transform source code into assembly code for the target platform","optimize the program for better performance on the target platform","check the code for syntax and type errors"]},
+  asm:{name:"assembler", in:"assembly code", out:"object code", tasks:["translate assembly instructions into machine code"]},
+  link:{name:"linker", in:"object code", out:"executable code", tasks:["combine object code files into a single executable binary","determine addresses for each function and static object in the program","connect calls to functions defined in other files or libraries"]}
+};
+const CODEDESC = {"source code":"the .c file you write; it goes INTO the preprocessor", "translation unit code":"comes OUT of the preprocessor and goes INTO the compiler", "assembly code":"comes OUT of the compiler and goes INTO the assembler", "object code":"comes OUT of the assembler and goes INTO the linker", "executable code":"comes OUT of the linker: the finished program", "bytecode":"not part of the C build process at all"};
+// three statements (a)(b)(c), then (d) both of two, (e) All / None; the answer pattern is chosen first
+function abcde(trueS, falseS){
+  for(let k = 0; k < 300; k++){
+    const eAll = Math.random() < .55, ans = ri(0, 4), pair = shuffle([0, 1, 2]).slice(0, 2).sort((a, b) => a - b);
+    const truth = ans < 3 ? [0, 1, 2].map(j => j === ans) : ans === 3 ? [0, 1, 2].map(j => pair.includes(j)) : [0, 1, 2].map(() => eAll);
+    const nT = truth.filter(Boolean).length;
+    if(nT > trueS.length || 3 - nT > falseS.length) continue;
+    const T = shuffle(trueS), F = shuffle(falseS), stm = truth.map(t => t ? T.pop() : F.pop());
+    return {stm, truth, ans, pair, eAll, list:[...stm.map(s => s.text), `both (${"abc"[pair[0]]}) and (${"abc"[pair[1]]})`, eAll ? "All of the above" : "None of the above"]};
+  }
+}
+function genBuild(target){
+  const s = pick(Object.keys(BS));
+  if(target === "b_io"){
+    const dir = pick(["input","output"]), ans = BS[s][dir === "input" ? "in" : "out"], none = Math.random() < .2;
+    const others = shuffle(Object.keys(CODEDESC).filter(c => c !== ans)).slice(0, none ? 4 : 3);
+    const four = none ? others : shuffle([ans, ...others]);
+    const list = [...four, "None of the above"], ai = none ? 4 : four.indexOf(ans);
+    return {kind:"mc", target, sk:[target], letters:true, list, ans:ai,
+      prompt:`In the standard C build process, which of the following types of code is the <b>${dir}</b> ${dir === "input" ? "to" : "from"} the ${BS[s].name}?`,
+      why:list.map((c, j) => j === ai ? "" : j === 4 ? `${ans} is one of the options, so "None" is wrong.` : `${c}: ${CODEDESC[c]}.`),
+      explain:`The ${dir} ${dir === "input" ? "to" : "from"} the ${BS[s].name} is <b>${ans}</b>.${none ? " It isn't among the options, so the answer is None of the above." : ""}<div class="pipe">${PIPE}</div>`};
+  }
+  if(Math.random() < .3){
+    // reverse form: given a task, which stage?
+    const task = pick(BS[s].tasks), stages = Object.keys(BS), none = Math.random() < .15;
+    const shown = none ? stages.filter(x => x !== s) : stages;
+    const list = [...shown.map(x => "the " + BS[x].name), ...(none ? ["the loader"] : []), "None of the above"].slice(0, 5);
+    const ai = none ? 4 : shown.indexOf(s);
+    return {kind:"mc", target, sk:[target], letters:true, list, ans:ai,
+      prompt:`In the standard C build process, which stage is responsible for this task: <i>${task}</i>?`, why:list.map(() => ""),
+      explain:`That is the job of the <b>${BS[s].name}</b>.${none ? " It isn't among the options (the loader isn't a build stage)." : ""}`};
+  }
+  const T = BS[s].tasks.map(t => ({text:t, note:`yes, the ${BS[s].name} does this`}));
+  const F = Object.keys(BS).filter(o => o !== s).flatMap(o => BS[o].tasks.map(t => ({text:t, note:`no, that's the ${BS[o].name}'s job`})));
+  const q = abcde(T, F);
+  return {kind:"mc", target, sk:[target], letters:true, list:q.list, ans:q.ans, why:q.list.map(() => ""),
+    prompt:`In the standard C build process, which task is handled by the <b>${BS[s].name}</b>?`,
+    explain:`<ul>${q.stm.map((x, j) => `<li>(${"abc"[j]}) ${x.text}: <b>${x.note}</b>.</li>`).join("")}</ul>`};
+}
+
+/* ================= Q2: compile-time defects ================= */
+const DCAT = {d_semi:"Missing semicolon <code>;</code>", d_brace:"Missing closing brace <code>}</code>", d_undecl:"Undeclared variable", d_ret:"Invalid <code>return</code> statement"};
+// correct functions; undecl / ret: [line, replacement, note, hardOnly]
+const DT = [
+  {lines:["int binary_search(int arr[], int n, int target) {","    int start = 0, end = n;","    while (start < end) {","        int mid = (start + end) / 2;","        if (arr[mid] == target) return mid;","        if (arr[mid] < target) start = mid + 1;","        else end = mid;","    }","    return -1;","}"],
+   undecl:[[1,"    int start = 0;","<code>end</code> is used but never declared"],[3,"        mid = (start + end) / 2;","<code>mid</code> is never declared"]],
+   ret:[[8,"    return;","<code>return;</code> with no value in a function that returns <code>int</code>"],[4,"        if (arr[mid] == target) return;","<code>return;</code> with no value in an <code>int</code> function"]]},
+  {lines:["void bubble_sort(int arr[], int n) {","    for (int i = n; i > 0; i--) {","        int sorted = 1;","        for (int j = 1; j < i; j++)","            if (arr[j - 1] > arr[j]) {","                int temp = arr[j - 1];","                arr[j - 1] = arr[j];","                arr[j] = temp;","                sorted = 0;","            }","        if (sorted) return;","    }","}"],
+   undecl:[[2,"        sorted = 1;","<code>sorted</code> is never declared"],[5,"                temp = arr[j - 1];","<code>temp</code> is never declared"]],
+   ret:[[10,"        if (sorted) return 0;","<code>return 0;</code> returns a value from a <code>void</code> function"]]},
+  {lines:["void compute_primes(int primes[], int n) {","    if (n < 1) return;","    else primes[0] = 2; // first prime is 2","    int i = 1, x = 2, is_prime;","    while (i < n) {","        do {","            is_prime = 1, x += 1;","            for (int j = 0; j < i; j++)","                is_prime = is_prime && x % primes[j];","        } while (!is_prime);","        primes[i++] = x;","    }","}"],
+   undecl:[[3,"    int i = 1, x = 2;","<code>is_prime</code> is never declared"],[3,"    int i = 1, is_prime;","<code>x</code> is never declared"]],
+   ret:[[1,"    if (n < 1) return 0;","<code>return 0;</code> returns a value from a <code>void</code> function"]]},
+  {lines:["int find_min(int arr[], int n) {","    int min = arr[0];","    for (int i = 1; i < n; i++) {","        if (arr[i] < min)","            min = arr[i];","    }","    return min;","}"],
+   undecl:[[1,"    min = arr[0];","<code>min</code> is never declared"],[6,"    return arr[i];","<code>i</code> only exists inside the <code>for</code> loop, so it's undeclared after it",1]],
+   ret:[[6,"    return;","<code>return;</code> with no value in an <code>int</code> function"]]},
+  {lines:["int digit_sum(int n) {","    int sum = 0;","    while (n > 0) {","        sum += n % 10;","        n /= 10;","    }","    return sum;","}"],
+   undecl:[[1,"    int total = 0;","<code>sum</code> is never declared (the declaration says <code>total</code>)"]],
+   ret:[[6,"    return;","<code>return;</code> with no value in an <code>int</code> function"]]},
+  {lines:["void reverse_array(int arr[], int n) {","    for (int i = 0; i < n / 2; i++) {","        int t = arr[i];","        arr[i] = arr[n - 1 - i];","        arr[n - 1 - i] = t;","    }","    return;","}"],
+   undecl:[[2,"        t = arr[i];","<code>t</code> is never declared"]],
+   ret:[[6,"    return arr[0];","returns a value from a <code>void</code> function"]]},
+  {lines:["int is_sorted(int arr[], int n) {","    int up = 1, down = 1;","    for (int i = 1; i < n; i++) {","        if (arr[i] < arr[i - 1]) up = 0;","        if (arr[i] > arr[i - 1]) down = 0;","    }","    if (up) return 1;","    if (down) return -1;","    return 0;","}"],
+   undecl:[[1,"    int up = 1;","<code>down</code> is never declared"],[1,"    int down = 1;","<code>up</code> is never declared"]],
+   ret:[[8,"    return;","<code>return;</code> with no value in an <code>int</code> function"],[7,"    if (down) return;","<code>return;</code> with no value in an <code>int</code> function"]]},
+  {lines:["int count_matches(int arr[], int n, int value) {","    int count = 0;","    for (int i = 0; i < n; i++)","        if (arr[i] == value)","            count++;","    return count;","}"],
+   undecl:[[1,"    int total = 0;","<code>count</code> is never declared (the declaration says <code>total</code>)"],[5,"    return count + i;","<code>i</code> only exists inside the <code>for</code> loop",1]],
+   ret:[[5,"    return;","<code>return;</code> with no value in an <code>int</code> function"]]}
+];
+function injectDefects(t, set, hard){
+  const L = t.lines.slice(), notes = [], used = new Set();
+  const take = alts => { const ok = alts.filter(a => (hard || !a[3]) && !used.has(a[0])); if(!ok.length) return false; const a = pick(ok); L[a[0]] = a[1]; used.add(a[0]); notes.push([a[0], a[2]]); return true; };
+  if(set.has("d_undecl") && !take(t.undecl)) return null;
+  if(set.has("d_ret") && !take(t.ret)) return null;
+  if(set.has("d_semi")){
+    const c = L.map((_, i) => i).filter(i => i > 0 && !used.has(i) && !/^\s*for\b/.test(L[i]) && L[i].split("//")[0].includes(";"));
+    if(!c.length) return null;
+    const i = pick(c), parts = L[i].split("//"), code = parts[0], j = code.lastIndexOf(";");
+    L[i] = code.slice(0, j) + code.slice(j + 1) + (parts.length > 1 ? "//" + parts.slice(1).join("//") : "");
+    used.add(i); notes.push([i, "the statement has no <code>;</code> at the end"]);
+  }
+  if(set.has("d_brace")){
+    const c = L.map((_, i) => i).filter(i => !used.has(i) && i < L.length - 1 && /^\s*}\s*$/.test(L[i]));
+    const i = c.length ? pick(c) : L.length - 1;
+    L[i] = null; notes.push([-1, "one <code>}</code> is missing, so the braces don't balance (count the opening ones)"]);
+  }
+  const map = []; let k = 0; L.forEach((l, i) => { map[i] = l === null ? null : ++k; });
+  return {lines:L.filter(l => l !== null), notes:notes.sort((a, b) => a[0] - b[0]).map(([i, n]) => i >= 0 ? `line ${map[i]}: ${n}` : n)};
+}
+function genDefect(target, hard){
+  for(let k = 0; k < 400; k++){
+    const cats = shuffle(Object.keys(DCAT)).slice(0, 3);
+    if(target && !cats.includes(target)) continue;
+    const eAll = Math.random() < .5, ans = ri(0, 4), pair = shuffle([0, 1, 2]).slice(0, 2).sort((a, b) => a - b);
+    const truth = ans < 3 ? [0, 1, 2].map(j => j === ans) : ans === 3 ? [0, 1, 2].map(j => pair.includes(j)) : [0, 1, 2].map(() => eAll);
+    const set = new Set(cats.filter((_, j) => truth[j]));
+    if(target && !set.has(target)) continue;
+    const inj = injectDefects(pick(DT), set, hard);
+    if(!inj) continue;
+    const list = [...cats.map(c => DCAT[c]), `both (${"abc"[pair[0]]}) and (${"abc"[pair[1]]})`, eAll ? "All of the above" : "None of the above"];
+    return {kind:"mc", target:target || (set.size ? pick([...set]) : pick(cats)), sk:set.size ? [...set] : cats, letters:true, listHTML:true,
+      pre:"Refer to the function listing below. This code may contain defects that would produce compiler errors or warnings.",
+      code:numbered(inj.lines), prompt:"Which of the following compile-time defects are present in the function?", list, ans, why:list.map(() => ""),
+      explain:set.size ? `Defects present:<ul>${inj.notes.map(n => `<li>${n}</li>`).join("")}</ul>` : `No defects: it compiles. Look-alikes that are fine: <code>return;</code> in a void function, <code>return -1;</code> in an int function, a <code>for</code> body without braces.`};
+  }
+}
+
+/* ================= Q4: tracing digit loops ================= */
+function digitCode(v){
+  const name = v.kind === "count" ? "digit_count" : "digit_sum", acc = v.kind === "count" ? "count" : "sum", body = v.kind === "count" ? "count++;" : "sum += n % 10;";
+  const L = [`int ${name}(int n) {`, `    int ${acc} = 0;`];
+  if(v.dw) L.push("    do {", `        ${body}`, "        n /= 10;", `    } while (${v.cond});`);
+  else L.push(`    while (${v.cond}) {`, `        ${body}`, "        n /= 10;", "    }");
+  L.push(`    return ${acc};`, "}");
+  return L;
+}
+function digitRun(v, n){
+  const test = x => v.cond === "n" ? x !== 0 : x > 0, steps = [];
+  let acc = 0;
+  if(!v.dw && !test(n)){ steps.push(`n = ${n}: <code>${v.cond}</code> is false at the start, so the loop body never runs → return ${acc}`); return {val:acc, steps}; }
+  if(v.dw) steps.push("do-while: the body runs once before any check");
+  let g = 0;
+  do {
+    const d = n % 10, n2 = Math.trunc(n / 10);
+    if(v.kind === "count") acc++; else acc += d;
+    steps.push(v.kind === "count" ? `n = ${n}: count → ${acc}, n /= 10 → ${n2}` : `n = ${n}: n % 10 = ${d}, sum → ${acc}, n /= 10 → ${n2}`);
+    n = n2;
+  } while(test(n) && ++g < 20);
+  steps.push(`<code>${v.cond}</code> with n = ${n} is false → return ${acc}`);
+  return {val:acc, steps};
+}
+const intended = (kind, n) => { const s = String(Math.abs(n)); return kind === "count" ? s.length : [...s].reduce((a, c) => a + +c, 0); };
+const VARIANTS = ["count","sum"].flatMap(kind => ["n","n > 0"].flatMap(cond => [false, true].map(dw => ({kind, cond, dw}))));
+function digitAlts(v, n, ans){
+  const m = new Map(), sk = n === 0 ? "t_zero" : n < 0 ? "t_neg" : "t_trace";
+  const add = (x, why, s) => { if(x !== ans && !m.has(x)) m.set(x, {why, sk:s || sk}); };
+  for(const w of VARIANTS.filter(w => w.kind === v.kind && (w.cond !== v.cond || w.dw !== v.dw))){
+    const x = digitRun(w, n).val;
+    if(w.dw !== v.dw) add(x, v.dw ? "That's the while-loop answer. do-while runs the body once before checking." : "That's the do-while answer. A while loop checks first.", "t_zero");
+    else add(x, v.cond === "n > 0" ? "That's what while (n) would give. n > 0 is false for a negative n." : "That's what n > 0 would give. while (n) keeps going for negatives: -123 / 10 = -12 is still nonzero.", "t_neg");
+  }
+  add(intended(v.kind, n), "That's what the function is SUPPOSED to return. The question is what this code actually does on this input.");
+  if(v.kind === "sum" && n < 0) add(-intended("sum", n) === ans ? intended("sum", n) : -intended("sum", n), "% keeps the sign: -1238 % 10 = -8. Trace each digit.", "t_neg");
+  if(v.kind === "count"){ add(ans + 1, "One iteration too many. Check the condition right after the last n /= 10.", "t_trace"); if(ans > 0) add(ans - 1, "One iteration too few.", "t_trace"); }
+  return m;
+}
+function randNum(k){ let s = String(ri(1, 9)); for(let i = 1; i < k; i++) s += Math.random() < .25 ? "0" : String(ri(0, 9)); return +s; }
+function digitInput(target){
+  if(target === "t_zero") return 0;
+  if(target === "t_neg") return -randNum(ri(1, 5));
+  return randNum(ri(1, 5));
+}
+function genDigit(target){
+  const v = pick(VARIANTS), n = digitInput(target), r = digitRun(v, n), fn = v.kind === "count" ? "digit_count" : "digit_sum";
+  return {kind:"num", target, sk:[target], code:digitCode(v).join("\n"), codeLbl:`The function is meant to return the ${v.kind === "count" ? "number" : "sum"} of decimal digits, but it may have bugs on some inputs.`,
+    prompt:`What does <code>${fn}(${n})</code> return?`, ans:r.val, alts:digitAlts(v, n, r.val), explain:`<ol>${r.steps.map(s => `<li>${s}</li>`).join("")}</ol>`};
+}
+function q4Inputs(){ return [ri(0, 1) ? 0 : ri(1, 9), (Math.random() < .6 ? -1 : 1) * ri(1, 9), randNum(ri(2, 3)), -randNum(4), -randNum(5)]; }
+
+/* ================= Q5: relational and logical ================= */
+const BIN = {"||":1,"&&":2,"==":3,"!=":3,"<":4,"<=":4,">":4,">=":4,"+":5,"-":5,"*":6,"/":6,"%":6};
+const rtok = s => s.match(/\d+|[A-Za-z_]\w*|&&|\|\||==|!=|<=|>=|[<>!()+\-*\/%]/g);
+function rparse(src, mode){
+  mode = mode || {};
+  const prec = op => { let p = BIN[op]; if(mode.flatLogic && p === 2) p = 1; if(mode.flatRel && p === 3) p = 4; if(mode.relFirst){ if(p === 4) p = 5; else if(p === 5) p = 4; } return p; };
+  const t = rtok(src); let i = 0;
+  const unary = () => {
+    const x = t[i];
+    if(x === "!" || x === "-"){ i++; return {k:"u", op:x, e:x === "!" && mode.looseNot ? climb(prec("<")) : unary()}; }
+    if(x === "("){ i++; const e = climb(1); if(t[i++] !== ")") throw "paren"; return {k:"p", e}; }
+    i++; return /^\d/.test(x) ? {k:"n", v:+x} : {k:"v", name:x};
+  };
+  const climb = minP => {
+    let L = unary();
+    while(i < t.length && BIN[t[i]] && prec(t[i]) >= minP){
+      const op = t[i++], R = climb(prec(op) + 1);
+      if(mode.mathChain && L.k === "b" && (BIN[op] === 3 || BIN[op] === 4) && BIN[L.op] === BIN[op]) L = {k:"b", op:"&&", l:L, r:{k:"b", op, l:L.r, r:R}};
+      else L = {k:"b", op, l:L, r:R};
+    }
+    return L;
+  };
+  const ast = climb(1); if(i !== t.length) throw "parse"; return ast;
+}
+function bin(op, a, b){
+  switch(op){
+    case "||": return +(a !== 0 || b !== 0); case "&&": return +(a !== 0 && b !== 0);
+    case "==": return +(a === b); case "!=": return +(a !== b); case "<": return +(a < b); case "<=": return +(a <= b); case ">": return +(a > b); case ">=": return +(a >= b);
+    case "+": return a + b; case "-": return a - b; case "*": return a * b;
+    case "/": if(b === 0) throw "div0"; return Math.trunc(a / b);
+    case "%": if(b === 0) throw "div0"; return a % b;
+  }
+}
+function reval(n, env, out){
+  switch(n.k){
+    case "n": return n.v; case "v": return env[n.name]; case "p": return reval(n.e, env, out);
+    case "u": { const v = reval(n.e, env, out), r = n.op === "!" ? +(v === 0) : -v; if(out && n.op === "!") out.push(`!${v} → ${r}`); return r; }
+    case "b": { const a = reval(n.l, env, out), b = reval(n.r, env, out), r = bin(n.op, a, b); if(out) out.push(`${a} ${n.op} ${b} → ${r}`); return r; }
+  }
+}
+const rshow = n => n.k === "b" ? `(${rshow(n.l)} ${n.op} ${rshow(n.r)})` : n.k === "u" ? n.op + rshow(n.e) : n.k === "p" ? rshow(n.e) : n.k === "n" ? n.v : n.name;
+const RMODES = [
+  {m:{mathChain:1}, sk:"r_chain", why:"That reads it like math (a < b AND b < c). C does the first comparison, gets 0 or 1, then compares THAT."},
+  {m:{flatRel:1}, sk:"r_eqrel", why:"That treats == / != like < >. The relational operators < <= > >= go first."},
+  {m:{flatLogic:1}, sk:"r_logic", why:"That goes left to right. && binds tighter than ||."},
+  {m:{relFirst:1}, sk:"r_arith", why:"That compares before doing the arithmetic. + - go before < >."},
+  {m:{looseNot:1}, sk:"r_not", why:"That applies ! to the whole comparison. ! grabs only the next operand."}
+];
+const RT = [
+  {s:"L < A < M", sk:["r_chain"]}, {s:"A < B < C", sk:["r_chain"]}, {s:"L <= A <= M", sk:["r_chain"]},
+  {s:"A != B != C", sk:["r_chain"]}, {s:"A == B == C", sk:["r_chain"]},
+  {s:"A <= (D > (B && C + A))", sk:["r_logic","r_arith","r_val"]}, {s:"(A <= (D > B) && C) + A", sk:["r_val","r_logic"]},
+  {s:"(D < C) + L", sk:["r_val"]}, {s:"D < C + L", sk:["r_arith"]},
+  {s:"!B < B", sk:["r_not"]}, {s:"!A == B", sk:["r_not"]}, {s:"!A + B", sk:["r_not","r_val"]},
+  {s:"C < A && L <= B || B <= M", sk:["r_logic"]}, {s:"C < A || L <= B && B <= M", sk:["r_logic"]}, {s:"A || B && !C", sk:["r_logic","r_not"]},
+  {s:"D < B != B >= A", sk:["r_eqrel"]}, {s:"A < B == C > D", sk:["r_eqrel"]}, {s:"A > B != C", sk:["r_eqrel"]},
+  {s:"A + B + (C > (D == A))", sk:["r_val"]}, {s:"A + B + (C > D == A)", sk:["r_eqrel","r_val"]},
+  {s:"A > C - A < C", sk:["r_arith","r_chain"]}, {s:"(A > C) - (A < C)", sk:["r_val"]}, {s:"A - B < C", sk:["r_arith"]},
+  {s:"-A < B < !C", sk:["r_chain","r_not"], hard:1}, {s:"A % L == B < C", sk:["r_eqrel","r_arith"], hard:1},
+  {s:"!(A < B) + !A - !B", sk:["r_not","r_val"], hard:1}, {s:"A && B || C && !D == 0", sk:["r_logic","r_eqrel","r_not"], hard:1},
+  {s:"(A < B) + (B < C) + (C < D) == L", sk:["r_val","r_eqrel"], hard:1}, {s:"A - B > C != D <= A + L", sk:["r_arith","r_eqrel"], hard:1},
+  {s:"L > A > B > C", sk:["r_chain"], hard:1}, {s:"A / L == B % M", sk:["r_arith","r_eqrel"], hard:1},
+  {s:"!A < B == C || D", sk:["r_not","r_eqrel","r_logic"], hard:1}, {s:"A < B || C < D && !A", sk:["r_logic","r_not"], hard:1}
+];
+const RVARS = [["a","b","c","d"],["e","f","g","h"],["p","q","r","s"],["w","x","y","z"]];
+const fillR = (s, names) => { const p = shuffle(names); return s.replace(/\b[ABCDLM]\b/g, m => ({A:p[0], B:p[1], C:p[2], D:p[3]})[m] || String(ri(1, 9))); };
+function relEval(src, env){
+  const ast = rparse(src), steps = [], ans = reval(ast, env, steps), alts = new Map();
+  RMODES.forEach(md => { try { const v = reval(rparse(src, md.m), env); if(v !== ans && !alts.has(v)) alts.set(v, {why:md.why, sk:md.sk}); } catch(e){} });
+  const shown = String(rshow(ast)).replace(/^\((.*)\)$/, "$1");
+  return {ans, alts, explain:`Grouped: <code>${esc(shown)}</code><ol>${steps.map(s => `<li><code>${esc(s)}</code></li>`).join("")}</ol>`};
+}
+const declR = (names, vals) => `int ${names.map((n, i) => `${n} = ${vals[i]}`).join(", ")};`;
+function genRel(target, hard){
+  for(let k = 0; k < 600; k++){
+    const pool = RT.filter(t => (!target || t.sk.includes(target)) && (hard || !t.hard)), hp = pool.filter(t => t.hard);
+    const t = hard && hp.length && Math.random() < .65 ? pick(hp) : pick(pool);
+    const names = pick(RVARS), vals = names.map(() => ri(-9, 9)), env = Object.fromEntries(names.map((n, i) => [n, vals[i]]));
+    const src = fillR(t.s, names);
+    let r; try { r = relEval(src, env); } catch(e){ continue; }
+    const md = RMODES.find(m => m.sk === target);
+    if(md && k < 500){ let v; try { v = reval(rparse(src, md.m), env); } catch(e){ continue; } if(v === r.ans) continue; }
+    return {kind:"num", target:target || pick(t.sk), sk:t.sk, code:declR(names, vals), prompt:`What is the value of <code>${esc(src)}</code> ?`, src, ans:r.ans, alts:r.alts, explain:r.explain};
+  }
+}
+function genQ5(){
+  for(let k = 0; k < 200; k++){
+    const names = pick(RVARS), vals = names.map(() => ri(-9, 9)), env = Object.fromEntries(names.map((n, i) => [n, vals[i]]));
+    const tpls = shuffle(RT.filter(t => !t.hard)).slice(0, 10);
+    try {
+      const rows = tpls.map(t => { const src = fillR(t.s, names); return Object.assign({src, sk:t.sk}, relEval(src, env)); });
+      return {kind:"relQ", names, vals, decl:declR(names, vals), rows, pts:20};
+    } catch(e){}
+  }
+}
+
+/* ================= Q6–Q9: array patterns (which version is correct) ================= */
+const ARR = [
+  {name:"find_min", task:"return the minimum value (n ≥ 1)",
+   good:"int min = arr[0];\nfor (int i = 1; i < n; i++)\n    if (arr[i] < min) min = arr[i];\nreturn min;",
+   bugs:[["int min = 0;\nfor (int i = 0; i < n; i++)\n    if (arr[i] < min) min = arr[i];\nreturn min;","a_init","Starting at 0 breaks when every value is positive: {4, 7} returns 0."],
+         ["int min = arr[0];\nfor (int i = 1; i <= n; i++)\n    if (arr[i] < min) min = arr[i];\nreturn min;","a_bounds","i <= n reads arr[n], one past the end."],
+         ["int min = arr[0];\nfor (int i = 1; i < n; i++)\n    if (arr[i] < min) return arr[i];\nreturn min;","a_early","Returns the first smaller value, not the smallest: {5, 3, 1} gives 3."]]},
+  {name:"index_min", task:"return the INDEX of the minimum value (n ≥ 1)",
+   good:"int best = 0;\nfor (int i = 1; i < n; i++)\n    if (arr[i] < arr[best]) best = i;\nreturn best;",
+   bugs:[["int best = 0;\nfor (int i = 1; i < n; i++)\n    if (arr[i] < best) best = i;\nreturn best;","a_init","Compares a value with an index. best is a position, so compare with arr[best]."],
+         ["int best = arr[0];\nfor (int i = 1; i < n; i++)\n    if (arr[i] < best) best = arr[i];\nreturn best;","a_spec","Returns the minimum VALUE, not its index."],
+         ["int best = 0;\nfor (int i = 0; i <= n; i++)\n    if (arr[i] < arr[best]) best = i;\nreturn best;","a_bounds","i <= n reads arr[n], past the end."]]},
+  {name:"product_array", task:"return the product of all elements (empty array → 1)",
+   good:"int p = 1;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn p;",
+   bugs:[["int p = 0;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn p;","a_init","A product that starts at 0 stays 0. Start at 1."],
+         ["int p = arr[0];\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn p;","a_init","Multiplies arr[0] twice, and reads arr[0] even when n is 0."],
+         ["int p = 1;\nfor (int i = 1; i < n; i++)\n    p *= arr[i];\nreturn p;","a_bounds","Starting at i = 1 skips arr[0]."]]},
+  {name:"range", task:"return max − min (n ≥ 1)",
+   good:"int lo = arr[0], hi = arr[0];\nfor (int i = 1; i < n; i++) {\n    if (arr[i] < lo) lo = arr[i];\n    if (arr[i] > hi) hi = arr[i];\n}\nreturn hi - lo;",
+   bugs:[["int lo = 0, hi = 0;\nfor (int i = 0; i < n; i++) {\n    if (arr[i] < lo) lo = arr[i];\n    if (arr[i] > hi) hi = arr[i];\n}\nreturn hi - lo;","a_init","Starting at 0 is wrong when all values are positive (lo stays 0) or all negative (hi stays 0)."],
+         ["int lo = arr[0], hi = arr[0];\nfor (int i = 1; i < n; i++) {\n    if (arr[i] < lo) lo = arr[i];\n    if (arr[i] > hi) hi = arr[i];\n}\nreturn lo - hi;","a_spec","Backwards: the range is max − min, and it's never negative."],
+         ["int lo = arr[0], hi = arr[0];\nfor (int i = 1; i < n; i++) {\n    if (arr[i] < lo) lo = arr[i];\n    if (arr[i] > hi) hi = arr[i];\n    return hi - lo;\n}\nreturn 0;","a_early","Returns inside the loop after looking at one element, and returns 0 for n = 1 (should be 0 anyway, but {1, 5, 9} gives 4)."]]},
+  {name:"is_sorted", task:"return 1 if non-decreasing, -1 if non-increasing, 0 otherwise; empty, single or all-equal → 1",
+   good:"int up = 1, down = 1;\nfor (int i = 1; i < n; i++) {\n    if (arr[i] < arr[i - 1]) up = 0;\n    if (arr[i] > arr[i - 1]) down = 0;\n}\nif (up) return 1;\nif (down) return -1;\nreturn 0;",
+   bugs:[["for (int i = 1; i < n; i++) {\n    if (arr[i] < arr[i - 1]) return -1;\n    if (arr[i] > arr[i - 1]) return 1;\n}\nreturn 1;","a_early","Decides from the first unequal pair only: {1, 2, 0} returns 1."],
+         ["int up = 1, down = 1;\nfor (int i = 1; i < n; i++) {\n    if (arr[i] < arr[i - 1]) up = 0;\n    if (arr[i] > arr[i - 1]) down = 0;\n}\nif (down) return -1;\nif (up) return 1;\nreturn 0;","a_spec","All-equal arrays leave both flags at 1, and this checks down first, so {3, 3, 3} returns -1 instead of 1."],
+         ["int up = 1, down = 1;\nfor (int i = 0; i < n; i++) {\n    if (arr[i + 1] < arr[i]) up = 0;\n    if (arr[i + 1] > arr[i]) down = 0;\n}\nif (up) return 1;\nif (down) return -1;\nreturn 0;","a_bounds","At i = n - 1, arr[i + 1] is past the end."]]},
+  {name:"running_difference", task:"in place: every element after the first becomes (itself − the ORIGINAL previous element). {5, 3, 7} → {5, -2, 4}",
+   good:"for (int i = n - 1; i > 0; i--)\n    arr[i] = arr[i] - arr[i - 1];",
+   bugs:[["for (int i = 1; i < n; i++)\n    arr[i] = arr[i] - arr[i - 1];","a_inplace","Going forward overwrites arr[i - 1] before the next step reads it: {5, 3, 7} → {5, -2, 9}."],
+         ["for (int i = n - 1; i >= 0; i--)\n    arr[i] = arr[i] - arr[i - 1];","a_bounds","At i = 0 it reads arr[-1]."],
+         ["for (int i = n - 1; i > 0; i--)\n    arr[i] = arr[i - 1] - arr[i];","a_spec","Subtracts the wrong way round: 3 − 5 must give -2, and this gives 2."]]},
+  {name:"running_sum", task:"in place: every element becomes the sum of itself and all elements before it. {1, 2, 3} → {1, 3, 6}",
+   good:"for (int i = 1; i < n; i++)\n    arr[i] += arr[i - 1];",
+   bugs:[["for (int i = n - 1; i > 0; i--)\n    arr[i] += arr[i - 1];","a_inplace","Here backwards is the bug: a running sum needs the NEW arr[i - 1]. {1, 2, 3} → {1, 3, 5}."],
+         ["for (int i = 0; i < n; i++)\n    arr[i] += arr[i - 1];","a_bounds","At i = 0 it reads arr[-1]."],
+         ["int sum = 0;\nfor (int i = 0; i < n; i++)\n    sum += arr[i];\narr[n - 1] = sum;","a_spec","Only the last element is changed."]]},
+  {name:"has_duplicates", task:"return 1 if any value appears twice, else 0 (empty → 0)",
+   good:"for (int i = 0; i < n; i++)\n    for (int j = i + 1; j < n; j++)\n        if (arr[i] == arr[j]) return 1;\nreturn 0;",
+   bugs:[["for (int i = 0; i < n; i++)\n    for (int j = 0; j < n; j++)\n        if (arr[i] == arr[j]) return 1;\nreturn 0;","a_pairs","j starts at 0, so when j == i it compares an element with itself: always 1 for n ≥ 1."],
+         ["for (int i = 0; i < n - 1; i++)\n    if (arr[i] == arr[i + 1]) return 1;\nreturn 0;","a_pairs","Only checks neighbours: {1, 2, 1} returns 0."],
+         ["for (int i = 0; i < n; i++)\n    for (int j = i + 1; j < n; j++)\n        if (arr[i] == arr[j]) return 1;\n        else return 0;\nreturn 0;","a_early","Returns 0 at the first unequal pair."]]},
+  {name:"reverse_array", task:"reverse in place. {1, 2, 3, 4, 5} → {5, 4, 3, 2, 1}",
+   good:"for (int i = 0; i < n / 2; i++) {\n    int t = arr[i];\n    arr[i] = arr[n - 1 - i];\n    arr[n - 1 - i] = t;\n}",
+   bugs:[["for (int i = 0; i < n; i++) {\n    int t = arr[i];\n    arr[i] = arr[n - 1 - i];\n    arr[n - 1 - i] = t;\n}","a_inplace","Swaps every pair twice, so the array ends up unchanged. Stop at n / 2."],
+         ["for (int i = 0; i < n / 2; i++) {\n    arr[i] = arr[n - 1 - i];\n    arr[n - 1 - i] = arr[i];\n}","a_inplace","No temp: arr[i] is overwritten before it's copied, so the front half is lost."],
+         ["for (int i = 0; i < n / 2; i++) {\n    int t = arr[i];\n    arr[i] = arr[n - i];\n    arr[n - i] = t;\n}","a_bounds","arr[n - i] is past the end when i = 0. The mirror of i is n - 1 - i."]]},
+  {name:"geometric_mean", task:"return (x₀ · x₁ · … · xₙ₋₁)^(1/N) for a double array",
+   good:"double p = 1;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn pow(p, 1.0 / n);",
+   bugs:[["double p = 1;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn pow(p, 1 / n);","a_float","1 / n is int division: 0 for n > 1, so the result is always 1."],
+         ["double p = 0;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn pow(p, 1.0 / n);","a_init","A product must start at 1."],
+         ["double p = 1;\nfor (int i = 0; i < n; i++)\n    p *= arr[i];\nreturn pow(p, n);","a_spec","The N-th root is the power 1/N, not N."]]},
+  {name:"stddev", task:"return sqrt( (1/N) Σ (xᵢ − μ)² ) where μ is the mean",
+   good:"double sum = 0, var = 0;\nfor (int i = 0; i < n; i++) sum += arr[i];\ndouble mu = sum / n;\nfor (int i = 0; i < n; i++)\n    var += (arr[i] - mu) * (arr[i] - mu);\nreturn sqrt(var / n);",
+   bugs:[["double sum = 0, var = 0;\nfor (int i = 0; i < n; i++) sum += arr[i];\ndouble mu = sum / n;\nfor (int i = 0; i < n; i++)\n    var += (arr[i] - mu) * (arr[i] - mu);\nreturn sqrt(var) / n;","a_spec","Divides after the root. The 1/N is inside the square root."],
+         ["double sum = 0, var = 0;\nfor (int i = 0; i < n; i++) {\n    sum += arr[i];\n    double mu = sum / n;\n    var += (arr[i] - mu) * (arr[i] - mu);\n}\nreturn sqrt(var / n);","a_spec","Uses the mean before all values are summed. You need two loops."],
+         ["double sum = 0, var = 0;\nfor (int i = 0; i < n; i++) sum += arr[i];\ndouble mu = sum / n;\nfor (int i = 0; i < n; i++)\n    var += arr[i] - mu * arr[i] - mu;\nreturn sqrt(var / n);","a_spec","Missing brackets: arr[i] - mu * arr[i] - mu isn't (x − μ)²."]]},
+  {name:"count_matches", task:"return how many elements equal value",
+   good:"int count = 0;\nfor (int i = 0; i < n; i++)\n    if (arr[i] == value) count++;\nreturn count;",
+   bugs:[["int count;\nfor (int i = 0; i < n; i++)\n    if (arr[i] == value) count++;\nreturn count;","a_init","count is never set to 0, so it starts with garbage."],
+         ["int count = 0;\nfor (int i = 0; i < n; i++)\n    if (arr[i] = value) count++;\nreturn count;","a_spec","= assigns: it overwrites the array and counts every nonzero value."],
+         ["int count = 0;\nfor (int i = 0; i < n; i++)\n    if (arr[i] == value) return count + 1;\nreturn count;","a_early","Stops at the first match."]]}
+];
+function genArr(target, nopts){
+  const pool = ARR.filter(p => !target || p.bugs.some(b => b[1] === target)), p = pick(pool.length ? pool : ARR);
+  const bugs = shuffle(p.bugs).sort((a, b) => (b[1] === target) - (a[1] === target)).slice(0, (nopts || 4) - 1);
+  const opts = shuffle([[p.good, null, ""], ...bugs]);
+  return {kind:"mc", code:null, target:target || pick(p.bugs)[1], sk:[...new Set(p.bugs.map(b => b[1]))], codeOpts:true,
+    prompt:`Which body correctly implements <code>${p.name}</code>: ${esc(p.task)}?`,
+    list:opts.map(o => o[0]), ans:opts.findIndex(o => o[1] === null), why:opts.map(o => o[2]), diag:opts.map(o => o[1]),
+    explain:`Correct version:<pre class="code">${esc(p.good)}</pre>`};
+}
+</script>
+
+<script>
+/* ================= tiny C interpreter (the subset HW2.2 / HW2.3 use) ================= */
+class CErr extends Error {}
+const CTYPES = new Set(["int","double","float","long","short","char","void","unsigned","signed","const","bool","_Bool"]);
+function cTokenize(src){
+  const defs = {};
+  src = String(src).replace(/\r/g, "").replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, " ")).replace(/\/\/[^\n]*/g, "");
+  src = src.split("\n").map(l => { const m = l.match(/^\s*#\s*define\s+(\w+)\s+(.+)$/); if(m){ defs[m[1]] = m[2].trim(); return ""; } return /^\s*#/.test(l) ? "" : l; }).join("\n");
+  const ops = ["<<=",">>=","++","--","+=","-=","*=","/=","%=","==","!=","<=",">=","&&","||","<<",">>","&=","|=","^=","->"];
+  const toks = []; let i = 0, line = 1;
+  while(i < src.length){
+    const c = src[i], rest = src.slice(i, i + 40);
+    if(c === "\n"){ line++; i++; continue; }
+    if(/\s/.test(c)){ i++; continue; }
+    let m;
+    if((m = rest.match(/^(\d+\.\d*([eE][+-]?\d+)?|\.\d+([eE][+-]?\d+)?|\d+[eE][+-]?\d+)/))){ toks.push({k:"num", t:"d", v:parseFloat(m[0]), line}); i += m[0].length; if(/[fFlL]/.test(src[i] || "")) i++; continue; }
+    if((m = rest.match(/^(0[xX][0-9a-fA-F]+|\d+)[uUlL]*/))){ toks.push({k:"num", t:"i", v:parseInt(m[1]), line}); i += m[0].length; continue; }
+    if((m = rest.match(/^[A-Za-z_]\w*/))){
+      const w = m[0]; i += w.length;
+      if(defs[w] !== undefined){ cTokenize(defs[w]).toks.forEach(t => toks.push(Object.assign(t, {line}))); continue; }
+      toks.push({k:"id", v:w, line}); continue;
+    }
+    if(c === "'" && (m = rest.match(/^'(\\?.)'/))){ const ch = m[1].length === 2 ? ({n:"\n", t:"\t", "0":"\0"}[m[1][1]] ?? m[1][1]) : m[1]; toks.push({k:"num", t:"i", v:ch.charCodeAt(0), line}); i += m[0].length; continue; }
+    if(c === '"' && (m = src.slice(i).match(/^"(\\.|[^"\\\n])*"/))){ toks.push({k:"str", v:m[0], line}); i += m[0].length; continue; }
+    const op = ops.find(o => src.startsWith(o, i));
+    if(op){ toks.push({k:"op", v:op, line}); i += op.length; continue; }
+    if("+-*/%<>=!&|^~?:;,(){}[].".includes(c)){ toks.push({k:"op", v:c, line}); i++; continue; }
+    throw new CErr(`line ${line}: unexpected character "${c}"`);
+  }
+  return {toks, defs};
+}
+function cParse(src){
+  const {toks} = cTokenize(src); let p = 0;
+  const L = () => toks[p] ? toks[p].line : (toks.length ? toks[toks.length - 1].line : 1);
+  const at = v => toks[p] && toks[p].k !== "num" && toks[p].k !== "str" && toks[p].v === v;
+  const eat = v => { if(!at(v)) throw new CErr(`line ${L()}: expected "${v}"${toks[p] ? ` before "${toks[p].v}"` : " at the end"}`); return toks[p++]; };
+  const isType = () => toks[p] && toks[p].k === "id" && CTYPES.has(toks[p].v);
+  function parseType(){ const ws = []; while(isType()) ws.push(toks[p++].v); if(ws.includes("double") || ws.includes("float")) return "d"; if(ws.includes("void") && ws.length === 1) return "v"; return "i"; }
+  const name = what => { const t = toks[p]; if(!t || t.k !== "id" || CTYPES.has(t.v)) throw new CErr(`line ${L()}: expected ${what}`); p++; return t; };
+  function parseBlock(){ const open = L(); eat("{"); const body = []; while(!at("}")){ if(p >= toks.length) throw new CErr(`missing closing brace "}" for the block opened on line ${open}`); body.push(parseStmt()); } eat("}"); return {k:"block", body}; }
+  function parseDecl(){
+    const line = L(), t = parseType(); if(t === "v") throw new CErr(`line ${line}: a variable can't be void`);
+    const ds = [];
+    do {
+      const tk = name("a variable name"); let size = null, init = null;
+      if(at("[")){ p++; size = at("]") ? null : parseExpr(); eat("]"); if(!size) size = {k:"num", t:"i", v:-1}; }
+      if(at("=")){ p++; if(at("{")){ p++; init = {k:"list", items:[]}; while(!at("}")){ init.items.push(parseAssign()); if(at(",")) p++; else break; } eat("}"); } else init = parseAssign(); }
+      ds.push({name:tk.v, size, init, line:tk.line});
+    } while(at(",") && ++p);
+    return {k:"decl", t, ds, line};
+  }
+  function parseStmt(){
+    if(p >= toks.length) throw new CErr("the code ends too early (missing \"}\"?)");
+    const line = L();
+    if(at("{")) return parseBlock();
+    if(at(";")){ p++; return {k:"empty", line}; }
+    if(isType()){ const d = parseDecl(); eat(";"); return d; }
+    if(at("if")){ p++; eat("("); const c = parseExpr(); eat(")"); const th = parseStmt(); let el = null; if(at("else")){ p++; el = parseStmt(); } return {k:"if", c, th, el, line}; }
+    if(at("while")){ p++; eat("("); const c = parseExpr(); eat(")"); return {k:"while", c, body:parseStmt(), line}; }
+    if(at("do")){ p++; const body = parseStmt(); eat("while"); eat("("); const c = parseExpr(); eat(")"); eat(";"); return {k:"do", c, body, line}; }
+    if(at("for")){ p++; eat("("); let init = null; if(isType()) init = parseDecl(); else if(!at(";")) init = {k:"expr", e:parseExpr(), line}; eat(";"); const c = at(";") ? null : parseExpr(); eat(";"); const step = at(")") ? null : parseExpr(); eat(")"); return {k:"for", init, c, step, body:parseStmt(), line}; }
+    if(at("return")){ p++; const e = at(";") ? null : parseExpr(); eat(";"); return {k:"ret", e, line}; }
+    if(at("break")){ p++; eat(";"); return {k:"brk", line}; }
+    if(at("continue")){ p++; eat(";"); return {k:"cont", line}; }
+    if(at("else")) throw new CErr(`line ${line}: "else" without a matching "if"`);
+    const e = parseExpr(); eat(";"); return {k:"expr", e, line};
+  }
+  function parseExpr(){ let e = parseAssign(); while(at(",")){ p++; e = {k:"comma", a:e, b:parseAssign()}; } return e; }
+  const ASG = ["=","+=","-=","*=","/=","%=","&=","|=","^=","<<=",">>="];
+  function parseAssign(){
+    const line = L(), l = parseCond();
+    if(toks[p] && toks[p].k === "op" && ASG.includes(toks[p].v)){
+      const op = toks[p++].v, r = parseAssign();
+      if(l.k !== "var" && l.k !== "idx") throw new CErr(`line ${line}: the left side of ${op} must be a variable or array element`);
+      return {k:"asg", op, l, r, line};
+    }
+    return l;
+  }
+  function parseCond(){ const c = parseBin(0); if(at("?")){ p++; const a = parseExpr(); eat(":"); return {k:"tern", c, a, b:parseCond()}; } return c; }
+  const LV = [["||"],["&&"],["|"],["^"],["&"],["==","!="],["<",">","<=",">="],["<<",">>"],["+","-"],["*","/","%"]];
+  function parseBin(lv){
+    if(lv >= LV.length) return parseUnary();
+    let l = parseBin(lv + 1);
+    while(toks[p] && toks[p].k === "op" && LV[lv].includes(toks[p].v)){ const line = L(), op = toks[p++].v; l = {k:"bin", op, l, r:parseBin(lv + 1), line}; }
+    return l;
+  }
+  function parseUnary(){
+    const tk = toks[p]; if(!tk) throw new CErr("the code ends in the middle of an expression");
+    if(tk.k === "op" && ["!","-","+","~"].includes(tk.v)){ p++; return {k:"un", op:tk.v, e:parseUnary()}; }
+    if(tk.k === "op" && (tk.v === "++" || tk.v === "--")){ p++; return {k:"pre", op:tk.v, e:parseUnary(), line:tk.line}; }
+    if(at("(") && toks[p + 1] && toks[p + 1].k === "id" && CTYPES.has(toks[p + 1].v)){ p++; const t = parseType(); eat(")"); return {k:"cast", t, e:parseUnary()}; }
+    return parsePost();
+  }
+  function parsePost(){
+    let e = parsePrim();
+    for(;;){
+      if(at("[")){ const line = L(); p++; const i = parseExpr(); eat("]"); e = {k:"idx", a:e, i, line}; }
+      else if(at("(")){ if(e.k !== "var") throw new CErr(`line ${L()}: only named functions can be called`); p++; const args = []; if(!at(")")) do { args.push(parseAssign()); } while(at(",") && ++p); eat(")"); e = {k:"call", name:e.name, args, line:e.line}; }
+      else if(at("++") || at("--")){ e = {k:"post", op:toks[p++].v, e, line:L()}; }
+      else return e;
+    }
+  }
+  function parsePrim(){
+    const tk = toks[p++]; if(!tk) throw new CErr("the code ends in the middle of an expression");
+    if(tk.k === "num") return {k:"num", t:tk.t, v:tk.v};
+    if(tk.k === "str") return {k:"str", v:tk.v};
+    if(tk.k === "id" && !CTYPES.has(tk.v) && !["if","else","for","while","do","return","break","continue"].includes(tk.v)) return {k:"var", name:tk.v, line:tk.line};
+    if(tk.v === "("){ const e = parseExpr(); eat(")"); return e; }
+    throw new CErr(`line ${tk.line}: unexpected "${tk.v}"`);
+  }
+  const funcs = {};
+  while(p < toks.length){
+    if(at(";")){ p++; continue; }
+    const line = L();
+    if(!isType()) throw new CErr(`line ${line}: expected a function definition (stray code outside a function, or an extra "}"?)`);
+    const rt = parseType(), fn = name("a function name").v;
+    if(!at("(")) throw new CErr(`line ${line}: global variables aren't needed here; declare "${fn}" inside the function`);
+    eat("(");
+    const params = [];
+    if(at("void") && toks[p + 1] && toks[p + 1].v === ")") p++;
+    else if(!at(")")) do { const t = parseType(), pn = name("a parameter name").v; let arr = false; if(at("[")){ p++; if(!at("]")) parseExpr(); eat("]"); arr = true; } params.push({t, name:pn, arr}); } while(at(",") && ++p);
+    eat(")");
+    if(at(";")){ p++; continue; }
+    if(funcs[fn]) throw new CErr(`line ${line}: function ${fn} is defined twice`);
+    funcs[fn] = {rt, params, body:parseBlock(), line};
+  }
+  return funcs;
+}
+const mkv = (t, v) => ({t, v});
+const toInt = v => isFinite(v) ? (Math.trunc(v) | 0) : 0;
+const convT = (t, x) => t === "d" ? x.v : (x.t === "d" ? toInt(x.v) : x.v);
+// run function fname with JS args (numbers, or arrays for array params); returns {ret, arrays}
+function cRun(src, fname, args, limit){
+  const funcs = typeof src === "string" ? cParse(src) : src;
+  const f = funcs[fname]; if(!f) throw new CErr(`there is no function named ${fname} (check the spelling of the header)`);
+  let steps = 0, depth = 0; const LIMIT = limit || 2e6;
+  const tick = line => { if(++steps > LIMIT) throw new CErr(`the code ran too long: an infinite loop${line ? ` near line ${line}` : ""}?`); };
+  class Ret { constructor(v, line){ this.v = v; this.line = line; } }
+  const BRK = {k:"brk"}, CONT = {k:"cont"};
+  const BI = {pow:Math.pow, sqrt:Math.sqrt, fabs:Math.abs, fmod:(a, b) => a % b, exp:Math.exp, log:Math.log, log10:Math.log10, floor:Math.floor, ceil:Math.ceil, round:Math.round, cbrt:Math.cbrt, sin:Math.sin, cos:Math.cos, fmin:Math.min, fmax:Math.max};
+  function lookup(env, n, line){ for(let e = env; e; e = e.up) if(e.vars.has(n)) return e.vars.get(n); throw new CErr(`line ${line}: "${n}" is not declared (undeclared variable)`); }
+  function call(n, av, line){
+    const fn = funcs[n];
+    if(!fn){
+      if(n === "abs" || n === "labs") return mkv("i", Math.abs(av[0].v) | 0);
+      if(n === "printf" || n === "puts" || n === "putchar") return mkv("i", 0);
+      if(BI[n]) return mkv("d", BI[n](...av.map(a => a.v)));
+      throw new CErr(`line ${line}: function "${n}" is not defined`);
+    }
+    if(fn.params.length !== av.length) throw new CErr(`line ${line}: ${n} takes ${fn.params.length} argument(s), got ${av.length}`);
+    if(++depth > 400) throw new CErr("too much recursion");
+    const env = {vars:new Map(), up:null};
+    fn.params.forEach((pr, i) => { const a = av[i]; if(pr.arr){ if(!a.arr) throw new CErr(`line ${line}: argument ${i + 1} of ${n} must be an array`); env.vars.set(pr.name, a); } else { if(a.arr) throw new CErr(`line ${line}: argument ${i + 1} of ${n} must be a number, not an array`); env.vars.set(pr.name, {t:pr.t, v:convT(pr.t, a), init:true}); } });
+    try { for(const s of fn.body.body) exec(s, env); }
+    catch(e){
+      if(e instanceof Ret){ depth--;
+        if(fn.rt === "v"){ if(e.v) throw new CErr(`line ${e.line}: a void function can't return a value`); return mkv("i", 0); }
+        if(!e.v) throw new CErr(`line ${e.line}: "return;" with no value in a function that must return a value`);
+        return mkv(fn.rt, convT(fn.rt, e.v));
+      }
+      if(e === BRK || e === CONT) throw new CErr(`${e === BRK ? "break" : "continue"} outside a loop`);
+      throw e;
+    }
+    depth--;
+    if(fn.rt !== "v") throw new CErr(`${n} reached its closing "}" without a return statement`);
+    return mkv("i", 0);
+  }
+  const truthy = x => { if(x.arr) throw new CErr("an array can't be used as a condition"); return x.v !== 0; };
+  function idxRef(e, env){
+    const a = ev(e.a, env); if(!a.arr) throw new CErr(`line ${e.line}: [] used on something that isn't an array`);
+    const iv = ev(e.i, env); if(iv.t !== "i") throw new CErr(`line ${e.line}: an array index must be an int`);
+    if(iv.v < 0 || iv.v >= a.a.length) throw new CErr(`line ${e.line}: ${a.name}[${iv.v}] is out of bounds (valid indexes are 0 to ${a.a.length - 1})`);
+    return {a, i:iv.v};
+  }
+  function ref(e, env){
+    if(e.k === "var"){
+      const x = lookup(env, e.name, e.line); if(x.arr) throw new CErr(`line ${e.line}: you can't assign to a whole array`);
+      return {get(){ if(!x.init) throw new CErr(`line ${e.line}: "${e.name}" is used before it's given a value (uninitialized)`); return mkv(x.t, x.v); }, set(v){ if(v.arr) throw new CErr(`line ${e.line}: can't store an array in "${e.name}"`); x.v = convT(x.t, v); x.init = true; }};
+    }
+    const {a, i} = idxRef(e, env);
+    return {get(){ const v = a.a[i]; if(v === undefined) throw new CErr(`line ${e.line}: ${a.name}[${i}] is used before it's given a value`); return mkv(a.et, v); }, set(v){ a.a[i] = convT(a.et, v); }};
+  }
+  function bin(op, a, b, line){
+    if(a.arr || b.arr) throw new CErr(`line ${line}: arithmetic on a whole array (did you forget [i]?)`);
+    const d = a.t === "d" || b.t === "d";
+    switch(op){
+      case "+": return d ? mkv("d", a.v + b.v) : mkv("i", (a.v + b.v) | 0);
+      case "-": return d ? mkv("d", a.v - b.v) : mkv("i", (a.v - b.v) | 0);
+      case "*": return d ? mkv("d", a.v * b.v) : mkv("i", Math.imul(a.v, b.v));
+      case "/": if(d) return mkv("d", a.v / b.v); if(b.v === 0) throw new CErr(`line ${line}: integer division by zero`); return mkv("i", Math.trunc(a.v / b.v) | 0);
+      case "%": if(d) throw new CErr(`line ${line}: % needs two ints (it doesn't work on double)`); if(b.v === 0) throw new CErr(`line ${line}: % by zero`); return mkv("i", a.v % b.v);
+      case "<": return mkv("i", +(a.v < b.v)); case ">": return mkv("i", +(a.v > b.v));
+      case "<=": return mkv("i", +(a.v <= b.v)); case ">=": return mkv("i", +(a.v >= b.v));
+      case "==": return mkv("i", +(a.v === b.v)); case "!=": return mkv("i", +(a.v !== b.v));
+      case "&": return mkv("i", a.v & b.v); case "|": return mkv("i", a.v | b.v); case "^": return mkv("i", a.v ^ b.v);
+      case "<<": return mkv("i", a.v << b.v); case ">>": return mkv("i", a.v >> b.v);
+    }
+    throw new CErr(`line ${line}: unsupported operator ${op}`);
+  }
+  function ev(e, env){
+    switch(e.k){
+      case "num": return mkv(e.t, e.v);
+      case "str": return mkv("i", 0);
+      case "var": { const x = lookup(env, e.name, e.line); if(x.arr) return x; if(!x.init) throw new CErr(`line ${e.line}: "${e.name}" is used before it's given a value (uninitialized)`); return mkv(x.t, x.v); }
+      case "idx": return ref(e, env).get();
+      case "comma": ev(e.a, env); return ev(e.b, env);
+      case "tern": { const r = truthy(ev(e.c, env)) ? ev(e.a, env) : ev(e.b, env); return r; }
+      case "un": { const v = ev(e.e, env); if(v.arr) throw new CErr("operator on a whole array"); if(e.op === "!") return mkv("i", v.v === 0 ? 1 : 0); if(e.op === "-") return mkv(v.t, v.t === "i" ? (-v.v | 0) : -v.v); if(e.op === "~") return mkv("i", ~v.v); return v; }
+      case "cast": { const v = ev(e.e, env); return mkv(e.t === "d" ? "d" : "i", convT(e.t === "d" ? "d" : "i", v)); }
+      case "pre": case "post": { const r = ref(e.e, env), old = r.get(), dv = e.op === "++" ? 1 : -1, nv = mkv(old.t, old.t === "d" ? old.v + dv : (old.v + dv) | 0); r.set(nv); return e.k === "pre" ? nv : old; }
+      case "asg": { const r = ref(e.l, env); const v = e.op === "=" ? ev(e.r, env) : bin(e.op.slice(0, -1), r.get(), ev(e.r, env), e.line); r.set(v); return r.get(); }
+      case "bin":
+        if(e.op === "&&") return mkv("i", truthy(ev(e.l, env)) && truthy(ev(e.r, env)) ? 1 : 0);
+        if(e.op === "||") return mkv("i", truthy(ev(e.l, env)) || truthy(ev(e.r, env)) ? 1 : 0);
+        return bin(e.op, ev(e.l, env), ev(e.r, env), e.line);
+      case "call": tick(e.line); return call(e.name, e.args.map(a => ev(a, env)), e.line);
+    }
+    throw new CErr("unsupported expression");
+  }
+  function block(b, env){ const e2 = {vars:new Map(), up:env}; for(const s of b.body) exec(s, e2); }
+  function loopBody(s, env){ try { exec(s.body, env); } catch(e){ if(e === BRK) return "b"; if(e === CONT) return "c"; throw e; } return ""; }
+  function exec(s, env){
+    tick(s.line);
+    switch(s.k){
+      case "block": return block(s, env);
+      case "empty": return;
+      case "decl":
+        for(const d of s.ds){
+          if(env.vars.has(d.name)) throw new CErr(`line ${d.line}: "${d.name}" is declared twice in the same block`);
+          if(d.size){
+            let n = convT("i", ev(d.size, env)); if(n < 0) n = d.init && d.init.items ? d.init.items.length : 0;
+            const a = {arr:true, et:s.t, a:new Array(n).fill(undefined), name:d.name};
+            if(d.init && d.init.items){ a.a.fill(0); d.init.items.forEach((it, i) => { if(i < n) a.a[i] = convT(s.t, ev(it, env)); }); }
+            env.vars.set(d.name, a);
+          } else env.vars.set(d.name, {t:s.t, v:d.init ? convT(s.t, ev(d.init, env)) : undefined, init:!!d.init});
+        }
+        return;
+      case "expr": ev(s.e, env); return;
+      case "if": if(truthy(ev(s.c, env))) exec(s.th, env); else if(s.el) exec(s.el, env); return;
+      case "while": while(truthy(ev(s.c, env))){ tick(s.line); if(loopBody(s, env) === "b") break; } return;
+      case "do": do { tick(s.line); if(loopBody(s, env) === "b") break; } while(truthy(ev(s.c, env))); return;
+      case "for": { const e2 = {vars:new Map(), up:env}; if(s.init){ if(s.init.k === "decl") exec(s.init, e2); else ev(s.init.e, e2); }
+        for(;;){ tick(s.line); if(s.c && !truthy(ev(s.c, e2))) break; if(loopBody(s, e2) === "b") break; if(s.step) ev(s.step, e2); } return; }
+      case "ret": throw new Ret(s.e ? ev(s.e, env) : null, s.line);
+      case "brk": throw BRK;
+      case "cont": throw CONT;
+    }
+  }
+  const arrays = [];
+  const av = f.params.map((pr, i) => { if(pr.arr){ const a = {arr:true, et:pr.t, a:args[i].map(x => pr.t === "d" ? +x : toInt(x)), name:pr.name}; arrays.push(a); return a; } return mkv(pr.t, pr.t === "d" ? +args[i] : toInt(args[i])); });
+  const ret = call(fname, av, f.line);
+  return {ret:f.rt === "v" ? null : ret.v, arrays:arrays.map(a => a.a.slice())};
+}
+
+/* ================= the HW2.2 / HW2.3 coding bank ================= */
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const rArr = (n, lo, hi) => Array.from({length:n}, () => rnd(lo, hi));
+const rDbl = (n, lo, hi) => Array.from({length:n}, () => Math.round((lo + Math.random() * (hi - lo)) * 100) / 100);
+const distinct = (n, lo, hi) => { const s = new Set(); while(s.size < n) s.add(rnd(lo, hi)); return [...s]; };
+const many = (k, f) => Array.from({length:k}, f);
+const CODE = [
+  // ---- HW2.2 conditionals ----
+  {id:"signum", fam:"c_cond", hw:"HW2.2.1", spec:"Return -1 if <code>value</code> &lt; 0, 1 if <code>value</code> &gt; 0, otherwise 0.",
+   starter:"// Returns 1 if positive, -1 if negative, or 0 if zero\nint signum(int value) {\n    \n}",
+   ref:"int signum(int value) {\n    if (value < 0) return -1;\n    if (value > 0) return 1;\n    return 0;\n}",
+   tests:() => [[-5],[0],[7],[-1],[1],...many(4, () => [rnd(-1000, 1000)])]},
+  {id:"clamp", fam:"c_cond", hw:"HW2.2.2", spec:"If <code>value</code> &lt; <code>lo</code> return <code>lo</code>; if <code>value</code> &gt; <code>hi</code> return <code>hi</code>; otherwise return <code>value</code>. You may assume lo ≤ hi.",
+   starter:"// Clamps value to the range [lo, hi].\nint clamp(int value, int lo, int hi) {\n    \n}",
+   ref:"int clamp(int value, int lo, int hi) {\n    if (value < lo) return lo;\n    if (value > hi) return hi;\n    return value;\n}",
+   tests:() => [[5,0,10],[-3,0,10],[12,0,10],[0,0,10],[10,0,10],[4,4,4],...many(4, () => { const lo = rnd(-20, 5), hi = lo + rnd(0, 15); return [rnd(-30, 30), lo, hi]; })]},
+  {id:"xor", fam:"c_cond", hw:"HW2.2.3", spec:"Return 1 if exactly one of <code>x</code>, <code>y</code> is true (nonzero), else 0.",
+   starter:"// Returns 1 if either x or y is true but not both, and 0 otherwise\nint xor(int x, int y) {\n    \n}",
+   ref:"int xor(int x, int y) {\n    return !x != !y;\n}",
+   tests:() => [[0,0],[0,1],[1,0],[1,1],[5,0],[0,-3],[7,-2],[-4,9],[0,12]]},
+  {id:"manhattan_distance", fam:"c_cond", hw:"HW2.2.4", spec:"Return |x1 − x2| + |y1 − y2|. Compute the absolute values yourself (no <code>abs()</code>).",
+   starter:"// Computes the Manhattan distance between (x1,y1) and (x2,y2),\n// defined as |x1 - x2| + |y1 - y2|.\nint manhattan_distance(int x1, int y1, int x2, int y2) {\n    \n}",
+   ref:"int manhattan_distance(int x1, int y1, int x2, int y2) {\n    int dx = x1 - x2, dy = y1 - y2;\n    if (dx < 0) dx = -dx;\n    if (dy < 0) dy = -dy;\n    return dx + dy;\n}",
+   tests:() => [[0,0,0,0],[1,2,4,6],[4,6,1,2],[-3,5,2,-1],...many(5, () => rArr(4, -15, 15))]},
+  {id:"cubic_kernel", fam:"c_cond", hw:"HW2.2.5", dbl:true, spec:"With q = |x| / h: W = 7/(4πh²) · (1 − (3/2)q² + (3/4)q³) for 0 ≤ q ≤ 1; 7/(4πh²) · (1/4)(2 − q)³ for 1 &lt; q ≤ 2; 0 for q &gt; 2. <code>PI</code> is defined for you.",
+   starter:"#include <math.h>\n#define PI 3.1415926536\n\n// Computes the 2D cubic kernel with smoothing radius h\ndouble cubic_kernel(double h, double x) {\n    double q = fabs(x) / h;\n    \n}",
+   ref:"#include <math.h>\n#define PI 3.1415926536\n\ndouble cubic_kernel(double h, double x) {\n    double q = fabs(x) / h;\n    double c = 7 / (4 * PI * h * h);\n    if (q <= 1) return c * (1 - 1.5 * q * q + 0.75 * q * q * q);\n    if (q <= 2) return c * 0.25 * (2 - q) * (2 - q) * (2 - q);\n    return 0;\n}",
+   tests:() => [[1,0],[1,0.5],[1,1],[1,1.5],[1,2],[1,2.5],[2,-1.2],[0.5,0.7],[2,3.9],[1.5,-4]]},
+  {id:"is_leap_year", fam:"c_cond", hw:"HW2.2.6", spec:"Return 1 if <code>year</code> is divisible by 400, or divisible by 4 but not by 100; else 0.",
+   starter:"// Return 1 if year is a leap year, 0 otherwise.\nint is_leap_year(int year) {\n    \n}",
+   ref:"int is_leap_year(int year) {\n    return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);\n}",
+   tests:() => [[2000],[2024],[1899],[1900],[2100],[2400],[2023],[1996],[4],[100]]},
+  // ---- HW2.2 loops ----
+  {id:"exponent", fam:"c_loop", hw:"HW2.2.7", spec:"Return n<sup>k</sup>: 0 for k &lt; 0, 1 for k = 0, n × n<sup>k−1</sup> for k &gt; 0. Use a loop.",
+   starter:"// Computes n raised to the k power\nint exponent(int n, int k) {\n    \n}",
+   ref:"int exponent(int n, int k) {\n    if (k < 0) return 0;\n    int result = 1;\n    for (int i = 0; i < k; i++)\n        result *= n;\n    return result;\n}",
+   tests:() => [[2,0],[2,10],[3,4],[5,-1],[-2,3],[-3,4],[0,0],[0,5],[7,1],[1,-3]]},
+  {id:"factorial", fam:"c_loop", hw:"HW2.2.8", spec:"Return n! = n × (n−1) × … × 1, with n! = 1 for n ≤ 0. Use a loop.",
+   starter:"// Computes n!\nint factorial(int n) {\n    \n}",
+   ref:"int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; i++)\n        result *= i;\n    return result;\n}",
+   tests:() => [[0],[1],[2],[5],[7],[10],[12],[-1],[-5],[3]]},
+  {id:"binomial", fam:"c_loop", hw:"HW2.2.9", spec:"Return n choose k = n! / (k! (n−k)!). A separate factorial helper function is allowed (and useful).",
+   starter:"// Computes n choose k, also known as the binomial coefficient\nint binomial(int n, int k) {\n    \n}",
+   ref:"int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; i++)\n        result *= i;\n    return result;\n}\n\nint binomial(int n, int k) {\n    return factorial(n) / (factorial(k) * factorial(n - k));\n}",
+   tests:() => [[5,2],[6,3],[10,0],[10,10],[12,6],[7,1],[4,2],[9,4],[1,0],[11,5]]},
+  {id:"gcd", fam:"c_loop", hw:"HW2.2.10", spec:"Euclid: if either number is 0 return 0. Otherwise repeat: remainder = larger % smaller; when it's 0, return |smaller|. Always return a positive value (inputs can be negative).",
+   starter:"// Computes GCD of a and b\nint gcd(int a, int b) {\n    \n}",
+   ref:"int gcd(int a, int b) {\n    if (a == 0 || b == 0) return 0;\n    if (a < 0) a = -a;\n    if (b < 0) b = -b;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n    }\n    return a;\n}",
+   tests:() => [[48,18],[18,48],[-12,8],[7,0],[0,5],[17,5],[-9,-6],[100,10],[21,-14],[13,13]]},
+  {id:"fibonacci", fam:"c_loop", hw:"HW2.2.11", spec:"F<sub>0</sub> = 0, F<sub>1</sub> = 1, F<sub>n</sub> = F<sub>n−1</sub> + F<sub>n−2</sub>. Return F<sub>n</sub> (0 for n &lt; 1).",
+   starter:"// Computes nth Fibonacci number\nint fibonacci(int n) {\n    if (n < 1) return 0;  // F_0 = 0, also skip negative n\n    if (n == 1) return 1; // F_1 = 1\n    // Now write a loop to calculate F_n for n >= 2\n    \n}",
+   ref:"int fibonacci(int n) {\n    if (n < 1) return 0;\n    if (n == 1) return 1;\n    int prev = 0, cur = 1;\n    for (int i = 2; i <= n; i++) {\n        int next = prev + cur;\n        prev = cur;\n        cur = next;\n    }\n    return cur;\n}",
+   tests:() => [[0],[1],[2],[3],[10],[20],[30],[-4],[5],[40]]},
+  // ---- HW2.3 basic reductions ----
+  {id:"sum_array", fam:"c_red", hw:"HW2.3.1", spec:"Return the sum of all elements.",
+   starter:"// Return the sum of all elements in arr.\n// n is the number of elements.\nint sum_array(int arr[], int n) {\n    \n}",
+   ref:"int sum_array(int arr[], int n) {\n    int sum = 0;\n    for (int i = 0; i < n; i++)\n        sum += arr[i];\n    return sum;\n}",
+   tests:() => [[[],0],[[5],1],[[1,2,3],3],...many(6, () => { const a = rArr(rnd(1, 8), -20, 20); return [a, a.length]; })]},
+  {id:"product_array", fam:"c_red", hw:"HW2.3.2", spec:"Return the product of all elements. An empty array returns 1.",
+   starter:"// Return the product of all elements in arr.\n// n is the number of elements.\nint product_array(int arr[], int n) {\n    \n}",
+   ref:"int product_array(int arr[], int n) {\n    int p = 1;\n    for (int i = 0; i < n; i++)\n        p *= arr[i];\n    return p;\n}",
+   tests:() => [[[],0],[[7],1],[[2,3,4],3],[[5,0,9],3],...many(5, () => { const a = rArr(rnd(1, 6), -6, 6); return [a, a.length]; })]},
+  {id:"find_min", fam:"c_red", hw:"HW2.3.3", spec:"Return the minimum value (n ≥ 1).",
+   starter:"// Return the minimum value in arr.\n// n is the number of elements (n >= 1).\nint find_min(int arr[], int n) {\n    \n}",
+   ref:"int find_min(int arr[], int n) {\n    int min = arr[0];\n    for (int i = 1; i < n; i++)\n        if (arr[i] < min) min = arr[i];\n    return min;\n}",
+   tests:() => [[[4],1],[[4,7,9],3],[[9,7,4],3],[[-2,-8,-5],3],...many(5, () => { const a = rArr(rnd(1, 8), -30, 30); return [a, a.length]; })]},
+  {id:"find_max", fam:"c_red", hw:"HW2.3.4", spec:"Return the maximum value (n ≥ 1).",
+   starter:"// Return the maximum value in arr.\n// n is the number of elements (n >= 1).\nint find_max(int arr[], int n) {\n    \n}",
+   ref:"int find_max(int arr[], int n) {\n    int max = arr[0];\n    for (int i = 1; i < n; i++)\n        if (arr[i] > max) max = arr[i];\n    return max;\n}",
+   tests:() => [[[4],1],[[4,7,9],3],[[9,7,4],3],[[-2,-8,-5],3],...many(5, () => { const a = rArr(rnd(1, 8), -30, 30); return [a, a.length]; })]},
+  {id:"index_min", fam:"c_red", hw:"HW2.3.5", spec:"Return the INDEX of the minimum value (n ≥ 1).",
+   starter:"// Return the index of the minimum value in arr.\n// n is the number of elements (n >= 1).\nint index_min(int arr[], int n) {\n    \n}",
+   ref:"int index_min(int arr[], int n) {\n    int best = 0;\n    for (int i = 1; i < n; i++)\n        if (arr[i] < arr[best]) best = i;\n    return best;\n}",
+   tests:() => [[[4],1],[[3,1,2],3],[[1,2,3],3],[[5,9,-4],3],...many(5, () => { const a = distinct(rnd(2, 8), -30, 30); return [a, a.length]; })]},
+  {id:"index_max", fam:"c_red", hw:"HW2.3.6", spec:"Return the INDEX of the maximum value (n ≥ 1).",
+   starter:"// Return the index of the maximum value in arr.\n// n is the number of elements (n >= 1).\nint index_max(int arr[], int n) {\n    \n}",
+   ref:"int index_max(int arr[], int n) {\n    int best = 0;\n    for (int i = 1; i < n; i++)\n        if (arr[i] > arr[best]) best = i;\n    return best;\n}",
+   tests:() => [[[4],1],[[3,1,2],3],[[1,2,3],3],[[-5,-9,-4],3],...many(5, () => { const a = distinct(rnd(2, 8), -30, 30); return [a, a.length]; })]},
+  {id:"count_matching", fam:"c_red", hw:"HW2.3.7", spec:"Return how many elements equal <code>target</code>.",
+   starter:"// Return the number of elements in arr that equal target.\n// n is the number of elements.\nint count_matching(int arr[], int n, int target) {\n    \n}",
+   ref:"int count_matching(int arr[], int n, int target) {\n    int count = 0;\n    for (int i = 0; i < n; i++)\n        if (arr[i] == target) count++;\n    return count;\n}",
+   tests:() => [[[],0,3],[[3,3,3],3,3],[[1,2,3],3,4],[[0,5,0],3,0],...many(5, () => { const a = rArr(rnd(1, 9), 0, 4); return [a, a.length, rnd(0, 5)]; })]},
+  {id:"range", fam:"c_red", hw:"PE2 Q9", spec:"Return max − min (n ≥ 1).",
+   starter:"// Return the range of arr, equal to max - min.\n// n is the number of elements (n >= 1).\nint range(int arr[], int n) {\n    \n}",
+   ref:"int range(int arr[], int n) {\n    int lo = arr[0], hi = arr[0];\n    for (int i = 1; i < n; i++) {\n        if (arr[i] < lo) lo = arr[i];\n        if (arr[i] > hi) hi = arr[i];\n    }\n    return hi - lo;\n}",
+   tests:() => [[[5],1],[[1,5,9],3],[[4,7,2],3],[[-3,-9,-1],3],...many(5, () => { const a = rArr(rnd(1, 8), -25, 25); return [a, a.length]; })]},
+  // ---- HW2.3 statistics: maps + reductions ----
+  {id:"geometric_mean", fam:"c_stat", hw:"HW2.3.8", dbl:true, spec:"Return the N-th root of the product: (x<sub>0</sub> · x<sub>1</sub> · … · x<sub>N−1</sub>)<sup>1/N</sup>. <code>pow</code> is available.",
+   starter:"#include <math.h>\n\n// Computes the geometric mean of the values in arr.\n// n is the number of elements.\ndouble geometric_mean(double arr[], int n) {\n    \n}",
+   ref:"#include <math.h>\n\ndouble geometric_mean(double arr[], int n) {\n    double p = 1;\n    for (int i = 0; i < n; i++)\n        p *= arr[i];\n    return pow(p, 1.0 / n);\n}",
+   tests:() => [[[4],1],[[2,8],2],[[1,3,9],3],...many(6, () => { const a = rDbl(rnd(1, 6), 0.5, 9); return [a, a.length]; })]},
+  {id:"harmonic_mean", fam:"c_stat", hw:"HW2.3.9", dbl:true, spec:"Return N divided by the sum of the reciprocals: N / Σ (1 / x<sub>i</sub>).",
+   starter:"// Computes the harmonic mean of the values in arr.\n// n is the number of elements.\ndouble harmonic_mean(double arr[], int n) {\n    \n}",
+   ref:"double harmonic_mean(double arr[], int n) {\n    double s = 0;\n    for (int i = 0; i < n; i++)\n        s += 1.0 / arr[i];\n    return n / s;\n}",
+   tests:() => [[[4],1],[[1,4,4],3],[[2,6],2],...many(6, () => { const a = rDbl(rnd(1, 6), 0.5, 9); return [a, a.length]; })]},
+  {id:"stddev", fam:"c_stat", hw:"HW2.3.10", dbl:true, spec:"Return σ = sqrt( (1/N) Σ (x<sub>i</sub> − μ)² ), where μ is the mean. Two loops: the mean first, then the variance.",
+   starter:"#include <math.h>\n\n// Computes the standard deviation of the data in arr.\n// n is the number of elements (n >= 1).\ndouble stddev(double arr[], int n) {\n    \n}",
+   ref:"#include <math.h>\n\ndouble stddev(double arr[], int n) {\n    double sum = 0, var = 0;\n    for (int i = 0; i < n; i++)\n        sum += arr[i];\n    double mu = sum / n;\n    for (int i = 0; i < n; i++)\n        var += (arr[i] - mu) * (arr[i] - mu);\n    return sqrt(var / n);\n}",
+   tests:() => [[[5],1],[[2,4,4,4,5,5,7,9],8],[[1,1,1],3],...many(6, () => { const a = rDbl(rnd(2, 8), -10, 10); return [a, a.length]; })]},
+  {id:"range_normalize", fam:"c_stat", hw:"HW2.3.11", dbl:true, inplace:true, spec:"In place: map every element to (x − min) / (max − min), so the min becomes 0 and the max becomes 1. n ≥ 2 and max &gt; min.",
+   starter:"// Normalizes the data in arr to the interval [0, 1].\n// n is the number of elements (n >= 2).\nvoid range_normalize(double arr[], int n) {\n    \n}",
+   ref:"void range_normalize(double arr[], int n) {\n    double lo = arr[0], hi = arr[0];\n    for (int i = 1; i < n; i++) {\n        if (arr[i] < lo) lo = arr[i];\n        if (arr[i] > hi) hi = arr[i];\n    }\n    for (int i = 0; i < n; i++)\n        arr[i] = (arr[i] - lo) / (hi - lo);\n}",
+   tests:() => [[[0,10],2],[[5,1,3],3],[[-2,-4,6,1],4],...many(6, () => { const a = distinct(rnd(2, 8), -40, 40).map(x => x / 4); return [a, a.length]; })]},
+  {id:"running_sum", fam:"c_stat", hw:"HW2.3.12", inplace:true, spec:"In place: every element becomes itself plus all elements before it. {1, 2, 3} → {1, 3, 6}. n can be 0.",
+   starter:"// Transforms the array into a running sum of its data.\n// n is the number of elements (n >= 0).\nvoid running_sum(int arr[], int n) {\n    \n}",
+   ref:"void running_sum(int arr[], int n) {\n    for (int i = 1; i < n; i++)\n        arr[i] += arr[i - 1];\n}",
+   tests:() => [[[],0],[[4],1],[[1,2,3],3],...many(6, () => { const a = rArr(rnd(1, 8), -15, 15); return [a, a.length]; })]},
+  {id:"running_difference", fam:"c_stat", hw:"HW2.3.13", inplace:true, spec:"In place: every element after the first becomes (itself − the ORIGINAL previous element). {5, 3, 7} → {5, -2, 4}. Hint: go backwards. n can be 0.",
+   starter:"// Transforms the array into the running differences of its data.\n// n is the number of elements (n >= 0).\nvoid running_difference(int arr[], int n) {\n    \n}",
+   ref:"void running_difference(int arr[], int n) {\n    for (int i = n - 1; i > 0; i--)\n        arr[i] = arr[i] - arr[i - 1];\n}",
+   tests:() => [[[],0],[[4],1],[[5,3,7],3],...many(6, () => { const a = rArr(rnd(1, 8), -15, 15); return [a, a.length]; })]},
+  {id:"z_normalize", fam:"c_stat", hw:"HW2.3.14", dbl:true, inplace:true, spec:"In place: every element becomes its Z-score (x − μ) / σ, with μ the mean and σ the standard deviation (the 1/N version).",
+   starter:"#include <math.h>\n\n// Normalizes the data in arr to Z-scores.\n// n is the number of elements (n >= 1).\nvoid z_normalize(double arr[], int n) {\n    \n}",
+   ref:"#include <math.h>\n\nvoid z_normalize(double arr[], int n) {\n    double sum = 0;\n    for (int i = 0; i < n; i++)\n        sum += arr[i];\n    double mu = sum / n;\n    for (int i = 0; i < n; i++)\n        arr[i] -= mu;\n    double var = 0;\n    for (int i = 0; i < n; i++)\n        var += arr[i] * arr[i];\n    double sigma = sqrt(var / n);\n    for (int i = 0; i < n; i++)\n        arr[i] /= sigma;\n}",
+   tests:() => [[[1,3],2],[[2,4,4,4,5,5,7,9],8],...many(6, () => { const a = distinct(rnd(2, 7), -30, 30).map(x => x / 3); return [a, a.length]; })]},
+  // ---- HW2.3 predicates & transformations ----
+  {id:"has_duplicates", fam:"c_pred", hw:"HW2.3.15", spec:"Return 1 if any value appears more than once, else 0. An empty array returns 0.",
+   starter:"// Returns 1 if arr has any duplicate elements, 0 otherwise\nint has_duplicates(int arr[], int n) {\n    \n}",
+   ref:"int has_duplicates(int arr[], int n) {\n    for (int i = 0; i < n; i++)\n        for (int j = i + 1; j < n; j++)\n            if (arr[i] == arr[j]) return 1;\n    return 0;\n}",
+   tests:() => [[[],0],[[3],1],[[1,2,1],3],[[1,2,3],3],[[4,4],2],[[5,1,9,2,9],5],...many(4, () => { const a = rArr(rnd(2, 7), 0, 9); return [a, a.length]; })]},
+  {id:"is_sorted", fam:"c_pred", hw:"HW2.3.16", spec:"Return 1 if non-decreasing, -1 if non-increasing, 0 otherwise. Empty, single-element and all-equal arrays return 1.",
+   starter:"// Return 1 if arr is sorted ascending (non-decreasing).\n// Return -1 if arr is sorted descending (non-increasing).\n// Return 0 if arr is not sorted in either direction.\n// An array of all equal elements counts as ascending (return 1).\n// n is the number of elements.\nint is_sorted(int arr[], int n) {\n    \n}",
+   ref:"int is_sorted(int arr[], int n) {\n    int up = 1, down = 1;\n    for (int i = 1; i < n; i++) {\n        if (arr[i] < arr[i - 1]) up = 0;\n        if (arr[i] > arr[i - 1]) down = 0;\n    }\n    if (up) return 1;\n    if (down) return -1;\n    return 0;\n}",
+   tests:() => [[[],0],[[4],1],[[3,3,3],3],[[1,2,2,5],4],[[9,4,4,1],4],[[1,3,2],3],[[5,1,9],3],[[2,2,1],3],...many(2, () => { const a = rArr(rnd(2, 6), 0, 9); return [a, a.length]; })]},
+  {id:"reverse_array", fam:"c_pred", hw:"HW2.3.17", inplace:true, spec:"Reverse the array in place. {1, 2, 3, 4, 5} → {5, 4, 3, 2, 1}.",
+   starter:"// Reverse the array arr in place.\n// n is the number of elements.\nvoid reverse_array(int arr[], int n) {\n    \n}",
+   ref:"void reverse_array(int arr[], int n) {\n    for (int i = 0; i < n / 2; i++) {\n        int t = arr[i];\n        arr[i] = arr[n - 1 - i];\n        arr[n - 1 - i] = t;\n    }\n}",
+   tests:() => [[[],0],[[7],1],[[1,2],2],[[1,2,3,4,5],5],[[4,8,15,16],4],...many(4, () => { const a = rArr(rnd(2, 9), -20, 20); return [a, a.length]; })]}
+];
+const CODEBY = Object.fromEntries(CODE.map(c => [c.id, c]));
+CODE.forEach(c => { c.parsed = cParse(c.ref); });
+const fmtV = v => Array.isArray(v) ? `{${v.map(fmtV).join(", ")}}` : (typeof v === "number" && !Number.isInteger(v) ? String(+v.toFixed(6)) : String(v));
+const closeV = (a, b) => a === b || (typeof a === "number" && typeof b === "number" && Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(b)));
+// grade student source against fresh tests; expected values come from the reference solution
+function gradeC(prob, src){
+  let funcs;
+  try { funcs = cParse(src); } catch(e){ return {pass:0, total:1, err:"Compile error: " + e.message, fails:[]}; }
+  if(!funcs[prob.id]) return {pass:0, total:1, err:`Compile error: no function named ${prob.id} (keep the header exactly as given)`, fails:[]};
+  const tests = prob.tests(), fails = []; let pass = 0;
+  for(const args of tests){
+    const exp = cRun(prob.parsed, prob.id, args.map(a => Array.isArray(a) ? a.slice() : a));
+    const call = `${prob.id}(${args.map(fmtV).join(", ")})`;
+    let got;
+    try { got = cRun(funcs, prob.id, args.map(a => Array.isArray(a) ? a.slice() : a)); }
+    catch(e){ fails.push({call, exp:prob.inplace ? fmtV(exp.arrays[0]) : fmtV(exp.ret), got:"error: " + e.message}); continue; }
+    const ok = prob.inplace ? exp.arrays[0].length === got.arrays[0].length && exp.arrays[0].every((v, i) => closeV(got.arrays[0][i], v)) : closeV(got.ret, exp.ret);
+    if(ok) pass++;
+    else fails.push({call, exp:prob.inplace ? "array becomes " + fmtV(exp.arrays[0]) : fmtV(exp.ret), got:prob.inplace ? "array became " + fmtV(got.arrays[0]) : fmtV(got.ret)});
+  }
+  return {pass, total:tests.length, fails, err:null};
+}
+
+/* ================= Learn animations + memory hooks ================= */
+const HOOKS = {
+  rel:{title:"Precedence, top to bottom", hook:"<b>N</b>inja <b>M</b>onkeys <b>A</b>lways <b>C</b>limb <b>E</b>very <b>A</b>pple <b>O</b>rchard", key:"<b>N</b>ot <code>!</code> → <b>M</b>ultiply <code>* / %</code> → <b>A</b>dd <code>+ -</code> → <b>C</b>ompare <code>&lt; &gt; &lt;= &gt;=</code> → <b>E</b>qual <code>== !=</code> → <b>A</b>nd <code>&amp;&amp;</code> → <b>O</b>r <code>||</code>. And every comparison collapses to a single 0 or 1."},
+  dig:{title:"The digit machine", hook:"<b>% 10 bites, / 10 chops.</b> The sign rides along on both.", key:"<code>n % 10</code> bites off the last digit; <code>n /= 10</code> chops it away. -472 bites -2, then -7, then -4. <code>while</code> asks <i>before</i> eating; <code>do-while</code> eats once, then asks."},
+  bld:{title:"The four stages", hook:"<b>P</b>lease <b>C</b>ook <b>A</b> <b>L</b>asagna · <b>S</b>our <b>T</b>omatoes <b>A</b>re <b>O</b>ften <b>E</b>dible", key:"Stages: <b>P</b>reprocessor → <b>C</b>ompiler → <b>A</b>ssembler → <b>L</b>inker. Code between them: <b>S</b>ource → <b>T</b>ranslation unit → <b>A</b>ssembly → <b>O</b>bject → <b>E</b>xecutable. Each stage eats one and outputs the next."},
+  def:{title:"Four sweeps", hook:"<b>S</b>ome <b>B</b>ugs <b>U</b>ndo <b>R</b>eturns", key:"Sweep the listing once per defect: <b>S</b>emicolons, <b>B</b>races (count { and }), <b>U</b>ndeclared names, <b>R</b>eturn statements. One rule loaded per sweep, the same method that fixed your keyword question."},
+  cond:{title:"Gatekeepers", hook:"<b>Guard first, default last.</b>", key:"Each special case is a gate at the top: <code>if (…) return …;</code>. Whoever gets past every gate reaches the last line, the default. No else needed after a return."},
+  loop:{title:"The accumulator", hook:"<b>Start at the identity, update every lap, return after the finish line.</b>", key:"Products start at 1, sums at 0. Two-value recurrences shuffle like a conveyor belt: <code>next = prev + cur; prev = cur; cur = next;</code>"},
+  red:{title:"Walk the array, carry one box", hook:"<b>Zero adds, one multiplies, arr[0] starts the race.</b>", key:"Reductions carry ONE running value while i walks 0 … n-1. sum = 0, product = 1, count = 0, min / max = arr[0]. An index search carries a position: compare <code>arr[i]</code> with <code>arr[best]</code>."},
+  stat:{title:"Which way to walk", hook:"<b>Sums walk forward, differences walk back.</b>", key:"A running sum needs the NEW previous value, so go forward. A running difference needs the ORIGINAL previous value, so go backward before it's overwritten. Multi-step stats: reduce first (mean, min, max), then map."},
+  pred:{title:"Any vs all, and the mirror", hook:"<b>Any: shout early. All: judge at the end. Mirror: stop at the middle.</b>", key:"\"Is there a duplicate?\" → return 1 the moment you find one. \"Is it sorted?\" → flags, decide after the loop. Reverse → swap i with n-1-i only while i &lt; n/2; going further swaps everything back."}
+};
+const A = {
+  cells(arr, o = {}){
+    return `<div class="acells">${arr.map((v, i) => { const cls = [o.hi && o.hi.includes(i) ? "hi" : "", o.bad && o.bad.includes(i) ? "bad" : "", o.good && o.good.includes(i) ? "good" : "", o.dim && o.dim.includes(i) ? "dim" : ""].join(" "); const p = o.ptr && Object.entries(o.ptr).filter(([, x]) => x === i).map(([k]) => k).join(" "); return `<div class="acell ${cls}"><span class="av">${v === null ? "" : v}</span><span class="ai">[${i}]</span><span class="ap">${p ? "↑ " + p : ""}</span></div>`; }).join("")}</div>`;
+  },
+  code(lines, on, bad){ return `<pre class="acode">${lines.map((l, i) => `<span class="${i === on ? "on" : ""} ${bad && bad.includes(i) ? "bad" : ""}">${String(i + 1).padStart(2)}  ${esc(l)}</span>`).join("\n")}</pre>`; },
+  vars(o){ return `<div class="avars">${Object.entries(o).map(([k, v]) => `<div class="avar"><span>${k}</span><b>${v}</b></div>`).join("")}</div>`; },
+  row(...parts){ return `<div class="arow">${parts.join("")}</div>`; }
+};
+const SCENES = {
+  rel(){
+    const env = "a = 3, b = -2, c = 5", F = [];
+    const tok = (s, cls) => `<span class="tk ${cls || ""}">${esc(s)}</span>`;
+    const show = (html, cap) => F.push({html:`<div class="small">${env}</div><div class="aexpr">${html}</div>`, cap});
+    show(`${tok("a + 2 < c == b > 0 || !c")}`, "The expression as written. No brackets yet: precedence decides who groups first.");
+    show(`a + 2 &lt; c == b &gt; 0 || ${tok("!c", "l1")}`, "N — Not: <code>!</code> grabs only its own operand: <code>!c</code>.");
+    show(`${tok("(a + 2)", "l2")} &lt; c == b &gt; 0 || (!c)`, "A — Add: <code>a + 2</code> groups before any comparison.");
+    show(`${tok("((a + 2) < c)", "l3")} == ${tok("(b > 0)", "l3")} || (!c)`, "C — Compare: both <code>&lt;</code> and <code>&gt;</code> group next.");
+    show(`${tok("(((a + 2) < c) == (b > 0))", "l4")} || (!c)`, "E — Equal: <code>==</code> joins the two comparisons.");
+    show(`${tok("((((a + 2) < c) == (b > 0)) || (!c))", "l5")}`, "O — Or: <code>||</code> is last. Now the brackets are complete.");
+    show(`((${tok("5", "v")} &lt; 5) == (b &gt; 0)) || (!c)`, "Evaluate inside out: a + 2 = 5.");
+    show(`(${tok("0", "v")} == ${tok("0", "v")}) || (!c)`, "5 &lt; 5 is false → 0. b &gt; 0 is -2 &gt; 0, false → 0.");
+    show(`${tok("1", "v")} || ${tok("0", "v")}`, "0 == 0 is true → 1. !c is !5 → 0 (any nonzero is true, so ! gives 0).");
+    show(`${tok("1", "v big")}`, "1 || 0 → 1. Every comparison and logical operator always lands on 0 or 1.");
+    return F;
+  },
+  dig(){
+    const F = [], lines = ["int digit_sum(int n) {", "    int sum = 0;", "    while (n > 0) {", "        sum += n % 10;", "        n /= 10;", "    }", "    return sum;", "}"];
+    const run = (n0, cond, label) => {
+      let n = n0, sum = 0; const rows = [];
+      F.push({html:A.row(A.code(lines.map(l => l.replace("n > 0", cond)), 1), A.vars({n, sum})), cap:`${label}: call digit_sum(${n0}). sum starts at 0.`});
+      for(let g = 0; g < 8; g++){
+        const c = cond === "n > 0" ? n > 0 : n !== 0;
+        F.push({html:A.row(A.code(lines.map(l => l.replace("n > 0", cond)), 2), A.vars({n, sum, [cond]:c ? "true" : "false"})), cap:`Check <code>${cond}</code> with n = ${n}: ${c ? "true, so eat a digit" : "false, so stop"}.`});
+        if(!c) break;
+        const d = n % 10; sum += d;
+        F.push({html:A.row(A.code(lines.map(l => l.replace("n > 0", cond)), 3), A.vars({n, "n % 10":d, sum})), cap:`<b>% 10 bites</b> the last digit: ${n} % 10 = ${d}. sum becomes ${sum}.`});
+        n = Math.trunc(n / 10);
+        F.push({html:A.row(A.code(lines.map(l => l.replace("n > 0", cond)), 4), A.vars({n, sum})), cap:`<b>/ 10 chops</b> it off: n is now ${n}.`});
+      }
+      F.push({html:A.row(A.code(lines.map(l => l.replace("n > 0", cond)), 6), A.vars({return:sum})), cap:`Returns <b>${sum}</b>.`});
+    };
+    run(472, "n > 0", "Normal number");
+    run(-472, "n > 0", "Negative, with while (n > 0)");
+    run(-472, "n != 0", "Negative, with while (n != 0)");
+    return F;
+  },
+  bld(){
+    const F = [], st = ["Preprocessor", "Compiler", "Assembler", "Linker"], ty = ["Source", "Translation unit", "Assembly", "Object", "Executable"];
+    const files = [
+      "#include \"sq.h\"\n#define TWO 2\n// doubles x\nint f(int x) {\n    return sq(x) * TWO;\n}",
+      "int sq(int x);   <- pasted from sq.h\nint f(int x) {\n    return sq(x) * 2;\n}",
+      "f:  mov  edi, x\n    call sq\n    add  eax, eax\n    ret",
+      "55 48 89 e5 89 7d fc\ne8 00 00 00 00   <- sq: address unknown\n01 c0 5d c3",
+      "f.o + sq.o (+ libc)\n→ every call has a real address\n→ a.out you can run"];
+    const notes = ["You write source code: #include, #define and comments are still in it.",
+      "<b>P</b>reprocessor: pastes the #include file in, replaces TWO with 2, deletes the comment. Output: a <b>translation unit</b>.",
+      "<b>C</b>ompiler: checks syntax and types, optimizes, writes <b>assembly</b> for this CPU. (Syntax errors are caught here.)",
+      "<b>A</b>ssembler: assembly → machine bytes = <b>object code</b>. Calls into other files still have blank addresses.",
+      "<b>L</b>inker: joins all object files and libraries, fills in every address, outputs the <b>executable</b>."];
+    for(let k = 0; k <= 4; k++){
+      const pipe = `<div class="apipe">${ty.map((t, j) => `<div class="apb ${j === k ? "on" : j < k ? "past" : ""}">${t}</div>${j < 4 ? `<div class="apst ${j === k - 1 ? "on" : ""}">${st[j]} →</div>` : ""}`).join("")}</div>`;
+      F.push({html:pipe + `<pre class="acode">${esc(files[k])}</pre>`, cap:notes[k]});
+    }
+    F.push({html:`<div class="apipe">${ty.map(t => `<div class="apb past">${t}</div>`).join("")}</div><div class="aexpr" style="font-size:1rem"><b>P</b>lease <b>C</b>ook <b>A</b> <b>L</b>asagna · <b>S</b>our <b>T</b>omatoes <b>A</b>re <b>O</b>ften <b>E</b>dible</div>`, cap:"Two sentences, the whole topic. Bytecode is never in the C chain."});
+    return F;
+  },
+  def(){
+    const F = [], L = ["int count_pos(int arr[], int n) {", "    int count = 0", "    for (int i = 0; i < n; i++) {", "        if (arr[i] > 0)", "            total++;", "    return;", "}"];
+    const sw = [
+      {on:[1], bad:[1], cap:"Sweep 1, <b>S</b>emicolons: line 2 is a statement with no <code>;</code>. Lines with for, if, { and } don't need one."},
+      {on:[0, 2, 6], bad:[2], cap:"Sweep 2, <b>B</b>races: count them: two <code>{</code> (lines 1 and 3) but one <code>}</code>. The for loop is never closed."},
+      {on:[4], bad:[4], cap:"Sweep 3, <b>U</b>ndeclared: <code>total</code> is never declared (the counter is called count)."},
+      {on:[5], bad:[5], cap:"Sweep 4, <b>R</b>eturn: the function returns int, but <code>return;</code> has no value."}
+    ];
+    F.push({html:A.code(L, -1), cap:"A buggy listing. Don't read it once and hope: do one sweep per defect type."});
+    let found = [];
+    sw.forEach(s => { found = found.concat(s.bad); F.push({html:`<pre class="acode">${L.map((l, i) => `<span class="${s.on.includes(i) ? "on" : ""} ${found.includes(i) ? "bad" : ""}">${String(i + 1).padStart(2)}  ${esc(l)}</span>`).join("\n")}</pre>`, cap:s.cap}); });
+    F.push({html:`<div class="aexpr" style="font-size:1rem"><b>S</b>ome <b>B</b>ugs <b>U</b>ndo <b>R</b>eturns</div>`, cap:"All four defects here, so the answer would be \"All of the above\". Four sweeps, one rule each."});
+    return F;
+  },
+  cond(){
+    const F = [], lo = -2, hi = 3;
+    const line = (v, which) => `<div class="aline">${Array.from({length:13}, (_, j) => j - 6).map(x => `<div class="at ${x >= lo && x <= hi ? "in" : ""} ${x === v ? "dot" : ""}">${x}</div>`).join("")}</div>`;
+    const code = ["int clamp(int value, int lo, int hi) {", "    if (value < lo) return lo;", "    if (value > hi) return hi;", "    return value;", "}"];
+    [[-5, 1, "below lo, so the first gate catches it: returns lo = -2"], [6, 2, "passes gate 1, caught by gate 2: returns hi = 3"], [1, 3, "passes both gates and reaches the default: returns 1 unchanged"], [-2, 3, "on the edge: -2 &lt; -2 is false, so it passes through and returns -2"]].forEach(([v, ln, why]) => {
+      F.push({html:`<div class="small">lo = ${lo}, hi = ${hi} (the shaded range)</div>${line(v)}${A.code(code, ln)}`, cap:`value = ${v}: ${why}.`});
+    });
+    F.push({html:A.code(["int signum(int value) {", "    if (value < 0) return -1;   // gate", "    if (value > 0) return 1;    // gate", "    return 0;                   // default", "}"], -1), cap:"<b>Guard first, default last.</b> Same shape: gates on top, the \"otherwise\" at the bottom."});
+    return F;
+  },
+  loop(){
+    const F = [];
+    let r = 1; F.push({html:A.row(A.vars({n:5, result:1})), cap:"factorial(5): result starts at the identity for products, 1."});
+    for(let i = 2; i <= 5; i++){ r *= i; F.push({html:A.row(A.cells([2, 3, 4, 5], {hi:[i - 2], good:Array.from({length:i - 2}, (_, k) => k)}), A.vars({i, result:r})), cap:`Lap i = ${i}: result *= ${i} → ${r}.`}); }
+    F.push({html:A.vars({return:120}), cap:"After the finish line: return 120. For n ≤ 1 the loop never runs, so it returns 1 for free."});
+    let p = 0, c = 1; const seq = [0, 1];
+    F.push({html:A.row(A.cells(seq, {ptr:{prev:0, cur:1}})), cap:"fibonacci: keep two values, prev = F₀ = 0 and cur = F₁ = 1."});
+    for(let i = 2; i <= 7; i++){ const nx = p + c; seq.push(nx); p = c; c = nx; F.push({html:A.row(A.cells(seq, {ptr:{prev:seq.length - 2, cur:seq.length - 1}, hi:[seq.length - 1]}), A.vars({i, next:`${seq[seq.length - 3]} + ${seq[seq.length - 2]} = ${nx}`})), cap:`next = prev + cur, then the belt moves: prev = cur, cur = next.`}); }
+    F.push({html:A.vars({"fibonacci(7)":c}), cap:"The conveyor belt: <code>next = prev + cur; prev = cur; cur = next;</code>"});
+    return F;
+  },
+  red(){
+    const F = [], arr = [7, 3, 9, 1, 4];
+    F.push({html:A.row(A.cells(arr), A.vars({min:"?"})), cap:"find_min. What should min start as?"});
+    F.push({html:A.row(A.cells(arr, {bad:[]}), A.vars({"min = 0":"✗"})), cap:"Not 0: every value here is bigger than 0, so min would never change and the function returns 0. Wrong."});
+    let m = arr[0];
+    F.push({html:A.row(A.cells(arr, {ptr:{start:0}, good:[0]}), A.vars({min:m})), cap:"<b>arr[0] starts the race</b>: it's a real value from the array."});
+    for(let i = 1; i < arr.length; i++){ const nm = Math.min(m, arr[i]); F.push({html:A.row(A.cells(arr, {ptr:{i}, hi:[i], good:[arr.indexOf(nm)]}), A.vars({i, "arr[i]":arr[i], min:nm})), cap:arr[i] < m ? `${arr[i]} &lt; ${m}: new min.` : `${arr[i]} is not smaller: min stays ${m}.`}); m = nm; }
+    F.push({html:A.row(A.cells(arr, {good:[3]}), A.vars({return:m})), cap:"Return after the loop. <b>Zero adds, one multiplies, arr[0] starts the race.</b>"});
+    let best = 0;
+    F.push({html:A.row(A.cells(arr, {ptr:{best:0}}), A.vars({best:0})), cap:"index_min carries a POSITION: best = 0, and it compares arr[i] with arr[best]."});
+    for(let i = 1; i < arr.length; i++){ const ob = best, win = arr[i] < arr[ob]; if(win) best = i; F.push({html:A.row(A.cells(arr, {ptr:{i, best}, hi:[i]}), A.vars({best, "arr[best]":arr[best]})), cap:`arr[${i}] = ${arr[i]} vs arr[best] = ${arr[ob]}: ${win ? `smaller, so best = ${i}` : `not smaller, best stays ${ob}`}.`}); }
+    return F;
+  },
+  stat(){
+    const F = [], src = [5, 3, 7, 2];
+    let a = src.slice();
+    F.push({html:A.row(A.cells(a)), cap:"Running sum: every cell should become itself + everything before it. Target {5, 8, 15, 17}."});
+    for(let i = 1; i < a.length; i++){ a[i] += a[i - 1]; F.push({html:A.row(A.cells(a, {ptr:{i}, hi:[i], good:[i - 1]})), cap:`Forward: arr[${i}] += arr[${i - 1}] → ${a[i]}. The NEW previous value already holds the sum so far. That's what we want.`}); }
+    a = src.slice();
+    F.push({html:A.row(A.cells(a)), cap:"Running difference: target {5, -2, 4, -5}. Try walking forward first…"});
+    a[1] = a[1] - a[0]; F.push({html:A.row(A.cells(a, {ptr:{i:1}, hi:[1]})), cap:"i = 1: 3 − 5 = -2. Fine so far."});
+    a[2] = a[2] - a[1]; F.push({html:A.row(A.cells(a, {ptr:{i:2}, bad:[2], hi:[1]})), cap:"i = 2: 7 − (-2) = 9 ✗. It used the OVERWRITTEN -2 instead of the original 3."});
+    a = src.slice();
+    F.push({html:A.row(A.cells(a)), cap:"Now walk <b>backward</b>, from the end."});
+    for(let i = a.length - 1; i > 0; i--){ a[i] = a[i] - a[i - 1]; F.push({html:A.row(A.cells(a, {ptr:{i}, good:[i], hi:[i - 1]})), cap:`i = ${i}: arr[${i}] − arr[${i - 1}]. arr[${i - 1}] is still original, because nothing before it has been touched yet.`}); }
+    F.push({html:A.row(A.cells(a, {good:[1, 2, 3]})), cap:"{5, -2, 4, -5} ✓. <b>Sums walk forward, differences walk back.</b>"});
+    return F;
+  },
+  pred(){
+    const F = [], arr = [4, 9, 2, 9];
+    F.push({html:A.row(A.cells(arr)), cap:"has_duplicates: compare every PAIR once. i picks one element, j checks everything after it (j = i + 1)."});
+    outer: for(let i = 0; i < arr.length; i++) for(let j = i + 1; j < arr.length; j++){
+      const same = arr[i] === arr[j];
+      F.push({html:A.row(A.cells(arr, {ptr:{i, j}, hi:[i, j], good:same ? [i, j] : []}), A.vars({"arr[i] == arr[j]":same ? "1" : "0"})), cap:same ? `${arr[i]} == ${arr[j]}: <b>shout early</b>, return 1 right now.` : `${arr[i]} vs ${arr[j]}: different, keep going.`});
+      if(same) break outer;
+    }
+    F.push({html:A.vars({"if no pair matched":"return 0 after BOTH loops"}), cap:"<b>Any: shout early. All: judge at the end.</b>"});
+    const r = [1, 2, 3, 4, 5];
+    F.push({html:A.row(A.cells(r, {ptr:{i:0, "n-1-i":4}})), cap:"reverse_array: swap the mirror pairs i and n−1−i."});
+    for(let i = 0; i < 2; i++){ [r[i], r[4 - i]] = [r[4 - i], r[i]]; F.push({html:A.row(A.cells(r, {ptr:{i, "n-1-i":4 - i}, good:[i, 4 - i]})), cap:`Swap arr[${i}] and arr[${4 - i}] (with a temp).`}); }
+    F.push({html:A.row(A.cells(r, {good:[0, 1, 2, 3, 4]})), cap:"i = 2 = n/2: <b>stop at the middle</b>. Done: {5, 4, 3, 2, 1}."});
+    [r[3], r[1]] = [r[1], r[3]]; [r[4], r[0]] = [r[0], r[4]];
+    F.push({html:A.row(A.cells(r, {bad:[0, 1, 3, 4]})), cap:"If the loop went all the way to n, i = 3 and i = 4 would swap the same pairs back: {1, 2, 3, 4, 5}. Unchanged ✗."});
+    return F;
+  }
+};
+let AN = null;
+function mountAnim(id, host){
+  if(!SCENES[id]) return;
+  const frames = SCENES[id]();
+  if(AN && AN.timer) clearInterval(AN.timer);
+  AN = {frames, k:0, play:true, host};
+  host.innerHTML = `<div class="anim"><div class="anim-stage" id="anStage"></div><div class="anim-cap" id="anCap"></div>
+    <div class="row anim-ctl"><button class="btn ghost" id="anPrev" type="button" aria-label="Previous step">◀</button><button class="btn ghost" id="anPlay" type="button">Pause</button><button class="btn ghost" id="anNext" type="button" aria-label="Next step">▶</button>
+    <input type="range" id="anScrub" min="0" max="${frames.length - 1}" value="0" aria-label="Animation step" style="flex:1;min-width:120px"><span class="small" id="anNum"></span></div></div>`;
+  const draw = () => { const f = AN.frames[AN.k]; $("anStage").innerHTML = f.html; $("anCap").innerHTML = f.cap; $("anScrub").value = AN.k; $("anNum").textContent = `${AN.k + 1} / ${AN.frames.length}`; };
+  const step = d => { AN.k = (AN.k + d + AN.frames.length) % AN.frames.length; draw(); };
+  const setPlay = p => { AN.play = p; $("anPlay").textContent = p ? "Pause" : "Play"; clearInterval(AN.timer); if(p) AN.timer = setInterval(() => { if(!document.body.contains($("anStage"))){ clearInterval(AN.timer); return; } step(1); }, 2600); };
+  $("anPrev").onclick = () => { setPlay(false); step(-1); };
+  $("anNext").onclick = () => { setPlay(false); step(1); };
+  $("anPlay").onclick = () => setPlay(!AN.play);
+  $("anScrub").oninput = () => { setPlay(false); AN.k = +$("anScrub").value; draw(); };
+  draw(); setPlay(!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+}
+const hookHTML = id => HOOKS[id] ? `<div class="hook"><span class="lbl">Memory hook · ${HOOKS[id].title}</span><div class="hk">${HOOKS[id].hook}</div><div class="small">${HOOKS[id].key}</div></div>` : "";
+
+</script>
+
+<script>
+/* ================= ladder app ================= */
+const STAGES = [
+  {name:"Learn", kind:"learn", pass:1,
+   blurb:"From zero, one topic at a time, in exam order. Each topic: a short lesson, then worked example → your turn pairs. Hints are free here. Coding topics run your function against tests, like PrairieLearn."},
+  {name:"Spoon-fed", kind:"single", len:14, nopts:3, card:true, retry:true, pass:.85,
+   blurb:"One question at a time from every Exam 2 part. The rule is shown, numbers have 3 choices, and multiple choice uses the exam's (a)–(e) format. Misses come back later in the round."},
+  {name:"Guided", kind:"single", len:16, nopts:4, hint:true, retry:true, pass:.9,
+   blurb:"4 choices for numbers, and every wrong choice is a real mistake pattern. The rule is behind a hint, and a hinted answer doesn't count."},
+  {name:"Bare", kind:"single", len:16, typed:true, pass:.9,
+   blurb:"Type every number yourself. Multiple choice stays (a)–(e) like the exam. No hints."},
+  {name:"Write functions", kind:"code", len:8, pass:.875,
+   blurb:"The real HW2.2 / HW2.3 functions, chosen by your weakest families (HW2.3 most often, since Q6–Q9 come from there). Write the body, press Run tests. Only a first run that passes every test counts as clean. You can keep fixing until it passes."},
+  {name:"Exam replica", kind:"exam", pass:.95,
+   blurb:"The whole Exam 2: Q1–Q5 (build process, two defect listings, the digit-loop pair, 10 expressions) plus Q6–Q9, four HW2.3 functions you write and the tests grade. 100 points, one submit, no hints. Pass = 95."},
+  {name:"Beyond", kind:"single", len:16, typed:true, hard:true, pass:.9,
+   blurb:"Harder than the exam: longer chains, ! inside comparisons, % and / inside == tests, 5-digit negatives, and defect listings with scope traps (a for-loop variable used after the loop)."}
+];
+const SKEY = "c2-ladder-v1";
+const fresh = () => ({m:{}, seen:{}, passed:{}, best:{}, unlocked:1, learn:{}, cm:{}});
+function load(){ try { const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m){ s.learn = s.learn || {}; s.cm = s.cm || {}; return s; } } catch(e){} return fresh(); }
+function save(){ try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+const $ = id => document.getElementById(id);
+const mOf = k => S.m[k] || 0;
+function record(k, ok){ if(!SK[k]) return; S.seen[k] = 1; S.m[k] = ok ? Math.min(5, mOf(k) + 1) : Math.max(1, mOf(k) - 2); }
+function pickSkills(n){
+  const w = DRILL.map(k => (S.seen[k] ? 6 - mOf(k) : 7) * GW[k[0]]), tot = w.reduce((a, b) => a + b, 0), out = [];
+  while(out.length < n){
+    let x = Math.random() * tot, i = 0;
+    while((x -= w[i]) > 0 && i < DRILL.length - 1) i++;
+    if(out.length && out[out.length - 1][0] === DRILL[i][0] && Math.random() < .6) continue;
+    out.push(DRILL[i]);
+  }
+  return out;
+}
+const cardHTML = k => `<div class="rule"><span class="lbl">Rule · ${SK[k].label}</span><div>${CARDS[k]}</div></div>`;
+function makeItem(k, st){
+  const c = k[0];
+  if(c === "b") return genBuild(k);
+  if(c === "d") return genDefect(k, st.hard);
+  if(c === "t") return genDigit(k);
+  if(c === "r") return genRel(k, st.hard);
+  return genArr(k, st.nopts || 4);
+}
+
+let cur = null;
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st, i) => {
+    const locked = i + 1 > S.unlocked, passed = S.passed[i];
+    const best = S.best[i] != null ? "best " + Math.round(S.best[i] * 100) + "%" : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur === i ? "on" : ""} ${locked ? "locked" : ""} ${passed ? "passed" : ""}" data-i="${i}" type="button">
+      <span class="n">Rung ${i + 1}</span><span class="nm">${st.name}</span><span class="st">${passed ? "passed · " : ""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  let html = "", g = null;
+  for(const k of Object.keys(SK)){
+    if(SK[k].g !== g){ if(g) html += "</div>"; g = SK[k].g; html += `<div class="mgroup">${g}</div><div class="mgrid">`; }
+    html += `<div class="chip" style="background:${S.seen[k] ? `var(--m${mOf(k)})` : "var(--m0)"}">${SK[k].label}</div>`;
+  }
+  $("mgrid").innerHTML = html + "</div>";
+}
+function renderSheet(){ $("sheetBody").innerHTML = Object.keys(SK).map(cardHTML).join(""); }
+
+/* ================= coding items (shared by Learn, Write functions and the exam) ================= */
+const NOTES = {
+  signum:["Three cases, so three returns. The first two ifs catch negative and positive; whatever is left is 0.", "Bonus (no if): <code>return (value &gt; 0) - (value &lt; 0);</code> works because comparisons give 0 or 1."],
+  clamp:["Check below first, then above, then return the value itself.", "No else needed: a <code>return</code> leaves the function immediately."],
+  xor:["<code>!x</code> is 1 when x is 0 and 0 otherwise, so it squashes any number to 0 or 1.", "XOR = \"the two truth values differ\" = <code>!x != !y</code>. With &amp;&amp; / ||: <code>(x &amp;&amp; !y) || (!x &amp;&amp; y)</code>."],
+  manhattan_distance:["Compute each difference, flip its sign when negative (that's |d| without abs()), then add.", "<code>int dx = x1 - x2, dy = y1 - y2;</code> declares both on one line."],
+  cubic_kernel:["q is given. Compute the constant 7/(4πh²) once, then one return per piece of the piecewise function.", "Trap: <code>3/2</code> and <code>3/4</code> are 1 and 0 in C. Write <code>1.5</code> and <code>0.75</code> (or 3.0 / 2).", "Check the pieces in order: q ≤ 1, then q ≤ 2, else 0."],
+  is_leap_year:["Translate the sentence directly: \"divisible by 400, or (divisible by 4 and not by 100)\".", "Divisible by k means <code>year % k == 0</code>. The comparison already gives 0 or 1, so you can return it."],
+  exponent:["Guard the special case first: k &lt; 0 → 0.", "Then multiply 1 by n, k times. k = 0 runs the loop 0 times and returns 1 automatically."],
+  factorial:["Product accumulator starting at 1, multiplied by 2, 3, …, n.", "For n ≤ 1 the loop never runs, so 0!, 1! and negatives all return 1 for free."],
+  binomial:["Write a factorial helper ABOVE binomial, then use the formula directly.", "Multiply the two bottom factorials before dividing: <code>f(n) / (f(k) * f(n - k))</code>. Integer division is exact here."],
+  gcd:["Zero rule first. Make both numbers positive.", "Euclid: keep replacing (a, b) with (b, a % b) until b is 0; then a is the answer. The order doesn't matter: if a &lt; b, the first step just swaps them."],
+  fibonacci:["Keep the last two values. Each step: next = prev + cur, then shift both along.", "Start with prev = F₀ = 0, cur = F₁ = 1, and loop i from 2 to n."],
+  sum_array:["Sum starts at 0. Add every element, i from 0 to n − 1.", "n = 0: the loop never runs, so it returns 0 (correct)."],
+  product_array:["Product starts at 1, not 0 (0 times anything stays 0).", "Empty array: the loop doesn't run, so it returns 1, which is exactly what the spec asks."],
+  find_min:["Start at arr[0] (it IS a value in the array), then compare from i = 1.", "Starting at 0 is the classic bug: {4, 7} would give 0."],
+  find_max:["Mirror of find_min: start at arr[0], keep the bigger value."],
+  index_min:["Keep a POSITION. Compare <code>arr[i]</code> with <code>arr[best]</code>, not with best itself.", "Return best (the index), not arr[best] (the value)."],
+  index_max:["Same as index_min with &gt;: best is an index, so compare through arr[best]."],
+  count_matching:["Counter starts at 0, +1 each time arr[i] == target.", "== compares, = assigns. <code>if (arr[i] = target)</code> is a bug."],
+  range:["Track min and max in the same loop, both starting at arr[0].", "Return hi − lo (max − min), never the other way round."],
+  geometric_mean:["Product reduction (start at 1), then the N-th root = <code>pow(p, 1.0 / n)</code>.", "<code>1 / n</code> is integer division, 0 for n &gt; 1, so the result would always be 1."],
+  harmonic_mean:["Sum of reciprocals: <code>s += 1.0 / arr[i];</code>.", "Then N / sum. n is an int but s is a double, so the division is done in double."],
+  stddev:["Loop 1: sum → mean μ = sum / n. Loop 2: add up (xᵢ − μ)².", "The 1/N goes INSIDE the root: <code>sqrt(var / n)</code>."],
+  range_normalize:["Reduce first (min and max in one loop), then map every element to (x − min) / (max − min).", "Everything is double, so the division isn't truncated."],
+  running_sum:["Go FORWARD: arr[i] += arr[i − 1] uses the already-updated previous value, which holds the sum so far.", "Start at i = 1; arr[0] stays."],
+  running_difference:["Go BACKWARD: each step needs the ORIGINAL previous value, so update from the end before it gets overwritten.", "Stop at i &gt; 0: arr[0] stays, and i = 0 would read arr[−1]."],
+  z_normalize:["Four passes: sum → mean; subtract the mean; sum of squares → σ; divide by σ.", "After subtracting the mean, the elements ARE the deviations, so σ² is just the mean of their squares."],
+  has_duplicates:["Compare every pair once: i, then j from i + 1.", "Return 1 the moment a pair matches. Only after BOTH loops finish can you return 0."],
+  is_sorted:["Two flags, both 1. A step down kills \"up\", a step up kills \"down\".", "Decide after the loop, checking up FIRST, so all-equal arrays return 1."],
+  reverse_array:["Swap the mirror pairs: i and n − 1 − i, with a temp.", "Only go to n / 2. Going all the way swaps every pair twice and undoes everything."]
+};
+const starterOf = p => p.starter;
+function codeHTML(p, id, opts){
+  opts = opts || {};
+  return `<div class="small">${p.hw} · <code>${p.id}</code></div><div class="prompt">${p.spec}</div>
+    <textarea class="ed" id="${id}" spellcheck="false" autocapitalize="off" aria-label="Your ${p.id} function">${esc(starterOf(p))}</textarea>
+    ${opts.noRun ? "" : `<div class="row"><button class="btn" id="${id}_run" type="button">Run tests</button>${opts.hint ? `<button class="btn ghost" id="${id}_hint" type="button">Show the pattern</button>` : ""}<span class="small">Tab indents. Keep the header line exactly as given.</span></div>`}
+    <div id="${id}_out"></div>`;
+}
+function tabbable(ta){
+  ta.addEventListener("keydown", e => {
+    if(e.key !== "Tab") return;
+    e.preventDefault();
+    const s = ta.selectionStart, v = ta.value;
+    ta.value = v.slice(0, s) + "    " + v.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = s + 4;
+  });
+}
+function resultHTML(g, p, showRef){
+  const all = !g.err && g.pass === g.total;
+  return `<div class="fb ${all ? "" : "bad"}"><h3>${g.err ? "Doesn't compile" : all ? `All ${g.total} tests pass` : `${g.pass} / ${g.total} tests pass`}</h3>
+    ${g.err ? `<div>${esc(g.err)}</div>` : ""}
+    ${g.fails.length ? `<div class="tests">${g.fails.slice(0, 4).map(f => `<div class="t">${esc(f.call)}<br>expected ${esc(f.exp)}, got ${esc(f.got)}</div>`).join("")}</div>` : ""}
+    ${showRef ? `<details ${all ? "" : "open"}><summary class="small">Model solution and why it works</summary><pre class="code">${esc(p.ref)}</pre><ul>${(NOTES[p.id] || []).map(n => `<li>${n}</li>`).join("")}</ul></details>` : ""}</div>`;
+}
+
+/* ================= Learn rung ================= */
+const TOPICS = [
+  {id:"rel", name:"Relational and logical values", q:"Q5 · 20 pts · HW2.1.1", kind:"gen", targets:["r_val","r_arith","r_eqrel","r_logic","r_not","r_chain"],
+   lesson:`<p>Q5 gives you some int variables and asks for the <b>value</b> of 10 expressions. Two facts do all the work:</p>
+   <ul><li><b>Every comparison and logical operator produces the int 0 or 1.</b> Any nonzero value counts as true.</li>
+   <li><b>Precedence, high to low:</b> <code>!</code> and unary minus → <code>* / %</code> → <code>+ -</code> → <code>&lt; &lt;= &gt; &gt;=</code> → <code>== !=</code> → <code>&amp;&amp;</code> → <code>||</code>. Same level: left to right.</li></ul>
+   <p><b>Method:</b> put the brackets in first, following the table, then evaluate inside out, writing each 0 / 1 down. That's your x/y/z-box technique from Exam 1.</p>`},
+  {id:"dig", name:"Tracing digit loops", q:"Q4 · 20 pts · HW2.1.2", kind:"gen", targets:["t_trace","t_zero","t_neg","t_neg"],
+   lesson:`<p>Q4 shows a <code>digit_count</code> / <code>digit_sum</code> function that may be buggy, and asks what it returns for 5 inputs. You don't fix the bug; you <b>run the code as written</b>.</p>
+   <ul><li>Make a table: n, the accumulator, and whether the condition is true. One row per pass.</li>
+   <li><code>n % 10</code> is the last digit, and <code>n /= 10</code> drops it.</li>
+   <li><b>Negative n:</b> / and % keep the sign: -123 % 10 = -3, -123 / 10 = -12. So <code>while (n &gt; 0)</code> never runs, but <code>while (n)</code> or <code>n != 0</code> keeps going and adds negative digits.</li>
+   <li><b>n = 0:</b> <code>while</code> checks first (0 passes), but <code>do { } while</code> always runs once.</li></ul>`},
+  {id:"bld", name:"The C build process", q:"Q1 + Q3 · 10 pts · HW3.1.1–2", kind:"gen", targets:["b_io","b_task","b_io","b_task"],
+   lesson:`<p>Memorize one chain; every Q1 / Q3 question is a lookup in it:</p><div class="pipe">${PIPE}</div>
+   <ul><li><b>Preprocessor:</b> handles <code>#include</code> (pastes the file in) and <code>#define</code> (find and replace), and strips comments.</li>
+   <li><b>Compiler:</b> checks syntax and types, optimizes, and turns C into assembly.</li>
+   <li><b>Assembler:</b> assembly → machine code (object files).</li>
+   <li><b>Linker:</b> joins object files into one executable, connects calls to other files and libraries, and decides every function's address.</li></ul>
+   <p>"Bytecode" belongs to Java and Python, never to C.</p>`},
+  {id:"def", name:"Compile-time defects", q:"Q2 · 10 pts · HW3.1.3", kind:"gen", targets:["d_semi","d_brace","d_undecl","d_ret"],
+   lesson:`<p>Q2 shows a listing and asks which defects it has: missing <code>;</code>, missing <code>}</code>, undeclared variable, invalid return. Do one sweep per defect type, the same way you did keywords on Exam 1:</p>
+   <ul><li><b>Semicolons:</b> every statement line ends in <code>;</code>, including <code>} while (…);</code>. The lines <code>for (…)</code>, <code>if (…)</code>, <code>{</code> and <code>}</code> don't.</li>
+   <li><b>Braces:</b> count the <code>{</code> and <code>}</code>. The totals must match.</li>
+   <li><b>Undeclared:</b> check each name against the parameters and the declarations. A <code>for (int i …)</code> variable dies after its loop.</li>
+   <li><b>Return:</b> void → only <code>return;</code>. Non-void → every return needs a value.</li></ul>`},
+  {id:"cond", name:"Writing conditionals", q:"HW2.2.1–6", kind:"code", sk:"c_cond", pairs:[["signum","clamp"],["is_leap_year","xor"],["manhattan_distance","cubic_kernel"]]},
+  {id:"loop", name:"Writing loops", q:"HW2.2.7–11", kind:"code", sk:"c_loop", pairs:[["factorial","exponent"],["fibonacci","gcd"],["factorial","binomial"]]},
+  {id:"red", name:"Array reductions", q:"Q6–Q9 · HW2.3.1–7", kind:"code", sk:"c_red", pairs:[["sum_array","product_array"],["find_min","find_max"],["index_min","index_max"],["count_matching","range"]]},
+  {id:"stat", name:"Maps + reductions (statistics)", q:"Q6–Q9 · HW2.3.8–14", kind:"code", sk:"c_stat", pairs:[["geometric_mean","harmonic_mean"],["stddev","z_normalize"],["running_sum","running_difference"],["range","range_normalize"]]},
+  {id:"pred", name:"Predicates and in-place transforms", q:"Q6–Q9 · HW2.3.15–17", kind:"code", sk:"c_pred", pairs:[["count_matching","has_duplicates"],["range","is_sorted"],["running_difference","reverse_array"]]}
+];
+TOPICS.forEach(t => { if(t.kind === "code") t.lesson = `<p>${CARDS[t.sk]}</p><p><b>Workflow for every function:</b> read the spec twice, write the starting value and the loop header first, then the body, then the return. Before running, trace one tiny input by hand (for example {5, 3, 7}).</p>`; });
+let LRN = null;
+function openLearn(){
+  const done = TOPICS.filter(t => S.learn[t.id] && S.learn[t.id].done).length;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung 1 of ${STAGES.length} · Learn</span><span>${done} / ${TOPICS.length} topics learned</span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">Learn, from zero</h2>
+    <p style="margin:0;max-width:65ch">${STAGES[0].blurb}</p>
+    <div class="rule"><span class="lbl">Exam 2 map</span><div>Q1 + Q3 build process (10 pts) · Q2 compile defects (10) · Q4 digit-loop tracing (20) · Q5 relational / logical values (20) · <b>Q6–Q9 write four HW2.3 functions (40)</b>. The coding part is the biggest single block.</div></div>
+    <div style="display:grid;gap:8px">${TOPICS.map((t, k) => { const st = S.learn[t.id]; return `<button class="topic ${st && st.done ? "done" : ""}" data-k="${k}" type="button"><span class="num">${st && st.done ? "✓" : k + 1}</span><span><b>${t.name}</b> <span class="small">· ${t.q}</span></span><span class="small">${st && st.done ? `done, ${st.clean} / ${st.n} clean` : ""}</span></button>`; }).join("")}</div>`;
+  $("stage").querySelectorAll(".topic").forEach(b => b.onclick = () => startTopic(+b.dataset.k));
+}
+function startTopic(k){
+  const t = TOPICS[k];
+  const pairs = t.kind === "gen" ? t.targets.map(x => ({target:x})) : t.pairs.map(([a, b]) => ({ex:CODEBY[a], you:CODEBY[b]}));
+  LRN = {k, t, pairs, pos:0, clean:0, n:pairs.length};
+  $("stage").innerHTML = `
+    <div class="meta"><span>Learn · ${t.name}</span><span>${t.q}</span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.5rem">${t.name}</h2>
+    ${hookHTML(t.id)}
+    <div id="animHost"></div>
+    <div class="lesson">${t.lesson}</div>
+    ${t.kind === "gen" ? `<details><summary class="small">The rules for this topic</summary>${[...new Set(t.targets)].map(cardHTML).join("")}</details>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">Worked example 1 of ${pairs.length} ↵</button><button class="btn ghost" id="back" type="button">All topics</button></div>`;
+  mountAnim(t.id, $("animHost"));
+  $("go").onclick = () => showExample(); $("back").onclick = () => openLearn(); $("go").focus();
+}
+function lmeta(phase){ return `<div class="meta"><span>Learn · ${LRN.t.name} · pair ${LRN.pos + 1} of ${LRN.n}</span><span>${phase}</span></div><div class="bar"><i style="width:${LRN.pos / LRN.n * 100}%"></i></div>`; }
+function showExample(){
+  const pr = LRN.pairs[LRN.pos];
+  let body;
+  if(LRN.t.kind === "gen"){
+    const it = makeItem(pr.target, {nopts:4});
+    const ansTxt = it.kind === "mc" ? `(${it.letters ? "abcde"[it.ans] : it.ans + 1}) ${it.codeOpts ? `<pre class="code">${esc(it.list[it.ans])}</pre>` : it.list[it.ans]}` : `<b>${it.ans}</b>`;
+    body = `${itemHead(it)}<div class="fb"><h3>Answer: ${ansTxt}</h3><div>${it.explain}</div></div>${cardHTML(pr.target)}`;
+  } else {
+    const p = pr.ex;
+    body = `<div class="small">${p.hw} · <code>${p.id}</code></div><div class="prompt">${p.spec}</div><pre class="code">${esc(p.ref)}</pre><div class="fb"><h3>Why it works</h3><ul style="margin:0">${(NOTES[p.id] || []).map(n => `<li>${n}</li>`).join("")}</ul></div>`;
+  }
+  $("stage").innerHTML = `${lmeta("worked example")}<span class="lbl">Worked example: read every line, then redo it on paper without looking</span>${body}
+    <details id="replay"><summary class="small">Replay the animation${HOOKS[LRN.t.id] ? " · " + HOOKS[LRN.t.id].title : ""}</summary><div id="animHost"></div></details>
+    <div class="row"><button class="btn" id="go" type="button">Your turn: same type ↵</button></div>`;
+  $("replay").ontoggle = () => { if($("replay").open && !$("animHost").innerHTML) mountAnim(LRN.t.id, $("animHost")); };
+  $("go").onclick = () => showTurn(false); $("go").focus();
+}
+function showTurn(extra){
+  const pr = LRN.pairs[LRN.pos], counted = !extra;
+  LRN.hinted = false; LRN.answered = false; LRN.counted = counted;
+  if(LRN.t.kind === "gen"){
+    const it = makeItem(pr.target, {nopts:4}); LRN.it = it;
+    const ans = it.kind === "mc"
+      ? `<div class="opts wide" id="opts">${it.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${it.letters ? "abcde"[j] : j + 1}</span>${it.codeOpts ? `<span class="code-o">${esc(o)}</span>` : `<span style="font-weight:400">${o}</span>`}</button>`).join("")}</div>`
+      : `<div class="row" style="flex-wrap:nowrap"><input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="a whole number" aria-label="Your answer"><button class="btn" id="check" type="button">Check</button></div>`;
+    $("stage").innerHTML = `${lmeta(counted ? "your turn" : "extra practice (not counted)")}<span class="lbl">Your turn: work it out on paper, then answer</span>${itemHead(it)}${ans}
+      <div class="row"><button class="btn ghost" id="hint" type="button">Show the rule</button><div id="hintout" style="flex-basis:100%"></div></div><div id="fb"></div>`;
+    if($("opts")) $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => learnGenAnswer(+b.dataset.j));
+    if($("typed")){ $("typed").focus(); $("typed").onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); if(!LRN.answered) learnGenAnswer($("typed").value); } }; $("check").onclick = () => learnGenAnswer($("typed").value); }
+    $("hint").onclick = () => { LRN.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = cardHTML(pr.target); };
+  } else {
+    const p = extra ? pick(CODE.filter(c => c.fam === LRN.t.sk && c.id !== pr.you.id)) : pr.you; LRN.p = p; LRN.runs = 0;
+    $("stage").innerHTML = `${lmeta(counted ? "your turn" : "extra practice (not counted)")}<span class="lbl">Your turn: write the whole function, then run the tests</span>${codeHTML(p, "ed", {hint:true})}<div id="fb"></div>`;
+    tabbable($("ed"));
+    $("ed_run").onclick = learnCodeRun;
+    $("ed_hint").onclick = () => { LRN.hinted = true; $("ed_hint").disabled = true; $("ed_out").innerHTML = cardHTML(LRN.t.sk); };
+    $("ed").focus();
+  }
+}
+function learnGenAnswer(choice){
+  if(LRN.answered) return;
+  const it = LRN.it; let ok, rightIdx = -1, why = "";
+  if(it.kind === "mc"){ ok = choice === it.ans; rightIdx = it.ans; if(!ok) why = it.why[choice] || ""; }
+  else { const s = String(choice).trim(); ok = /^-?\d+$/.test(s) && +s === it.ans; if(!ok){ const a = it.alts.get(+s); if(a) why = a.why; } $("typed").disabled = true; $("check").disabled = true; }
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if(k === rightIdx) b.classList.add("right"); else if(k === choice) b.classList.add("wrong"); });
+  LRN.answered = true; $("hint").disabled = true;
+  learnScore(ok && !LRN.hinted, it.target);
+  const head = it.kind === "mc" ? `(${it.letters ? "abcde"[it.ans] : it.ans + 1})` : `${it.ans}`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}"><h3>${ok ? (LRN.hinted ? "Right, but with the rule shown" : "Right") : "Not yet"}: ${head}</h3>${why ? `<div><b>Your answer:</b> ${why}</div>` : ""}<div>${it.explain}</div>${ok ? "" : cardHTML(it.target)}</div>${learnNav(ok)}`;
+  wireLearnNav();
+}
+function learnCodeRun(){
+  const p = LRN.p, g = gradeC(p, $("ed").value), all = !g.err && g.pass === g.total;
+  LRN.runs++;
+  if(LRN.runs === 1) learnScore(all && !LRN.hinted, LRN.t.sk);
+  $("ed_out").innerHTML = resultHTML(g, p, all || LRN.runs >= 2);
+  $("fb").innerHTML = all || LRN.runs >= 2 ? learnNav(all) : `<p class="small" style="margin:0">Fix it and run again. After a second run the model solution appears.</p>`;
+  wireLearnNav();
+}
+function learnScore(clean, sk){
+  if(!LRN.counted || LRN.scored) return;
+  LRN.scored = true; if(clean) LRN.clean++;
+  record(sk, clean); save(); renderMastery();
+}
+const learnNav = ok => `<div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">${LRN.pos + 1 < LRN.n ? "Next worked example ↵" : "Finish topic ↵"}</button>${ok ? "" : `<button class="btn ghost" id="more" type="button">Another one of this type</button>`}</div>`;
+function wireLearnNav(){
+  if($("next")){ $("next").onclick = learnNext; $("next").focus(); }
+  if($("more")) $("more").onclick = () => { LRN.scored = true; showTurn(true); };
+}
+function learnNext(){
+  LRN.pos++; LRN.scored = false;
+  if(LRN.pos < LRN.n){ showExample(); return; }
+  const t = LRN.t;
+  S.learn[t.id] = {done:true, clean:Math.max(LRN.clean, (S.learn[t.id] && S.learn[t.id].clean) || 0), n:LRN.n};
+  const all = TOPICS.every(x => S.learn[x.id] && S.learn[x.id].done);
+  if(all){ S.passed[0] = true; S.best[0] = 1; S.unlocked = Math.max(S.unlocked, 2); }
+  save(); renderLadder();
+  $("stage").innerHTML = `<div class="meta"><span>Learn · ${t.name}</span><span>topic done</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${LRN.clean} / ${LRN.n}</span><span class="pill ${LRN.clean === LRN.n ? "ok" : "no"}">clean on the first try</span></div>
+    ${HOOKS[t.id] ? `<div class="recall"><span class="lbl">Memory check: say the hook out loud, then reveal it</span><details><summary>${HOOKS[t.id].title}: reveal</summary><div class="hook"><div class="hk">${HOOKS[t.id].hook}</div><div class="small">${HOOKS[t.id].key}</div></div></details></div>` : ""}
+    <p style="margin:0">${all ? "Every topic is learned. Rung 2 is open: the drills start there." : LRN.clean === LRN.n ? "All clean. Next topic." : "Some weren't clean. Repeat this topic now, or come back to it after the next one."}</p>
+    <div class="row"><button class="btn" id="go" type="button">${all ? "Go to rung 2" : "All topics"}</button><button class="btn ghost" id="again" type="button">Repeat this topic</button></div>`;
+  $("go").onclick = () => all ? openStage(1) : openLearn(); $("again").onclick = () => startTopic(LRN.k); $("go").focus();
+}
+
+/* ================= Write functions rung ================= */
+const FAMW = {c_cond:.6, c_loop:.7, c_red:1.4, c_stat:1.3, c_pred:1.3};
+function pickCode(n){
+  const fams = Object.keys(FAMW), out = [];
+  while(out.length < n){
+    const w = fams.map(f => (S.seen[f] ? 6 - mOf(f) : 7) * FAMW[f]), tot = w.reduce((a, b) => a + b, 0);
+    let x = Math.random() * tot, i = 0; while((x -= w[i]) > 0 && i < fams.length - 1) i++;
+    const pool = CODE.filter(c => c.fam === fams[i] && !out.includes(c));
+    if(pool.length) out.push(pick(pool));
+  }
+  return out;
+}
+let CR = null;
+function startCode(i){
+  CR = {i, st:STAGES[i], queue:pickCode(STAGES[i].len), pos:0, clean:0, misses:[]};
+  showCode();
+}
+function showCode(){
+  const p = CR.queue[CR.pos]; CR.runs = 0;
+  $("stage").innerHTML = `<div class="meta"><span>Rung ${CR.i + 1} · ${CR.st.name} · ${SK[p.fam].label}</span><span><b>${CR.pos}</b> / ${CR.queue.length} · clean <b>${CR.clean}</b></span></div>
+    <div class="bar"><i style="width:${CR.pos / CR.queue.length * 100}%"></i></div>${codeHTML(p, "ed")}<div id="fb"></div>`;
+  tabbable($("ed")); $("ed_run").onclick = codeRun; $("ed").focus();
+}
+function codeRun(){
+  const p = CR.queue[CR.pos], g = gradeC(p, $("ed").value), all = !g.err && g.pass === g.total;
+  CR.runs++;
+  if(CR.runs === 1){ if(all) CR.clean++; else CR.misses.push({k:p.fam, html:`<code>${p.id}</code> (${p.hw})`}); record(p.fam, all); S.cm[p.id] = all ? 1 : 0; save(); renderMastery(); }
+  $("ed_out").innerHTML = resultHTML(g, p, all || CR.runs >= 2);
+  $("fb").innerHTML = all || CR.runs >= 2 ? `<div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>` : `<p class="small" style="margin:0">Fix it and run again (it no longer counts as clean). The model solution appears after the second run.</p>`;
+  if($("next")){ $("next").onclick = codeNext; $("next").focus(); }
+}
+function codeNext(){ CR.pos++; if(CR.pos >= CR.queue.length) finish(CR.i, CR.clean / CR.queue.length, CR.misses); else showCode(); }
+
+function openStage(i){
+  cur = i; renderLadder();
+  if(STAGES[i].kind === "learn"){ openLearn(); return; }
+  const st = STAGES[i], locked = i + 1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} of ${STAGES.length}</span><span>Pass mark: <b>${Math.round(st.pass * 100)}%</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${locked ? `<p class="small" style="margin:0">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked ? "Start anyway" : "Start round"}</button>
+    <span class="small">${st.kind === "single" ? "Keys: 1–5 to answer, Enter for next." : st.kind === "code" ? "Write, then Run tests. Tab indents." : "One submit at the end."}</span></div>`;
+  $("go").onclick = () => start(i);
+  $("go").focus();
+}
+const start = i => STAGES[i].kind === "exam" ? startExam(i) : STAGES[i].kind === "code" ? startCode(i) : STAGES[i].kind === "learn" ? openLearn() : startSingle(i);
+
+/* ----- single items ----- */
+let R = null;
+function startSingle(i){
+  const st = STAGES[i], queue = pickSkills(st.len).map(k => makeItem(k, st));
+  R = {i, st, queue, pos:0, total:queue.length, clean:0, misses:[], answered:false, hinted:false};
+  showItem();
+}
+function numOptions(it, n){
+  const opts = [it.ans];
+  for(const v of it.alts.keys()) if(opts.length < n && !opts.includes(v)) opts.push(v);
+  for(const c of shuffle([it.ans + 1, it.ans - 1, 1 - it.ans, -it.ans, it.ans + 2])) if(opts.length < n && !opts.includes(c)) opts.push(c);
+  return shuffle(opts).map(String);
+}
+function itemHead(it){
+  let h = "";
+  if(it.pre) h += `<div class="small">${it.pre}</div>`;
+  if(it.codeLbl) h += `<div class="small">${it.codeLbl}</div>`;
+  if(it.code) h += `<pre class="code">${esc(it.code)}</pre>`;
+  return h + `<div class="prompt">${it.prompt}</div>`;
+}
+function showItem(){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false;
+  const done = R.queue.slice(0, R.pos).filter(q => !q.retry).length;
+  let ans;
+  if(it.kind === "mc"){
+    R.list = it.list;
+    ans = `<div class="opts wide" id="opts">${it.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${it.letters ? "abcde"[j] : j + 1}</span>${it.codeOpts ? `<span class="code-o">${esc(o)}</span>` : `<span style="font-weight:400">${o}</span>`}</button>`).join("")}</div>`;
+  } else if(!st.typed){
+    R.list = numOptions(it, st.nopts);
+    ans = `<div class="opts" id="opts">${R.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${j + 1}</span><span>${o}</span></button>`).join("")}</div>`;
+  } else ans = `<div class="row" style="flex-wrap:nowrap"><input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="a whole number" aria-label="Your answer"><button class="btn" id="check" type="button">Check</button></div>`;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i + 1} · ${st.name} · ${SK[it.target].g}</span><span><b>${done}</b> / ${R.total} · clean <b>${R.clean}</b></span></div>
+    <div class="bar"><i style="width:${done / R.total * 100}%"></i></div>
+    ${it.retry ? `<span class="lbl">Again, a new question on the same rule</span>` : ""}
+    ${itemHead(it)}${st.card ? cardHTML(it.target) : ""}${ans}
+    <div class="row">${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint</button>` : ""}<div id="hintout" style="flex-basis:100%"></div></div>
+    <div id="fb"></div>`;
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.j));
+  if($("typed")){
+    $("typed").focus();
+    $("typed").onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); R.answered ? next() : answer($("typed").value); } };
+    $("check").onclick = () => answer($("typed").value);
+  }
+  if($("hint")) $("hint").onclick = () => { R.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = cardHTML(it.target); };
+}
+function answer(choice){
+  if(R.answered) return;
+  const it = R.queue[R.pos], st = R.st;
+  let ok, why = "", diag = null, rightIdx = -1;
+  if(it.kind === "mc"){
+    ok = choice === it.ans; rightIdx = it.ans;
+    if(!ok){ why = it.why[choice] || ""; diag = it.diag ? it.diag[choice] : null; }
+  } else {
+    const s = st.typed ? String(choice).trim() : R.list[choice];
+    ok = /^-?\d+$/.test(s) && +s === it.ans;
+    if(!ok){ const a = it.alts.get(+s); if(a && /^-?\d+$/.test(s)){ why = a.why; diag = a.sk; } }
+    if(!st.typed) rightIdx = R.list.indexOf(String(it.ans));
+    if($("typed")){ $("typed").disabled = true; $("check").disabled = true; }
+  }
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if(k === rightIdx) b.classList.add("right"); else if(k === choice) b.classList.add("wrong"); });
+  if($("hint")) $("hint").disabled = true;
+  R.answered = true;
+  const clean = ok && !R.hinted;
+  if(!it.retry){
+    if(clean) R.clean++; else R.misses.push({k:diag && SK[diag] ? diag : it.target, html:missLine(it)});
+    record(it.target, clean); if(diag && diag !== it.target) record(diag, false);
+    save(); renderMastery();
+  }
+  if(!ok && st.retry){ const again = Object.assign(makeItem(it.target, st), {retry:true}); R.queue.splice(Math.min(R.pos + 3, R.queue.length), 0, again); }
+  const head = it.kind === "mc" ? `(${it.letters ? "abcde"[it.ans] : it.ans + 1})` : `${it.ans}`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}">
+      <h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}: ${head}</h3>
+      ${why ? `<div><b>Your answer:</b> ${why}</div>` : ""}
+      <div>${it.explain}</div>
+      ${!ok ? cardHTML(diag && SK[diag] ? diag : it.target) : ""}
+    </div><div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next;
+  $("next").focus();
+}
+function missLine(it){
+  if(it.kind === "num") return `${it.prompt.replace(/^What (is the value of|does) /, "").replace(/ \?$|\?$/, "")} → ${it.ans}`;
+  if(it.codeOpts) return it.prompt.replace(/^Which body correctly implements /, "").replace(/\?$/, "");
+  return `${it.prompt} → (${"abcde"[it.ans]}) ${it.list[it.ans]}`;
+}
+function next(){
+  R.pos++;
+  if(R.pos >= R.queue.length) finish(R.i, R.clean / R.total, R.misses);
+  else showItem();
+}
+
+/* ----- exam replica ----- */
+let X = null;
+function startExam(i){
+  const st = STAGES[i], kinds = shuffle(["b_io","b_task"]);
+  const cnt = shuffle(VARIANTS.filter(v => v.kind === "count"))[0], sum = shuffle(VARIANTS.filter(v => v.kind === "sum"))[0];
+  const digitQ = {kind:"digQ", pts:20, fns:[cnt, sum].map(v => ({v, lines:digitCode(v), calls:q4Inputs().map(n => ({n, r:digitRun(v, n)}))}))};
+  const qs = [
+    Object.assign(genBuild(kinds[0]), {pts:5}),
+    {kind:"defQ", pts:10, parts:[genDefect(null, false), genDefect(null, false)]},
+    Object.assign(genBuild(kinds[1]), {pts:5}),
+    digitQ, genQ5(),
+    ...shuffle(CODE.filter(c => /^HW2\.3|PE2/.test(c.hw))).slice(0, 4).map(p => ({kind:"codeQ", pts:10, prob:p}))
+  ];
+  X = {i, st, qs, done:false};
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name}</span><span>9 questions · 100 points</span></div>
+    ${qs.map((q, n) => `<section class="q"><h3><span>Question ${n + 1}</span><span id="qs${n}">${q.pts} pts</span></h3><div class="qb">${examQHTML(q, n)}</div></section>`).join("")}
+    <div class="row"><button class="btn" id="grade" type="button">Save &amp; grade all</button><span class="small" id="gmsg"></span></div>
+    <div id="fb"></div>`;
+  $("grade").onclick = gradeExam;
+  $("stage").querySelectorAll("textarea.ed").forEach(tabbable);
+  window.scrollTo({top:0});
+}
+const radios = (name, list) => `<div class="radio">${list.map((o, j) => `<label id="${name}_l${j}"><input type="radio" name="${name}" value="${j}"> (${"abcde"[j]}) ${o}</label>`).join("")}</div>`;
+function examQHTML(q, n){
+  if(q.kind === "codeQ") return codeHTML(q.prob, `x${n}_0`, {noRun:true});
+  if(q.kind === "mc") return `<div>${q.prompt}</div>${radios(`x${n}_0`, q.list)}<div id="xr${n}_0"></div>`;
+  if(q.kind === "defQ") return q.parts.map((p, r) => `<div class="small">${p.pre}</div><pre class="code">${esc(p.code)}</pre><div>${p.prompt}</div>${radios(`x${n}_${r}`, p.list)}<div id="xr${n}_${r}"></div>`).join("<hr style='border:0;border-top:1px solid var(--line);width:100%'>");
+  if(q.kind === "digQ") return `<div class="two">${q.fns.map(f => `<pre class="code">${esc(numbered(f.lines))}</pre>`).join("")}</div>
+    <div>The <code>digit_count</code> function should return the count of decimal digits in its argument, while <code>digit_sum</code> should return the sum of those digits. However, the functions may have implementation errors and return unexpected results on certain inputs. Evaluate each call.</div>
+    <div class="calls">${[0, 1, 2, 3, 4].map(r => q.fns.map((f, c) => { const id = `x${n}_${c * 5 + r}`, fn = f.v.kind === "count" ? "digit_count" : "digit_sum"; return `<div><div class="call"><code>${fn}(${f.calls[r].n})</code><input type="text" id="${id}" autocomplete="off" aria-label="${fn}(${f.calls[r].n})"></div><div class="res" id="xr${n}_${c * 5 + r}"></div></div>`; }).join("")).join("")}</div>`;
+  return `<div>Given the following variable declarations:</div><pre class="code">${esc(q.decl)}</pre><div>What is the <i>value</i> of each expression?</div>
+    <div class="rows5">${q.rows.map((r, j) => `<div class="r5"><code>${esc(r.src)}</code><input type="text" id="x${n}_${j}" autocomplete="off" aria-label="Value of ${esc(r.src)}"><div class="res" id="xr${n}_${j}"></div></div>`).join("")}</div>`;
+}
+function gradeExam(){
+  if(X.done) return;
+  const blanks = [...$("stage").querySelectorAll("input[type=text]")].filter(e => !e.value.trim()).length + X.qs.reduce((a, q, n) => a + (q.kind === "mc" ? +!document.querySelector(`input[name=x${n}_0]:checked`) : q.kind === "defQ" ? q.parts.filter((_, r) => !document.querySelector(`input[name=x${n}_${r}]:checked`)).length : 0), 0);
+  if(blanks && $("gmsg").dataset.warned !== "1"){ $("gmsg").textContent = `${blanks} answers left blank. Press again to grade anyway.`; $("gmsg").dataset.warned = "1"; return; }
+  X.done = true;
+  let got = 0; const per = [], misses = [];
+  const res = (id, ok, html) => { const el = $(id); if(el){ el.className = "res " + (ok ? "ok" : "no"); el.innerHTML = html; } };
+  const gradeMC = (it, name, rid, pts) => {
+    const c = document.querySelector(`input[name=${name}]:checked`), j = c ? +c.value : -1, ok = j === it.ans;
+    document.querySelectorAll(`input[name=${name}]`).forEach(x => x.disabled = true);
+    $(`${name}_l${it.ans}`).classList.add("okc"); if(!ok && j >= 0) $(`${name}_l${j}`).classList.add("noc");
+    record(it.target, ok); if(!ok) misses.push({k:it.target, html:missLine(it)});
+    res(rid, ok, `${ok ? "✓" : `✗ (${"abcde"[it.ans]})`}<details ${ok ? "" : "open"}><summary class="small">why</summary>${it.explain}</details>`);
+    return ok ? pts : 0;
+  };
+  X.qs.forEach((q, n) => {
+    let pts = 0;
+    if(q.kind === "mc") pts = gradeMC(q, `x${n}_0`, `xr${n}_0`, 5);
+    else if(q.kind === "defQ") q.parts.forEach((p, r) => { pts += gradeMC(p, `x${n}_${r}`, `xr${n}_${r}`, 5); });
+    else if(q.kind === "digQ"){
+      q.fns.forEach((f, c) => f.calls.forEach((call, r) => {
+        const el = $(`x${n}_${c * 5 + r}`), s = el.value.trim(), ok = /^-?\d+$/.test(s) && +s === call.r.val, sk = call.n === 0 ? "t_zero" : call.n < 0 ? "t_neg" : "t_trace";
+        el.disabled = true; el.classList.add(ok ? "ok" : "no"); if(ok) pts += 2;
+        const a = ok ? null : digitAlts(f.v, call.n, call.r.val).get(+s);
+        record(a ? a.sk : sk, ok);
+        if(!ok) misses.push({k:a ? a.sk : sk, html:`<code>${f.v.kind === "count" ? "digit_count" : "digit_sum"}(${call.n})</code> → ${call.r.val}`});
+        res(`xr${n}_${c * 5 + r}`, ok, ok ? "✓" : `✗ <b>${call.r.val}</b>${a ? " · " + a.why : ""}<details><summary class="small">trace</summary><ol>${call.r.steps.map(s => `<li>${s}</li>`).join("")}</ol></details>`);
+      }));
+    } else if(q.kind !== "codeQ"){
+      q.rows.forEach((row, j) => {
+        const el = $(`x${n}_${j}`), s = el.value.trim(), ok = /^-?\d+$/.test(s) && +s === row.ans;
+        el.disabled = true; el.classList.add(ok ? "ok" : "no"); if(ok) pts += 2;
+        const a = ok ? null : row.alts.get(+s);
+        (a ? [a.sk] : row.sk).forEach(k => record(k, ok));
+        if(!ok) misses.push({k:a ? a.sk : row.sk[0], html:`<code>${esc(row.src)}</code> → ${row.ans}`});
+        res(`xr${n}_${j}`, ok, ok ? "✓" : `✗ <b>${row.ans}</b>${a ? " · " + a.why : ""}<details><summary class="small">steps</summary>${row.explain}</details>`);
+      });
+    }
+    if(q.kind === "codeQ"){
+      const ta = $(`x${n}_0`), g = gradeC(q.prob, ta.value), all = !g.err && g.pass === g.total;
+      ta.readOnly = true;
+      pts = g.err ? 0 : Math.round(10 * g.pass / g.total);
+      record(q.prob.fam, all); S.cm[q.prob.id] = all ? 1 : 0;
+      if(!all) misses.push({k:q.prob.fam, html:`<code>${q.prob.id}</code> (${q.prob.hw}): ${g.err ? "didn't compile" : `${g.pass} / ${g.total} tests`}`});
+      $(`x${n}_0_out`).innerHTML = resultHTML(g, q.prob, true);
+    }
+    got += pts; per.push(pts); $(`qs${n}`).textContent = `${pts} / ${q.pts}`;
+  });
+  save(); renderMastery();
+  $("grade").disabled = true;
+  X.result = {score:got / 100, got, total:100, per, misses};
+  $("fb").innerHTML = `<div class="row"><b>${got} / 100</b><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(X.i, X.result.score, X.result.misses, X.result);
+  $("next").focus();
+}
+
+/* ----- results ----- */
+function finish(i, score, misses, exam){
+  const st = STAGES[i], passed = score >= st.pass - 1e-9, last = STAGES.length - 1;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(STAGES.length, i + 2)); }
+  save(); renderLadder();
+  const by = {}; misses.forEach(m => (by[m.k] = by[m.k] || []).push(m.html));
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name} · round over</span><span>Pass mark ${Math.round(st.pass * 100)}%</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${exam ? exam.got + " / 100" : Math.round(score * 100) + "%"}</span>
+      <span class="pill ${passed ? "ok" : "no"}">${passed ? (i < last ? "Passed · rung " + (i + 2) + " unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${exam ? `<div class="qscore">${exam.per.map((p, n) => `<div>Q${n + 1}: <b>${p}</b> / ${X.qs[n].pts}</div>`).join("")}</div>` : ""}
+    ${misses.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Rules to review</h3><ul class="missl">${Object.entries(by).map(([k, l]) => `<li><b>${SK[k].label}</b>: <span class="small">${CARDS[k].replace(/<[^>]+>/g, "")}</span><br>${l.slice(0, 4).join("<br>")}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">
+      ${passed && i < last ? `<button class="btn" id="nx" type="button">Go to rung ${i + 2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>`
+                           : `<button class="btn" id="again" type="button">${passed ? "Play again" : "Try again"}</button>`}
+    </div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i + 1);
+  ($("nx") || $("again")).focus();
+  window.scrollTo({top:0});
+}
+
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if(R && $("opts") && !R.answered && /^[1-5]$/.test(e.key)){
+    const b = document.querySelector(`.opt[data-j="${+e.key - 1}"]`); if(b){ e.preventDefault(); b.click(); }
+  } else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+renderMastery(); renderSheet();
+openStage(Math.min(S.unlocked, STAGES.length) - 1);
+</script>
+</body>
+</html>
+
+</body></html>

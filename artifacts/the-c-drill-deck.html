@@ -1,0 +1,904 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>The C Drill Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,400&display=swap">
+
+<style>
+  :root {
+    --bg:        #f2f0f3;
+    --surface:   #fdfcfd;
+    --surface-2: #eae6ec;
+    --ink:       #1a1620;
+    --ink-2:     #5f5769;
+    --ink-3:     #8b8395;
+    --line:      #ddd6e1;
+    --line-2:    #c9c0ce;
+    --accent:    #8b2f7d;
+    --accent-sf: #f6e9f4;
+    --on-accent: #ffffff;
+    --ok:        #14714a;
+    --ok-sf:     #e4f2ea;
+    --bad:       #ad2a20;
+    --bad-sf:    #f8e8e6;
+    --term-bg:   #221c28;
+    --term-ink:  #efe9f2;
+    --term-dim:  #9d90a8;
+    --term-num:  #f0a6df;
+
+    --shadow: 0 1px 2px rgba(26,22,32,.05), 0 6px 20px -12px rgba(26,22,32,.22);
+    --radius: 4px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #15111b;
+      --surface:   #1e1926;
+      --surface-2: #282132;
+      --ink:       #ece7f0;
+      --ink-2:     #a99fb4;
+      --ink-3:     #7c7288;
+      --line:      #322a3d;
+      --line-2:    #453b52;
+      --accent:    #e58ad4;
+      --accent-sf: #2e2036;
+      --on-accent: #1a1620;
+      --ok:        #58c78d;
+      --ok-sf:     #172b22;
+      --bad:       #ff7d6f;
+      --bad-sf:    #32201e;
+      --term-bg:   #100c15;
+      --term-ink:  #ece7f0;
+      --term-dim:  #8b8095;
+      --term-num:  #e58ad4;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px -12px rgba(0,0,0,.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #15111b;
+    --surface:   #1e1926;
+    --surface-2: #282132;
+    --ink:       #ece7f0;
+    --ink-2:     #a99fb4;
+    --ink-3:     #7c7288;
+    --line:      #322a3d;
+    --line-2:    #453b52;
+    --accent:    #e58ad4;
+    --accent-sf: #2e2036;
+    --on-accent: #1a1620;
+    --ok:        #58c78d;
+    --ok-sf:     #172b22;
+    --bad:       #ff7d6f;
+    --bad-sf:    #32201e;
+    --term-bg:   #100c15;
+    --term-ink:  #ece7f0;
+    --term-dim:  #8b8095;
+    --term-num:  #e58ad4;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .mast {
+    padding: 52px 0 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(30px, 6vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .lede {
+    color: var(--ink-2);
+    font-size: 16px;
+    margin: 0;
+    max-width: 56ch;
+  }
+
+  /* ---------- scoreboard ---------- */
+
+  .board {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    margin: 0 -20px 40px;
+    padding: 11px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .tally {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .tally b { color: var(--ink); font-weight: 600; }
+  .meter {
+    flex: 1 1 140px;
+    height: 5px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 100px;
+  }
+  .meter span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--ok);
+    transition: width .35s ease;
+  }
+  .reset {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .05em;
+    background: none;
+    border: none;
+    color: var(--ink-3);
+    cursor: pointer;
+    padding: 3px 2px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .reset:hover { color: var(--accent); }
+
+  /* ---------- sections ---------- */
+
+  section { margin: 0 0 52px; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .sec-letter {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .08em;
+  }
+  .sec-head h2 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+  .sec-note {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin: 12px 0 26px;
+    max-width: 60ch;
+  }
+
+  /* ---------- question card ---------- */
+
+  .q {
+    border-top: 1px solid var(--line);
+    padding: 22px 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+  .q:first-of-type { border-top: none; }
+
+  .q-top {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .q-id {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+    padding-top: 2px;
+  }
+  .q-ask { margin: 0; flex: 1 1 auto; }
+
+  pre.term {
+    margin: 0;
+    background: var(--term-bg);
+    color: var(--term-ink);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    tab-size: 4;
+  }
+  pre.term .cm { color: var(--term-dim); }
+  pre.term .nm { color: var(--term-num); }
+
+  /* ---------- answering ---------- */
+
+  .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  input.ans {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    padding: 8px 11px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    flex: 1 1 190px;
+    min-width: 0;
+  }
+  input.ans::placeholder { color: var(--ink-3); }
+  input.ans:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    padding: 8px 15px;
+    border: 1px solid transparent;
+    transition: background .12s ease, color .12s ease;
+  }
+  .check { background: var(--accent); color: var(--on-accent); }
+  .check:hover { filter: brightness(1.1); }
+  .ghost {
+    background: none;
+    border-color: var(--line-2);
+    color: var(--ink-2);
+  }
+  .ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+
+  /* multiple choice */
+  .opts { display: flex; flex-direction: column; gap: 6px; }
+  .opt {
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 9px 13px;
+    font-size: 14px;
+    line-height: 1.45;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt .mark {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    flex: 0 0 auto;
+  }
+  .opt code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .opt.picked-ok  { border-color: var(--ok);  background: var(--ok-sf); }
+  .opt.picked-bad { border-color: var(--bad); background: var(--bad-sf); }
+  .opt.reveal     { border-color: var(--ok); }
+  .opt[disabled]  { cursor: default; opacity: 1; }
+
+  /* ---------- verdict + explanation ---------- */
+
+  .verdict {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    font-weight: 500;
+    display: none;
+  }
+  .verdict.good { color: var(--ok); display: block; }
+  .verdict.miss { color: var(--bad); display: block; }
+
+  .why {
+    display: none;
+    border-left: 2px solid var(--accent);
+    background: var(--accent-sf);
+    padding: 12px 15px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .why.show { display: block; }
+  .why p { margin: 0 0 8px; }
+  .why p:last-child { margin: 0; }
+  .why code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .why b { font-weight: 600; }
+
+  .q.done .q-id { color: var(--ok); }
+  .q.fail .q-id { color: var(--bad); }
+
+  /* ---------- write-it-yourself ---------- */
+
+  .task {
+    border-top: 1px solid var(--line);
+    padding: 18px 0;
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .task:first-of-type { border-top: none; }
+  .task .q-id { padding-top: 0; }
+  .task-body { flex: 1 1 auto; }
+  .task-body h3 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .task-body p { margin: 0 0 8px; color: var(--ink-2); font-size: 14px; }
+  .hint {
+    font-size: 13px;
+    color: var(--ink-3);
+    font-style: italic;
+  }
+
+  .shell {
+    margin: 8px 0 0;
+    background: var(--term-bg);
+    color: var(--term-ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    padding: 12px 15px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  .shell .cm { color: var(--term-dim); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 44px;
+    padding-top: 18px;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="kicker">Module 1 · Tokens, types, expressions</p>
+    <h1>The C Drill Deck</h1>
+    <p class="lede">Sixty-one questions in the exact shapes your homework and exam use. Commit to an answer before you check it — a guess you had to defend is worth ten answers you read.</p>
+  </header>
+
+  <div class="board">
+    <span class="tally"><b id="right">0</b> right · <b id="attempted">0</b> of <b id="total">0</b> tried</span>
+    <span class="meter"><span id="fill"></span></span>
+    <button class="reset" id="reset">clear progress</button>
+  </div>
+
+  <main id="deck"></main>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-letter">H</span>
+      <h2>Write it yourself</h2>
+    </div>
+    <p class="sec-note">Reading C and writing C are different skills, and only one of them is tested by prediction questions. Each of these is ten minutes of work and forces a rule to become reflex.</p>
+
+    <div class="task">
+      <span class="q-id">H1</span>
+      <div class="task-body">
+        <h3>Seconds to clock time</h3>
+        <p>Read a number of seconds into an <code>int</code> (hard-code it for now), then print it as hours, minutes and seconds. 3725 should print <code>1:02:05</code>.</p>
+        <p class="hint">Every piece is one <code>/</code> or one <code>%</code>. No other operator is needed.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <span class="q-id">H2</span>
+      <div class="task-body">
+        <h3>The average that lies</h3>
+        <p>Declare <code>int a = 7, b = 2;</code> and print their average two ways: once so it prints <code>3</code>, and once so it prints <code>3.5</code>. Same two variables both times.</p>
+        <p class="hint">The fix is a cast on one operand. Casting the <em>result</em> is too late — the damage happens during the division.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <span class="q-id">H3</span>
+      <div class="task-body">
+        <h3>Prove the division identity</h3>
+        <p>For any integers <code>a</code> and <code>b</code>, <code>(a/b)*b + (a%b)</code> should equal <code>a</code>. Print both sides for a few pairs, including negative ones like −17 and 5.</p>
+        <p class="hint">This is why C defines <code>%</code> the way it does. The identity is the whole reason the remainder takes the left operand's sign.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <span class="q-id">H4</span>
+      <div class="task-body">
+        <h3>Break it on purpose</h3>
+        <p>In one file, write each of these on its own line, compile, and read the error: <code>5 = x;</code> &nbsp; <code>int 2nd = 4;</code> &nbsp; <code>int double = 1;</code> &nbsp; <code>++x--;</code></p>
+        <p class="hint">Fix them one at a time. Learning to read gcc's error text is worth more than any single rule in this module.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <span class="q-id">H5</span>
+      <div class="task-body">
+        <h3>Trace before you run</h3>
+        <p>Write a program with <code>int x = 5;</code> followed by six lines that each modify x with a different operator (<code>+=</code>, <code>*=</code>, <code>%=</code>, <code>++</code>, <code>-=</code>, <code>/=</code>), printing x after each. Predict all six values on paper first, then run it.</p>
+        <p class="hint">If you got all six, you've finished this module. If you missed one, that operator is the one to review.</p>
+      </div>
+    </div>
+
+    <pre class="shell"><span class="cm"># compile and run anything you write</span>
+cd "D:\shopify AI toolkit\c-course"
+gcc -std=c99 -Wall myfile.c -o myfile.exe &amp;&amp; ./myfile.exe</pre>
+  </section>
+
+  <footer>
+    Every answer here was compiled and verified with gcc 14.2.0 before it was written down. Progress is stored in this browser only.
+  </footer>
+</div>
+
+<script>
+const DECK = [
+  {
+    letter: "A",
+    title: "Tokens and names",
+    note: "The cheapest points on any exam. Five categories of token, three rules for identifiers, and that is the entire first section of the course.",
+    qs: [
+      { id:"A1", kind:"choice",
+        ask:"In the line <code>int count = 42;</code>, what kind of token is <code>42</code>?",
+        opts:["An identifier","A literal","An operator","A keyword"], correct:1,
+        why:"<p>A <b>literal</b> is a value written directly into the source text. The full breakdown of that line: <code>int</code> keyword, <code>count</code> identifier, <code>=</code> operator, <code>42</code> literal, <code>;</code> punctuation — all five token categories in one statement.</p>" },
+
+      { id:"A2", kind:"choice",
+        ask:"Which of these is <b>not</b> a legal identifier?",
+        opts:["<code>_total</code>","<code>myVar2</code>","<code>2ndPlace</code>","<code>count_1</code>"], correct:2,
+        why:"<p>An identifier may contain letters, digits and underscores, but it <b>cannot start with a digit</b>. Underscores are fine anywhere, including first.</p>" },
+
+      { id:"A3", kind:"choice",
+        ask:"Why does <code>int double = 5;</code> fail to compile?",
+        opts:["<code>double</code> is already declared elsewhere","You cannot assign 5 to a double","<code>double</code> is a keyword","Identifiers cannot be six letters"], correct:2,
+        why:"<p><code>double</code> is a reserved <b>keyword</b> — a type specifier. Keywords are off-limits as identifiers. This is the second of the three identifier rules.</p>" },
+
+      { id:"A4", kind:"choice",
+        ask:"C has how many built-in identifiers you can use without declaring them?",
+        opts:["None — every identifier must be declared first","About 30","Only <code>main</code> and <code>printf</code>","Unlimited"], correct:0,
+        why:"<p><b>None.</b> Every name in a C program was declared by somebody. <code>printf</code> feels built in, but it is declared in <code>stdio.h</code> — which is exactly what <code>#include &lt;stdio.h&gt;</code> pulls in.</p>" },
+
+      { id:"A5", kind:"choice",
+        ask:"What is the difference between an expression and a statement?",
+        opts:["Statements are longer","An expression produces a value; a statement performs an action and ends in <code>;</code>","They are the same thing","Expressions must contain an operator"], correct:1,
+        why:"<p><code>a + b</code> is an expression: it produces 7 and does nothing else. <code>int t = a + b;</code> is a statement: it acts, and closes with a semicolon. The semicolon is the period at the end of the sentence.</p>" }
+    ]
+  },
+
+  {
+    letter: "B",
+    title: "Integer division and modulo",
+    note: "The single most reliable source of exam questions and of silent bugs in real programs. Type the number you would expect printed by %d.",
+    qs: [
+      { id:"B1", kind:"input", ask:"<code>printf(\"%d\", 17 / 5);</code>", ans:["3"], ph:"a whole number",
+        why:"<p><b>3.</b> Both operands are <code>int</code>, so integer division runs and the remainder is thrown away — not rounded. 3.4 does not become 3.4 or 4. It becomes 3.</p>" },
+      { id:"B2", kind:"input", ask:"<code>printf(\"%d\", 17 % 5);</code>", ans:["2"], ph:"a whole number",
+        why:"<p><b>2.</b> <code>%</code> gives you only what was left over: 17 = 5×3 + 2.</p>" },
+      { id:"B3", kind:"input", ask:"<code>printf(\"%d\", (17 / 5) * 5 + (17 % 5));</code>", ans:["17"], ph:"a whole number",
+        why:"<p><b>17.</b> <code>(3 × 5) + 2</code>. This identity — <code>(a/b)*b + a%b == a</code> — holds for every pair of integers, and it is the reason C defines the sign of <code>%</code> the way it does.</p>" },
+      { id:"B4", kind:"input", ask:"<code>printf(\"%d\", 5 / 10);</code>", ans:["0"], ph:"a whole number",
+        why:"<p><b>0.</b> The most dangerous case, because it looks like a bug in your logic rather than in your types. Anything smaller than the divisor divides to zero.</p>" },
+      { id:"B5", kind:"input", ask:"<code>printf(\"%d %d\", -9 / 2, -9 % 2);</code>", ans:["-4 -1","-4-1"], ph:"two numbers",
+        why:"<p><b>-4 and -1.</b> Division truncates <b>toward zero</b>, so −4.5 becomes −4, not −5. The remainder takes the sign of the <b>left</b> operand, so −9 gives −1.</p>" },
+      { id:"B6", kind:"input", ask:"<code>printf(\"%d\", 9 % -2);</code>", ans:["1"], ph:"a whole number",
+        why:"<p><b>1</b>, positive. The sign of the result follows the left-hand operand (9), never the right. If you remember one thing about negative modulo, remember that.</p>" },
+      { id:"B7", kind:"input", ask:"A race took <code>t = 3725</code> seconds. What do <code>t/3600</code>, <code>(t%3600)/60</code> and <code>t%60</code> print?", ans:["1 2 5","125"], ph:"three numbers",
+        why:"<p><b>1, 2, 5</b> — one hour, two minutes, five seconds. This is the standard idiom for splitting a total into units, and it is built entirely from <code>/</code> and <code>%</code>. Worth memorising as a shape.</p>" },
+      { id:"B8", kind:"choice", ask:"Which expression tests whether <code>n</code> is even?",
+        opts:["<code>n / 2 == 0</code>","<code>n % 2 == 0</code>","<code>n % 2 == 1</code>","<code>n / 2 == n</code>"], correct:1,
+        why:"<p><code>n % 2 == 0</code>. A number is even exactly when dividing by 2 leaves no remainder. Note that <code>n % 2 == 1</code> fails for negative odd numbers, which give −1.</p>" }
+    ]
+  },
+
+  {
+    letter: "C",
+    title: "Types and conversion",
+    note: "C makes you pick the container before you put the value in. These questions all turn on what happens when the value does not fit the container you chose.",
+    qs: [
+      { id:"C1", kind:"input", ask:"<code>int x = 7 / 2.0;</code> — what does <code>printf(\"%d\", x)</code> print?", ans:["3"], ph:"a whole number",
+        why:"<p><b>3.</b> Two steps. First <code>7 / 2.0</code>: one operand is a <code>double</code>, so 7 is promoted and the result is 3.5. Then the assignment forces it into an <code>int</code> box, and the fractional part is <b>truncated</b>, giving 3.</p>" },
+      { id:"C2", kind:"input", ask:"<code>double d = 7 / 2;</code> — what does <code>printf(\"%f\", d)</code> print?", ans:["3.000000","3.0","3"], ph:"a decimal",
+        why:"<p><b>3.000000.</b> The trap is the order. <code>7 / 2</code> is computed <i>first</i>, as integers, giving 3. Only then is 3 widened to a double. Making the destination a <code>double</code> cannot repair a division that already discarded the remainder.</p>" },
+      { id:"C3", kind:"input", ask:"<code>int y = -3.99;</code> — what does <code>printf(\"%d\", y)</code> print?", ans:["-3"], ph:"a whole number",
+        why:"<p><b>-3</b>, not −4. Conversion to an integer truncates <b>toward zero</b> in both directions. It never rounds and never floors.</p>" },
+      { id:"C4", kind:"input", ask:"<code>float avg = 5 / 2;</code> — what does <code>printf(\"%.1f\", avg)</code> print?", ans:["2.0","2"], ph:"a decimal",
+        why:"<p><b>2.0.</b> Same trap as C2 wearing different clothes, and it is the single most common beginner bug in C. Fix it by making one operand floating-point before the division: <code>(float)5 / 2</code>.</p>" },
+      { id:"C5", kind:"input", ask:"<code>printf(\"%d\", 010);</code>", ans:["8"], ph:"a whole number",
+        why:"<p><b>8.</b> A leading zero silently means <b>octal</b> — base 8. So <code>010</code> is 8, and <code>0377</code> is 255. This bites people who zero-pad numbers to line them up.</p>" },
+      { id:"C6", kind:"input", ask:"<code>printf(\"%d\", 0x1F);</code>", ans:["31"], ph:"a whole number",
+        why:"<p><b>31.</b> <code>0x</code> means hexadecimal: 1×16 + 15 = 31.</p>" },
+      { id:"C7", kind:"choice", ask:"What is the type of the expression <code>3 + 2.0</code>?",
+        opts:["<code>int</code>","<code>float</code>","<code>double</code>","It depends on the compiler"], correct:2,
+        why:"<p><b>double.</b> Two rules combine: a floating-point literal like <code>2.0</code> is a <code>double</code> by default (not a float), and when one operand is floating-point the whole expression becomes floating-point. More capable type wins.</p>" },
+      { id:"C8", kind:"choice", ask:"Which of these will <b>not</b> compile?",
+        opts:["<code>7.5 / 2</code>","<code>7.5 % 2</code>","<code>7 / 2.5</code>","<code>7 % 2</code>"], correct:1,
+        why:"<p><code>7.5 % 2</code>. The modulo operator is defined for <b>integers only</b> — remainder has no meaning for floating-point division. The other three are all legal.</p>" }
+    ]
+  },
+
+  {
+    letter: "D",
+    title: "Precedence and associativity",
+    note: "Precedence decides which operator grabs its operands first. Associativity decides direction when two are equally strong. Everything else in this section follows from those two.",
+    qs: [
+      { id:"D1", kind:"input", ask:"<code>printf(\"%d\", 2 + 3 * 4);</code>", ans:["14"], ph:"a whole number",
+        why:"<p><b>14.</b> <code>*</code> outranks <code>+</code>, so it binds first: <code>2 + (3*4)</code>. Identical to the PEMDAS you already know.</p>" },
+      { id:"D2", kind:"input", ask:"<code>printf(\"%d\", 10 - 2 - 3);</code>", ans:["5"], ph:"a whole number",
+        why:"<p><b>5.</b> Equal precedence, so <b>left-to-right</b> associativity applies: <code>(10-2)-3</code>. Reading it right-to-left would give 11, which is why direction matters.</p>" },
+      { id:"D3", kind:"input", ask:"<code>printf(\"%d\", 100 / 10 / 2);</code>", ans:["5"], ph:"a whole number",
+        why:"<p><b>5.</b> <code>(100/10)/2 = 10/2 = 5</code>. Right-to-left would give <code>100/(10/2) = 20</code>. Division is left-associative.</p>" },
+      { id:"D4", kind:"input", ask:"<code>printf(\"%d\", 2 + 10 % 3);</code>", ans:["3"], ph:"a whole number",
+        why:"<p><b>3.</b> <code>%</code> sits on the same rung as <code>*</code> and <code>/</code>, above <code>+</code>. So it is <code>2 + (10%3)</code> = 2 + 1.</p>" },
+      { id:"D5", kind:"input", ask:"<code>printf(\"%d\", (2 + 10) % 3);</code>", ans:["0"], ph:"a whole number",
+        why:"<p><b>0.</b> Parentheses beat everything: <code>12 % 3</code> divides evenly. Compare with D4 — same tokens, different answer, and the only difference is two brackets.</p>" },
+      { id:"D6", kind:"input", ask:"<code>printf(\"%d\", 7 + 3 * 2 - 4 / 2);</code>", ans:["11"], ph:"a whole number",
+        why:"<p><b>11.</b> Multiply and divide first: <code>7 + 6 - 2</code>. Then left-to-right: <code>13 - 2</code>.</p>" },
+      { id:"D7", kind:"input", ask:"<code>printf(\"%d\", 20 - 4 * 3 + 8 / 2);</code>", ans:["12"], ph:"a whole number",
+        why:"<p><b>12.</b> Becomes <code>20 - 12 + 4</code>, then left-to-right: <code>8 + 4</code>. The subtraction happens before the addition because they are equal rank and it comes first.</p>" },
+      { id:"D8", kind:"choice", ask:"Ordered from strongest to weakest, the precedence ladder is:",
+        opts:["assignment → arithmetic → prefix → postfix","postfix → prefix → arithmetic → assignment","arithmetic → postfix → prefix → assignment","prefix → postfix → assignment → arithmetic"], correct:1,
+        why:"<p><b>postfix → prefix → arithmetic → assignment.</b> Worth memorising as a sentence. The useful consequence is that assignment is <i>weakest</i>: the entire right-hand side finishes computing before anything is stored.</p>" }
+    ]
+  },
+
+  {
+    letter: "E",
+    title: "Increment, decrement, compound assignment",
+    note: "Both forms change the variable identically. What differs is the value handed back to the surrounding expression — which is exactly why exams put them inside bigger expressions.",
+    qs: [
+      { id:"E1", kind:"input",
+        ask:"<pre class=\"term\">int i = <span class=\"nm\">5</span>;\nint v = i++;   <span class=\"cm\">// what are v and i?</span></pre>",
+        ans:["5 6","v=5 i=6","56"], ph:"v then i",
+        why:"<p><b>v = 5, i = 6.</b> Post-increment hands back the <b>old</b> value, then bumps the variable. Read it left to right: <code>i</code> comes first, so you get i as it was.</p>" },
+      { id:"E2", kind:"input",
+        ask:"<pre class=\"term\">int j = <span class=\"nm\">5</span>;\nint v = ++j;   <span class=\"cm\">// what are v and j?</span></pre>",
+        ans:["6 6","v=6 j=6","66"], ph:"v then j",
+        why:"<p><b>v = 6, j = 6.</b> Pre-increment bumps first, then hands back the <b>new</b> value. The <code>++</code> is written first, so it happens first.</p>" },
+      { id:"E3", kind:"input",
+        ask:"<pre class=\"term\">int p = <span class=\"nm\">2</span>;\nint r = p++ * <span class=\"nm\">3</span>;   <span class=\"cm\">// r and p?</span></pre>",
+        ans:["6 3","r=6 p=3","63"], ph:"r then p",
+        why:"<p><b>r = 6, p = 3.</b> <code>p++</code> hands back 2, so the multiplication is <code>2 × 3</code>. The increment still happens — it just happens after the value was taken.</p>" },
+      { id:"E4", kind:"input",
+        ask:"<pre class=\"term\">int p = <span class=\"nm\">2</span>;\nint r = ++p * <span class=\"nm\">3</span>;   <span class=\"cm\">// r and p?</span></pre>",
+        ans:["9 3","r=9 p=3","93"], ph:"r then p",
+        why:"<p><b>r = 9, p = 3.</b> <code>++p</code> hands back 3, so the multiplication is <code>3 × 3</code>. Identical code to E3 apart from where the <code>++</code> sits, and the answer changes by 3.</p>" },
+      { id:"E5", kind:"input",
+        ask:"<pre class=\"term\">int x = <span class=\"nm\">10</span>, y = <span class=\"nm\">4</span>;\nx -= y++;   <span class=\"cm\">// x and y?</span></pre>",
+        ans:["6 5","x=6 y=5","65"], ph:"x then y",
+        why:"<p><b>x = 6, y = 5.</b> Work it in order: <code>y++</code> hands back 4 → <code>x -= 4</code> makes x 6 → y then becomes 5. This is the exam's favourite shape; your course uses the same one with different numbers.</p>" },
+      { id:"E6", kind:"input",
+        ask:"<pre class=\"term\">int x = <span class=\"nm\">10</span>, y = <span class=\"nm\">4</span>;\nx -= ++y;   <span class=\"cm\">// x and y?</span></pre>",
+        ans:["5 5","x=5 y=5","55"], ph:"x then y",
+        why:"<p><b>x = 5, y = 5.</b> <code>++y</code> makes y 5 and hands back 5, so <code>x -= 5</code>. One character different from E5, one different answer.</p>" },
+      { id:"E7", kind:"input",
+        ask:"<pre class=\"term\">int m = <span class=\"nm\">7</span>;\nm += <span class=\"nm\">3</span>;\nm /= <span class=\"nm\">2</span>;   <span class=\"cm\">// m?</span></pre>",
+        ans:["5"], ph:"a whole number",
+        why:"<p><b>5.</b> <code>m += 3</code> is shorthand for <code>m = m + 3</code>, giving 10; then <code>m /= 2</code> gives 5. Compound assignment is pure shorthand, nothing more.</p>" },
+      { id:"E8", kind:"input",
+        ask:"<pre class=\"term\">int s = <span class=\"nm\">0</span>, k = <span class=\"nm\">1</span>;\ns += k++;\ns += k++;\ns += k++;   <span class=\"cm\">// s and k?</span></pre>",
+        ans:["6 4","s=6 k=4","64"], ph:"s then k",
+        why:"<p><b>s = 6, k = 4.</b> Each line adds the current k and then bumps it: s takes 1, then 2, then 3 → 6. k ends at 4. This is precisely how a counting loop works, which is why <code>i++</code> is everywhere in C.</p>" },
+      { id:"E9", kind:"choice", ask:"When is <code>i++;</code> on a line by itself different from <code>++i;</code>?",
+        opts:["Never — with no surrounding expression they do the same thing","<code>++i</code> is faster","<code>i++</code> adds 1 later, on the next line","<code>++i</code> adds 2"], correct:0,
+        why:"<p><b>Never.</b> The difference is only ever in the value handed back, so if nothing is using that value the two are identical. This is why <code>for</code> loops can use either.</p>" }
+    ]
+  },
+
+  {
+    letter: "F",
+    title: "Assignment as an expression",
+    note: "The strange fact that makes chained assignment work: in C, storing a value is itself an expression that produces that value.",
+    qs: [
+      { id:"F1", kind:"input",
+        ask:"<pre class=\"term\">int a, b, c;\na = b = c = <span class=\"nm\">99</span>;   <span class=\"cm\">// a, b, c?</span></pre>",
+        ans:["99 99 99","999999","all 99","99,99,99"], ph:"three numbers",
+        why:"<p><b>All 99.</b> Assignment is <b>right-associative</b>, so it groups as <code>a = (b = (c = 99))</code>. <code>c = 99</code> stores 99 <i>and evaluates to</i> 99, which flows left into b, then into a.</p>" },
+      { id:"F2", kind:"input", ask:"<code>int x; printf(\"%d\", x = 42);</code> — what is printed?", ans:["42"], ph:"a whole number",
+        why:"<p><b>42.</b> The assignment stores 42 into x and then produces 42 as its own value, which is what <code>printf</code> receives. x is 42 afterwards too — both things happen.</p>" },
+      { id:"F3", kind:"choice", ask:"Why does <code>5 = x;</code> fail to compile?",
+        opts:["You cannot assign to a variable twice","5 is not an lvalue — it has no memory location","x must be initialised first","<code>=</code> only works with variables of the same type"], correct:1,
+        why:"<p>The left side of <code>=</code> must be a <b>place</b>, not a value. A variable has an address you can write to (an <i>lvalue</i>); the number 5 does not. Simple version: <b>left side must be a box, not a number.</b></p>" },
+      { id:"F4", kind:"choice", ask:"Why does <code>(a = b) = c;</code> fail?",
+        opts:["Parentheses are not allowed around assignments","<code>(a = b)</code> produces a value, not a location","It assigns in the wrong direction","<code>c</code> has not been declared"], correct:1,
+        why:"<p>Exactly the same error as <code>5 = x</code>. <code>(a = b)</code> evaluates to a value, and a value cannot sit on the left of an assignment. Adding parentheses did not create a box.</p>" },
+      { id:"F5", kind:"choice", ask:"Why does <code>++x--;</code> fail to compile?",
+        opts:["You cannot increment and decrement the same variable","It parses as <code>++(x--)</code>, and <code>x--</code> is not an lvalue","<code>--</code> must come before the variable","It compiles fine and leaves x unchanged"], correct:1,
+        why:"<p>Postfix binds tighter than prefix, so it groups as <code>++(x--)</code>. <code>x--</code> produces a value, and <code>++</code> needs a location to write into. Third appearance of the same error — most C errors in this module are that one.</p>" },
+      { id:"F6", kind:"input",
+        ask:"<pre class=\"term\">int n = <span class=\"nm\">100</span>;\nn %= <span class=\"nm\">7</span>;\nn *= <span class=\"nm\">2</span>;\nn -= <span class=\"nm\">1</span>;   <span class=\"cm\">// n?</span></pre>",
+        ans:["3"], ph:"a whole number",
+        why:"<p><b>3.</b> <code>100 % 7</code> is 2 (since 7×14 = 98), then <code>2 × 2 = 4</code>, then <code>4 − 1 = 3</code>. Take the lines strictly one at a time and these are never hard.</p>" },
+      { id:"F7", kind:"input",
+        ask:"<pre class=\"term\">int u = <span class=\"nm\">9</span>;\nint v = u / <span class=\"nm\">2</span> * <span class=\"nm\">2</span>;   <span class=\"cm\">// v?</span></pre>",
+        ans:["8"], ph:"a whole number",
+        why:"<p><b>8</b>, not 9. <code>/</code> and <code>*</code> are equal rank, so left-to-right: <code>(9/2)*2</code> = <code>4*2</code>. The remainder was destroyed by the division and multiplying cannot bring it back. Integer arithmetic is not algebra.</p>" }
+    ]
+  },
+  {
+    letter: "G",
+    title: "Token identification",
+    note: "HW1.1 drill. Every token in C is exactly one of five things: keyword, identifier, literal, operator, punctuation. The whole skill is knowing the 33 keywords \u2014 anything word-shaped that is not on that list is an identifier.",
+    qs: [
+      { id:"G1", kind:"choice", ask:"In <code>int main(void)</code>, what is <code>main</code>?",
+        opts:["A keyword","An identifier","An operator","Punctuation"], correct:1,
+        why:"<p><b>Identifier.</b> The most-missed token in the whole course. <code>main</code> feels reserved because the operating system calls it, but C does not reserve it \u2014 it is a name you declared, exactly like <code>x</code> or <code>total</code>.</p>" },
+
+      { id:"G2", kind:"choice", ask:"What is <code>printf</code>?",
+        opts:["A keyword","An identifier","An operator","A literal"], correct:1,
+        why:"<p><b>Identifier.</b> Your course text is explicit: <i>there are no built-in identifiers</i>. <code>printf</code> is declared in <code>stdio.h</code>, which is exactly what <code>#include &lt;stdio.h&gt;</code> pulls in.</p>" },
+
+      { id:"G3", kind:"choice", ask:"What is <code>'A'</code> (single quotes)?",
+        opts:["An identifier","A character literal","A string literal","An operator"], correct:1,
+        why:"<p><b>Character literal.</b> Single quotes make a single <code>char</code>; double quotes would make a string literal. Different types, but both are literals.</p>" },
+
+      { id:"G4", kind:"choice", ask:"What are the braces <code>{ }</code>?",
+        opts:["Operators","Punctuation","Keywords","Neither \u2014 they are ignored"], correct:1,
+        why:"<p><b>Punctuation.</b> Your course names exactly four: <code>{}</code> <code>()</code> <code>;</code> <code>,</code> \u2014 they mark boundaries between expressions, statements and blocks. They compute nothing, so they are not operators.</p>" },
+
+      { id:"G5", kind:"choice", ask:"Which of these is a <b>keyword</b>?",
+        opts:["<code>count</code>","<code>printf</code>","<code>unsigned</code>","<code>main</code>"], correct:2,
+        why:"<p><code>unsigned</code> is a type specifier, one of the 33 reserved words. The other three are identifiers \u2014 names someone declared.</p>" },
+
+      { id:"G6", kind:"choice", ask:"Which is <b>not</b> a keyword?",
+        opts:["<code>static</code>","<code>double</code>","<code>continue</code>","<code>string</code>"], correct:3,
+        why:"<p><code>string</code> is not a C keyword \u2014 C has no built-in string type at all. (<code>static</code> is a type modifier, <code>double</code> a type specifier, <code>continue</code> a control statement.)</p>" },
+
+      { id:"G7", kind:"input", ask:"Classify every token in <code>x = 5;</code> \u2014 four answers, in order.",
+        ans:["identifier operator literal punctuation"], ph:"four categories",
+        why:"<p><code>x</code> identifier \u00b7 <code>=</code> operator \u00b7 <code>5</code> literal \u00b7 <code>;</code> punctuation. Note there is no keyword here \u2014 this is an assignment statement, not a declaration.</p>" },
+
+      { id:"G8", kind:"input", ask:"How many tokens are in <code>int a = 3;</code> ?",
+        ans:["5","five"], ph:"a number",
+        why:"<p><b>5:</b> <code>int</code>, <code>a</code>, <code>=</code>, <code>3</code>, <code>;</code> \u2014 one of each of the five categories, which is why this line is the standard teaching example.</p>" },
+
+      { id:"G9", kind:"choice", ask:"What kind of token is <code>#include</code>?",
+        opts:["A keyword","An identifier","A preprocessor directive, not a normal token","An operator"], correct:2,
+        why:"<p><b>Preprocessor directive.</b> Lines starting with <code>#</code> are handled <i>before</i> the compiler proper sees your code, so it is not one of the five token categories.</p>" },
+
+      { id:"G10", kind:"choice", ask:"In <code>a + b</code>, what are <code>a</code> and <code>b</code> called?",
+        opts:["Operators","Operands","Literals","Statements"], correct:1,
+        why:"<p><b>Operands</b> \u2014 the values an operator works on. Literals and variables are <i>primary</i> operands because they supply values directly. <code>+</code> is the operator.</p>" },
+
+      { id:"G11", kind:"choice", ask:"<code>-x</code> uses a <b>unary</b> operator. What makes it unary?",
+        opts:["It produces a negative result","It takes only one operand","It comes before the variable","It has low precedence"], correct:1,
+        why:"<p><b>One operand.</b> Unary = one (<code>-x</code>, <code>++i</code>, <code>sizeof</code>), binary = two (<code>a + b</code>). Position is not the test \u2014 <code>i++</code> is unary too, despite coming after.</p>" },
+
+      { id:"G12", kind:"choice", ask:"Which term means \u201cthe complete list of a language\u2019s words with their roles and definitions\u201d?",
+        opts:["Syntax","Script","Lexicon","Semantics"], correct:2,
+        why:"<p><b>Lexicon.</b> The four in order: <i>script</i> is the symbol set, <i>lexicon</i> is the word list, <i>syntax</i> is the combining rules, <i>semantics</i> is how meaning comes out of the result.</p>" },
+
+      { id:"G13", kind:"choice", ask:"How do syntax and semantics differ?",
+        opts:["Syntax is the rules for combining tokens; semantics is how meaning is derived","Syntax is for compilers, semantics is for humans","They are the same thing","Semantics is checked first"], correct:0,
+        why:"<p>A program can be syntactically perfect and semantically nonsense \u2014 the compiler only checks grammar. Meaning is your job, which is exactly why code compiles cleanly and still does the wrong thing.</p>" },
+
+      { id:"G14", kind:"choice", ask:"<code>sizeof</code> is unusual because it is\u2026",
+        opts:["Not actually part of C","A keyword that acts as an operator","A function from stdio.h","An identifier you must declare"], correct:1,
+        why:"<p>It is a <b>reserved keyword</b> that behaves as a unary <b>operator</b>, and its result has type <code>size_t</code>. If a variant marks one answer wrong, try the other \u2014 sources classify it differently, and your course lists it in the operator precedence table.</p>" },
+
+      { id:"G15", kind:"choice", ask:"Which of these is <b>not</b> a legal identifier?",
+        opts:["<code>_9lives</code>","<code>Total_2</code>","<code>float_val</code>","<code>float</code>"], correct:3,
+        why:"<p><code>float</code> is a keyword. Note <code>_9lives</code> is legal \u2014 the rule is it cannot <i>start</i> with a digit, and a leading underscore is fine. <code>float_val</code> is legal too: containing a keyword is not the same as being one.</p>" },
+
+      { id:"G16", kind:"input", ask:"How many keywords does your course list in total (type specifiers + modifiers + control statements)?",
+        ans:["33","thirty three","thirty-three"], ph:"a number",
+        why:"<p><b>33</b> \u2014 12 type specifiers, 9 type modifiers, 12 control statements. Everything word-shaped that is <i>not</i> one of those 33 is an identifier. That one fact answers most token-identification questions.</p>" }
+    ]
+  }
+];
+
+const KEY = "c-drill-deck-v1";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function norm(s) {
+  return String(s).toLowerCase().replace(/[\s,;.]/g, "");
+}
+
+let totalQ = 0;
+
+function tally() {
+  const vals = Object.values(state);
+  const right = vals.filter(v => v === "ok").length;
+  document.getElementById("right").textContent = right;
+  document.getElementById("attempted").textContent = vals.length;
+  document.getElementById("fill").style.width = totalQ ? (right / totalQ * 100) + "%" : "0%";
+}
+
+function buildQuestion(q) {
+  const card = document.createElement("div");
+  card.className = "q";
+
+  const top = document.createElement("div");
+  top.className = "q-top";
+  const id = document.createElement("span");
+  id.className = "q-id";
+  id.textContent = q.id;
+  const ask = document.createElement("div");
+  ask.className = "q-ask";
+  ask.innerHTML = q.ask;
+  top.append(id, ask);
+  card.append(top);
+
+  const verdict = document.createElement("div");
+  verdict.className = "verdict";
+  const why = document.createElement("div");
+  why.className = "why";
+  why.innerHTML = q.why;
+
+  function settle(ok) {
+    state[q.id] = ok ? "ok" : "no";
+    save();
+    card.classList.toggle("done", ok);
+    card.classList.toggle("fail", !ok);
+    verdict.className = "verdict " + (ok ? "good" : "miss");
+    verdict.textContent = ok ? "✓ correct" : "✗ not quite — read why";
+    why.classList.add("show");
+    tally();
+  }
+
+  if (q.kind === "input") {
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const field = document.createElement("input");
+    field.className = "ans";
+    field.type = "text";
+    field.placeholder = q.ph || "your answer";
+    field.setAttribute("aria-label", "Answer for " + q.id);
+
+    const check = document.createElement("button");
+    check.className = "check";
+    check.textContent = "Check";
+
+    const show = document.createElement("button");
+    show.className = "ghost";
+    show.textContent = "Show answer";
+
+    function doCheck() {
+      if (!field.value.trim()) { field.focus(); return; }
+      const ok = q.ans.some(a => norm(a) === norm(field.value));
+      settle(ok);
+      field.disabled = true;
+      check.disabled = true;
+      check.style.display = "none";
+      show.style.display = "none";
+    }
+
+    check.addEventListener("click", doCheck);
+    field.addEventListener("keydown", e => { if (e.key === "Enter") doCheck(); });
+    show.addEventListener("click", () => {
+      state[q.id] = "no";
+      save();
+      field.disabled = true;
+      check.style.display = "none";
+      show.style.display = "none";
+      why.classList.add("show");
+      card.classList.add("fail");
+      tally();
+    });
+
+    row.append(field, check, show);
+    card.append(row);
+  } else {
+    const box = document.createElement("div");
+    box.className = "opts";
+    const letters = ["A", "B", "C", "D"];
+
+    q.opts.forEach((text, i) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = '<span class="mark">' + letters[i] + '</span><span>' + text + '</span>';
+      b.addEventListener("click", () => {
+        const ok = i === q.correct;
+        b.classList.add(ok ? "picked-ok" : "picked-bad");
+        if (!ok) box.children[q.correct].classList.add("reveal");
+        Array.from(box.children).forEach(c => { c.disabled = true; });
+        settle(ok);
+      });
+      box.append(b);
+    });
+    card.append(box);
+  }
+
+  card.append(verdict, why);
+  return card;
+}
+
+const deck = document.getElementById("deck");
+
+DECK.forEach(sec => {
+  const s = document.createElement("section");
+
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = '<span class="sec-letter">' + sec.letter + '</span><h2>' + sec.title + '</h2>';
+  s.append(head);
+
+  const note = document.createElement("p");
+  note.className = "sec-note";
+  note.textContent = sec.note;
+  s.append(note);
+
+  sec.qs.forEach(q => { totalQ++; s.append(buildQuestion(q)); });
+  deck.append(s);
+});
+
+document.getElementById("total").textContent = totalQ;
+
+document.getElementById("reset").addEventListener("click", () => {
+  state = {};
+  save();
+  location.reload();
+});
+
+tally();
+</script>
+
+</body></html>

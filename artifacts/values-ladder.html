@@ -1,0 +1,952 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Values Ladder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+
+/* Same layout as the Term and Token ladders: rungs on top, working card left, skill mastery right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+/* JetBrains Mono draws != and -> as ligatures; code must show its real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+code,.mono{font-family:var(--f-mono)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:1.15rem;line-height:1.5}
+.prompt code,.inl{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:pre}
+pre.code{font-family:var(--f-mono);font-size:.98rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+.formula{font-size:1.05rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em;white-space:pre}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700;min-width:0}
+.opts.wide .opt span:last-child{font-family:var(--f-mono);font-weight:400;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:8px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb ol,.fb ul{margin:0;padding-left:1.3em;display:grid;gap:3px;font-size:.93rem}
+.fb code{font-family:var(--f-mono);font-size:.9em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+input[type=text]:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent)}
+input.ok{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good)} input.no{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:170px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4}
+/* exam layout */
+.q{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.q > h3{margin:0;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:1rem;padding:8px 14px;display:flex;justify-content:space-between;gap:10px}
+.q > .qb{padding:14px;display:grid;gap:12px}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:minmax(0,260px) minmax(0,220px) minmax(0,1fr);gap:10px;align-items:center}
+.part .ex{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:pre;overflow-x:auto}
+.part .res{font-size:.88rem}
+.res.ok{color:var(--good)} .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select,.trow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre}
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.trow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:3px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+table.tests{border-collapse:collapse;font-size:.88rem;width:100%}
+table.tests td,table.tests th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+table.tests td.mono{font-family:var(--f-mono);font-size:.85rem;word-break:break-all}
+.tw{overflow-x:auto}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+/* mastery */
+aside .card{gap:10px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgroup{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.82rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink)}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.qscore{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.qscore div{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .res{grid-column:1/-1}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.part,.mrow{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* value-specific: state tables, streak, timer */
+table.st{border-collapse:collapse;font-family:var(--f-mono);font-size:.95rem}
+table.st th,table.st td{border:1px solid var(--line);padding:6px 10px;text-align:center;vertical-align:middle}
+table.st th{font-weight:600;color:var(--muted);font-size:.8rem}
+table.st td.line{text-align:left;white-space:pre;color:var(--muted)}
+table.st td.given{color:var(--muted)}
+table.st td.x{box-shadow:inset 0 0 0 2px var(--bad);font-weight:700}
+table.st input[type=text]{width:84px;text-align:center}
+.streak{display:flex;gap:4px;flex-wrap:wrap}
+.streak i{width:22px;height:10px;border-radius:3px;background:var(--m0)}
+.streak i.on{background:var(--good)}
+.timer{font-family:var(--f-mono)} .timer.over{color:var(--bad);font-weight:700}
+.wl{margin:0;padding-left:1.2em;display:grid;gap:4px;font-size:.93rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Values Ladder</h1>
+    <p>Only the value questions (PE1 Q5, Q7, Q8), drilled until a perfect score is the normal result. Every block is generated fresh and checked by a small built-in C engine, and every wrong number is traced back to the rule that produced it.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Skill mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div id="mgrid"></div>
+        <p class="small" style="margin:0">Starts from your PE1 Ladder chips. Weak skills get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>Rule sheet</summary>
+    <div class="sheetgrid" id="sheetBody"></div>
+  </details>
+</div>
+
+<script id="engine">
+/* ================= mini C engine: types, values, statements ================= */
+const TI = {
+  "char":{r:1,u:false,bits:8}, "signed char":{r:1,u:false,bits:8}, "unsigned char":{r:1,u:true,bits:8},
+  "short":{r:2,u:false,bits:16}, "unsigned short":{r:2,u:true,bits:16},
+  "int":{r:3,u:false,bits:32}, "unsigned int":{r:3,u:true,bits:32},
+  "long":{r:4,u:false,bits:64}, "unsigned long":{r:4,u:true,bits:64},
+  "long long":{r:5,u:false,bits:64}, "unsigned long long":{r:5,u:true,bits:64},
+  "float":{f:1}, "double":{f:2}, "long double":{f:3}
+};
+const isF = t => !!TI[t].f;
+const promote = t => (!isF(t) && TI[t].r < 3) ? "int" : t;
+const CE = msg => ({ce:msg});   // compile error
+const RE = msg => ({re:msg});   // runtime error
+
+// Usual arithmetic conversions. Mistake modes reproduce typical wrong answers for distractors.
+function usual(a, b, mode){
+  mode = mode || {};
+  const fa = isF(a), fb = isF(b);
+  if(fa || fb){
+    if(fa && fb) return TI[a].f >= TI[b].f ? a : b;
+    if(mode.intWins){ const i = fa ? b : a; return mode.noPromo ? i : promote(i); }
+    return fa ? a : b;
+  }
+  if(!mode.noPromo){ a = promote(a); b = promote(b); }
+  if(a === b) return a;
+  const A = TI[a], B = TI[b];
+  if(A.u === B.u) return A.r >= B.r ? a : b;
+  const u = A.u ? a : b, s = A.u ? b : a;
+  if(TI[u].r >= TI[s].r) return u;
+  // these two pairs depend on the platform's sizes, so generated questions avoid them
+  if((s === "long" && u === "unsigned int") || (s === "long long" && u === "unsigned long")){
+    if(mode.lenient) return s === "long" ? "long" : "unsigned long long";
+    throw {ambig:true};
+  }
+  return s;
+}
+
+function conv(v, t){
+  if(isF(t)) return t === "float" ? Math.fround(v) : v;
+  if(!isFinite(v)) throw RE("value out of range for " + t);
+  let x = Math.trunc(v); const I = TI[t];
+  if(I.bits <= 32){ const m = 2 ** I.bits; x = ((x % m) + m) % m; if(!I.u && x >= m / 2) x -= m; }
+  else if(I.u && x < 0) x += 2 ** 64;
+  return x === 0 ? 0 : x;
+}
+
+function litInfo(s){
+  if(/[.eE]/.test(s) && !/^0[xX]/.test(s)){
+    const suf = (s.match(/[fFlL]$/) || [""])[0];
+    const t = !suf ? "double" : /[fF]/.test(suf) ? "float" : "long double";
+    const v = parseFloat(s);
+    return {t, v: t === "float" ? Math.fround(v) : v};
+  }
+  const m = s.match(/^(0[xX][0-9a-fA-F]+|\d+)(.*)$/), d = m[1], suf = m[2];
+  const v = /^0[xX]/.test(d) ? parseInt(d, 16) : (d.length > 1 && d[0] === "0" ? parseInt(d, 8) : parseInt(d, 10));
+  const u = /[uU]/.test(suf), L = (suf.match(/[lL]/g) || []).length;
+  const t = L === 2 ? (u ? "unsigned long long" : "long long") : L === 1 ? (u ? "unsigned long" : "long") : (u ? "unsigned int" : "int");
+  return {t, v};
+}
+
+const TYPEKW = new Set(["char","short","int","long","float","double","signed","unsigned","const"]);
+function canonType(ws){
+  ws = ws.filter(w => w !== "const");
+  const has = w => ws.includes(w), L = ws.filter(w => w === "long").length, U = has("unsigned");
+  if(has("double")) return L ? "long double" : "double";
+  if(has("float")) return "float";
+  if(has("char")) return U ? "unsigned char" : has("signed") ? "signed char" : "char";
+  if(has("short")) return U ? "unsigned short" : "short";
+  if(L >= 2) return U ? "unsigned long long" : "long long";
+  if(L === 1) return U ? "unsigned long" : "long";
+  return U ? "unsigned int" : "int";
+}
+
+function tokenize(src){
+  const out = []; let i = 0;
+  while(i < src.length){
+    const c = src[i];
+    if(/\s/.test(c)){ i++; continue; }
+    if(src.startsWith("//", i)){ const j = src.indexOf("\n", i); i = j < 0 ? src.length : j; continue; }
+    if(src.startsWith("/*", i)){ const j = src.indexOf("*/", i + 2); if(j < 0) throw CE("a /* comment is never closed"); i = j + 2; continue; }
+    if(c === "#"){ const j = src.indexOf("\n", i); i = j < 0 ? src.length : j; continue; } // #include lines
+    const rest = src.slice(i);
+    let m = rest.match(/^(?:\d+\.\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)[fFlL]?(?![\w.])/);
+    if(m){ out.push({k:"num", s:m[0]}); i += m[0].length; continue; }
+    m = rest.match(/^(?:0[xX][0-9a-fA-F]+|\d+)(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?(?![\w.])/);
+    if(m){ out.push({k:"num", s:m[0]}); i += m[0].length; continue; }
+    if(/\d/.test(c)) throw CE(`"${(rest.match(/^[\w.]+/) || [c])[0]}" is not a valid number`);
+    m = rest.match(/^[A-Za-z_]\w*/);
+    if(m){ out.push({k:"id", s:m[0]}); i += m[0].length; continue; }
+    m = rest.match(/^(?:\+\+|--|[+\-*\/%]=|==|!=|<=|>=|&&|\|\||[+\-*\/%()=,;{}<>!])/);
+    if(m){ out.push({k:"p", s:m[0]}); i += m[0].length; continue; }
+    if(c === "^") throw CE("^ is not a power operator in C (it's bitwise XOR, and it doesn't work on doubles). Use pow(x, 2) or x * x.");
+    throw CE(`unexpected character '${c}'`);
+  }
+  return out;
+}
+
+// Recursive-descent parser for the Module 1 subset: + - * / %, unary - +, ++ --, casts, =, op=, calls.
+function parse(src, asProgram){
+  const T = tokenize(src); let i = 0;
+  const isP = (tok, s) => tok && tok.k === "p" && tok.s === s;
+  const accept = s => { if(isP(T[i], s)){ i++; return true; } return false; };
+  const expect = s => { if(!accept(s)) throw CE(`expected '${s}'${T[i] ? ` before '${T[i].s}'` : " at the end"}`); };
+  const typeWords = () => { const ws = []; while(T[i] && T[i].k === "id" && TYPEKW.has(T[i].s)) ws.push(T[i++].s); return canonType(ws); };
+  const lv = (e, op) => { while(e.k === "par") e = e.e; if(e.k !== "var") throw CE(`${op} needs a variable on its left/operand`); return e; };
+  function primary(){
+    const t = T[i];
+    if(!t) throw CE("the expression ends too early");
+    if(t.k === "num"){ i++; const L = litInfo(t.s); return {k:"lit", s:t.s, t:L.t, v:L.v}; }
+    if(t.k === "id"){
+      if(TYPEKW.has(t.s) || t.s === "return") throw CE(`unexpected '${t.s}'`);
+      i++;
+      if(t.s === "M_PI") return {k:"lit", s:"M_PI", t:"double", v:Math.PI};
+      if(isP(T[i], "(")){ i++; const args = []; if(!accept(")")){ do { args.push(assign()); } while(accept(",")); expect(")"); } return {k:"call", name:t.s, args}; }
+      return {k:"var", name:t.s};
+    }
+    if(isP(t, "(")){ i++; const e = assign(); expect(")"); return {k:"par", e}; }
+    throw CE(`unexpected '${t.s}'`);
+  }
+  function postfix(){ let e = primary(); while(isP(T[i], "++") || isP(T[i], "--")){ const op = T[i++].s; e = {k:"post", op, e:lv(e, op)}; } return e; }
+  function unary(){
+    const t = T[i];
+    if(isP(t, "++") || isP(t, "--")){ i++; return {k:"pre", op:t.s, e:lv(unary(), t.s)}; }
+    if(isP(t, "-") || isP(t, "+")){ i++; return {k:"neg", op:t.s, e:unary()}; }
+    if(isP(t, "(") && T[i+1] && T[i+1].k === "id" && TYPEKW.has(T[i+1].s)){ i++; const ty = typeWords(); expect(")"); return {k:"cast", t:ty, e:unary()}; }
+    return postfix();
+  }
+  function mul(){ let l = unary(); while(T[i] && T[i].k === "p" && /^[*\/%]$/.test(T[i].s)){ const op = T[i++].s; l = {k:"bin", op, l, r:unary()}; } return l; }
+  function add(){ let l = mul(); while(T[i] && T[i].k === "p" && /^[+-]$/.test(T[i].s)){ const op = T[i++].s; l = {k:"bin", op, l, r:mul()}; } return l; }
+  function assign(){
+    const l = add(), t = T[i];
+    if(t && t.k === "p" && /^(=|[+\-*\/%]=)$/.test(t.s)){ i++; return {k:"asg", op:t.s, e:lv(l, t.s), r:assign()}; }
+    return l;
+  }
+  function stmt(){
+    const t = T[i];
+    if(t.k === "id" && t.s === "return"){ i++; const e = assign(); expect(";"); return {k:"ret", e}; }
+    if(t.k === "id" && TYPEKW.has(t.s)){
+      const ty = typeWords(), items = [];
+      do {
+        const n = T[i];
+        if(!n || n.k !== "id" || TYPEKW.has(n.s)) throw CE("expected a variable name after the type");
+        i++; items.push({name:n.s, init: accept("=") ? assign() : null});
+      } while(accept(","));
+      expect(";"); return {k:"decl", t:ty, items};
+    }
+    if(isP(t, ";")){ i++; return {k:"empty"}; }
+    const e = assign(); expect(";"); return {k:"expr", e};
+  }
+  if(asProgram){ const out = []; while(i < T.length) out.push(stmt()); return out; }
+  const e = assign();
+  if(i < T.length) throw CE(`unexpected '${T[i].s}'`);
+  return e;
+}
+
+function show(n){
+  switch(n.k){
+    case "lit": return n.s;
+    case "var": return n.name;
+    case "par": return "(" + show(n.e) + ")";
+    case "neg": case "pre": return n.op + show(n.e);
+    case "post": return show(n.e) + n.op;
+    case "cast": return `(${n.t})` + show(n.e);
+    case "bin": return show(n.l) + " " + n.op + " " + show(n.r);
+    case "asg": return show(n.e) + " " + n.op + " " + show(n.r);
+    case "call": return n.name + "(" + n.args.map(show).join(", ") + ")";
+  }
+}
+
+function typeOf(n, env, mode){
+  mode = mode || {};
+  switch(n.k){
+    case "lit": return n.t;
+    case "var": if(!(n.name in env)) throw CE(`'${n.name}' is not declared`); return env[n.name].t;
+    case "par": return typeOf(n.e, env, mode);
+    case "neg": { const t = typeOf(n.e, env, mode); return mode.noPromo ? t : promote(t); }
+    case "pre": case "post": return typeOf(n.e, env, mode);
+    case "cast": typeOf(n.e, env, mode); return n.t;
+    case "bin": {
+      const a = typeOf(n.l, env, mode), b = typeOf(n.r, env, mode);
+      if(n.op === "%" && (isF(a) || isF(b))) throw CE("% only works on integers, not floating values (use fmod)");
+      return usual(a, b, mode);
+    }
+    case "asg": {
+      const lt = typeOf(n.e, env, mode), rt = typeOf(n.r, env, mode);
+      if(n.op === "%=" && (isF(lt) || isF(rt))) throw CE("%= only works on integers");
+      if(mode.asgRight) return n.op === "=" ? rt : usual(lt, rt, mode);
+      return lt;
+    }
+    case "call": n.args.forEach(a => typeOf(a, env, mode)); return "double";
+  }
+}
+
+function whyType(a, b, t){
+  if(isF(a) !== isF(b)) return "Floating beats integer.";
+  if(isF(a)) return a === b ? "Same type." : "The bigger floating type wins.";
+  const pa = promote(a), pb = promote(b);
+  const pre = (pa !== a || pb !== b) ? "char/short become int first. " : "";
+  if(pa === pb) return pre + "Same type.";
+  if(TI[pa].u === TI[pb].u) return pre + "Higher rank wins.";
+  const u = TI[pa].u ? pa : pb, s = TI[pa].u ? pb : pa;
+  if(TI[u].r >= TI[s].r) return pre + "Same or higher rank and unsigned, so unsigned wins.";
+  return pre + "The signed type is bigger and holds every value, so it wins.";
+}
+function typeSteps(n, env){
+  const steps = [];
+  (function walk(n){
+    switch(n.k){
+      case "lit": case "var": return typeOf(n, env);
+      case "par": return walk(n.e);
+      case "neg": { const t = walk(n.e), p = promote(t); if(p !== t) steps.push(`<code>${esc(show(n))}</code>: unary minus promotes ${t} to <b>int</b>`); return p; }
+      case "pre": case "post": return walk(n.e);
+      case "cast": { const t = walk(n.e); steps.push(`<code>${esc(show(n))}</code>: the cast turns only <code>${esc(show(n.e))}</code> (${t}) into <b>${n.t}</b>`); return n.t; }
+      case "bin": { const a = walk(n.l), b = walk(n.r), t = usual(a, b, {lenient:true}); steps.push(`<code>${esc(show(n))}</code>: ${a} ${n.op} ${b} → <b>${t}</b>. ${whyType(a, b, t)}`); return t; }
+      case "asg": { const rt = walk(n.r), lt = typeOf(n.e, env); steps.push(`<code>${esc(show(n))}</code>: an assignment has the left variable's type → <b>${lt}</b>${rt !== lt ? ` (the ${rt} value is converted into ${n.e.name})` : ""}`); return lt; }
+    }
+  })(n);
+  return steps;
+}
+function typeSkills(n, env){
+  const sk = new Set();
+  (function walk(n){
+    switch(n.k){
+      case "lit": if(n.s !== "M_PI" && /[uUlLfF]$/.test(n.s)) sk.add("ty_suffix"); return n.t;
+      case "var": return env[n.name].t;
+      case "par": return walk(n.e);
+      case "neg": { const t = walk(n.e); if(promote(t) !== t) sk.add("ty_promo"); return promote(t); }
+      case "pre": case "post": return walk(n.e);
+      case "cast": walk(n.e); sk.add("ty_cast"); return n.t;
+      case "bin": {
+        const a = walk(n.l), b = walk(n.r);
+        if(isF(a) !== isF(b)) sk.add("ty_float");
+        else if(isF(a)){ if(a !== b) sk.add("ty_frank"); }
+        else { if(promote(a) !== a || promote(b) !== b) sk.add("ty_promo"); if(promote(a) !== promote(b)) sk.add("ty_uns"); }
+        return usual(a, b, {lenient:true});
+      }
+      case "asg": walk(n.r); sk.add("ty_assign"); return env[n.e.name].t;
+    }
+  })(n);
+  return [...sk];
+}
+
+const fmt = v => Number.isInteger(v) ? String(v) : String(+v.toPrecision(10));
+function arith(op, a, b, mode, log){
+  const t = usual(a.t, b.t, {lenient:true}), x = conv(a.v, t), y = conv(b.v, t); let v;
+  if(op === "+") v = x + y; else if(op === "-") v = x - y; else if(op === "*") v = x * y;
+  else if(op === "/"){
+    if(isF(t)) v = x / y;
+    else {
+      if(y === 0) throw RE("integer division by zero");
+      v = mode.floorDiv ? Math.floor(x / y) : Math.trunc(x / y);
+      if(log && x % y !== 0) log.push(`${x} / ${y} = ${v} (int division cuts the fraction toward 0)`);
+    }
+  } else if(op === "%"){
+    if(isF(t)) throw CE("% only works on integers");
+    if(y === 0) throw RE("% by zero");
+    v = mode.modPos ? ((x % y) + Math.abs(y)) % Math.abs(y) : x % y;
+    if(log && (x < 0 || y < 0) && v !== 0) log.push(`${x} % ${y} = ${v} (the sign follows the left side)`);
+  }
+  return {t, v:conv(v, t)};
+}
+function evalE(n, env, mode, log){
+  mode = mode || {};
+  const getVar = name => { const x = env[name]; if(!x) throw CE(`'${name}' is not declared`); if(x.v === undefined) throw RE(`'${name}' is used before it has a value`); return x; };
+  switch(n.k){
+    case "lit": return {t:n.t, v:n.v};
+    case "var": { const x = getVar(n.name); return {t:x.t, v:x.v}; }
+    case "par": return evalE(n.e, env, mode, log);
+    case "neg": { const x = evalE(n.e, env, mode, log), t = promote(x.t); return {t, v: n.op === "-" ? conv(-conv(x.v, t), t) : conv(x.v, t)}; }
+    case "pre": case "post": {
+      const x = getVar(n.e.name), old = x.v, nv = conv(old + (n.op === "++" ? 1 : -1), x.t);
+      const asPre = n.k === "pre" ? !mode.postForPre : !!mode.preForPost;
+      if(!mode.noIncStore) x.v = nv;
+      if(log) log.push(n.k === "pre"
+        ? `<code>${n.op}${n.e.name}</code>: ${n.e.name} becomes ${nv} first, and the expression uses ${nv}`
+        : `<code>${n.e.name}${n.op}</code>: the expression uses the old value ${old}, then ${n.e.name} becomes ${nv}`);
+      return {t:x.t, v: asPre ? nv : old};
+    }
+    case "cast": { const x = evalE(n.e, env, mode, log); return {t:n.t, v:conv(x.v, n.t)}; }
+    case "bin": { const a = evalE(n.l, env, mode, log), b = evalE(n.r, env, mode, log); return arith(n.op, a, b, mode, log); }
+    case "asg": {
+      const x = env[n.e.name]; if(!x) throw CE(`'${n.e.name}' is not declared`);
+      const rv = evalE(n.r, env, mode, log); let nv;
+      if(n.op === "="){ nv = conv(rv.v, x.t); if(log) log.push(`<code>${n.e.name} = ${fmt(nv)}</code>`); }
+      else {
+        if(x.v === undefined) throw RE(`'${n.e.name}' is used before it has a value`);
+        const op = n.op[0]; nv = conv(arith(op, {t:x.t, v:x.v}, rv, mode, null).v, x.t);
+        if(log) log.push(`<code>${n.e.name} ${n.op} ${fmt(rv.v)}</code> → ${n.e.name} = ${fmt(x.v)} ${op} ${fmt(rv.v)} = ${fmt(nv)}`);
+      }
+      x.v = nv; return {t:x.t, v:nv};
+    }
+    case "call": {
+      const F = {pow:[2, Math.pow], sqrt:[1, Math.sqrt], fabs:[1, Math.abs], cbrt:[1, Math.cbrt]};
+      if(!F[n.name]) throw CE(`unknown function '${n.name}'`);
+      if(n.args.length !== F[n.name][0]) throw CE(`${n.name} takes ${F[n.name][0]} argument${F[n.name][0] > 1 ? "s" : ""}`);
+      const args = n.args.map(a => conv(evalE(a, env, mode, log).v, "double"));
+      return {t:"double", v:F[n.name][1](...args)};
+    }
+  }
+}
+function compileCheck(stmts, env){
+  const tenv = {}; for(const k in env) tenv[k] = {t:env[k].t};
+  for(const s of stmts){
+    if(s.k === "decl") for(const it of s.items){ if(it.init) typeOf(it.init, tenv, {lenient:true}); tenv[it.name] = {t:s.t}; }
+    else if(s.k === "expr" || s.k === "ret") typeOf(s.e, tenv, {lenient:true});
+  }
+}
+function runProgram(stmts, env, mode, log){
+  for(const s of stmts){
+    if(s.k === "decl") for(const it of s.items){ const v = it.init ? conv(evalE(it.init, env, mode, log).v, s.t) : undefined; env[it.name] = {t:s.t, v}; }
+    else if(s.k === "expr") evalE(s.e, env, mode, log);
+    else if(s.k === "ret") return {done:true, val:evalE(s.e, env, mode, log)};
+  }
+  return {done:false};
+}
+const noParen = line => line.replace(/^\s*(\w+)\s*([+\-*\/%])=\s*(.+);\s*$/, "$1 = $1 $2 $3;");
+function runVals(names, init, lines, mode, log){
+  mode = mode || {};
+  const env = {}; names.forEach((n, k) => env[n] = {t:"int", v:init[k]});
+  for(const L of lines){
+    const st = parse(mode.compoundNoParen ? noParen(L) : L, true);
+    const entry = log ? {stmt:L, steps:[]} : null;
+    runProgram(st, env, mode, entry ? entry.steps : null);
+    if(log){ entry.after = names.map(n => `${n} = ${env[n].v}`).join(", "); log.push(entry); }
+  }
+  return names.map(n => env[n].v);
+}
+function closeEnough(g, e){
+  if(typeof g !== "number" || !isFinite(g)) return false;
+  if(e === 0) return Math.abs(g) < 1e-12;
+  return Math.abs(g - e) / Math.abs(e) < 1e-6;
+}
+function gradeCode(prob, src){
+  let body = src; const a = src.indexOf("{"), b = src.lastIndexOf("}");
+  if(a >= 0 && b > a) body = src.slice(a + 1, b);
+  const paramEnv = () => { const env = {}; prob.params.forEach(([t, n]) => env[n] = {t}); return env; };
+  let stmts;
+  try {
+    stmts = parse(body, true);
+    if(!stmts.some(s => s.k === "ret")) throw CE("there is no return statement");
+    compileCheck(stmts, paramEnv());
+  } catch(e){
+    if(e && e.ce) return {compiled:false, err:e.ce, results:[], frac:0};
+    if(e && e.ambig) return {compiled:false, err:"unsupported type mix", results:[], frac:0};
+    throw e;
+  }
+  const results = prob.tests.map(([name, args]) => {
+    const exp = prob.ref(...args); let got, err;
+    try {
+      const env = {}; prob.params.forEach(([t, n], k) => env[n] = {t, v:conv(args[k], t)});
+      const r = runProgram(stmts, env, {}, null);
+      if(!r.done) err = "no value returned"; else got = conv(r.val.v, "double");
+    } catch(e){ if(e && (e.re || e.ce)) err = e.re || e.ce; else throw e; }
+    return {name, args, exp, got, err, ok: err === undefined && closeEnough(got, exp)};
+  });
+  return {compiled:true, results, frac:(1 + results.filter(r => r.ok).length) / (results.length + 1)};
+}
+</script>
+
+<script>
+/* ================= content ================= */
+const SK = {
+  v_post:{label:"x++ gives the old value"},
+  v_pre:{label:"++x gives the new value"},
+  v_chain:{label:"a = b = … right to left"},
+  v_comp:{label:"x op= the whole right side"},
+  v_div:{label:"int / cuts toward 0"},
+  v_mod:{label:"% sign follows the left"},
+  v_neg:{label:"Minus a negative adds"},
+  v_carry:{label:"Next line starts from the new values"}
+};
+const DRILL = ["v_post","v_pre","v_chain","v_comp","v_div","v_mod","v_neg"];
+const CARDS = {
+  v_post:`<b><code>x++</code> / <code>x--</code> hand over the OLD value</b>, then change x. With b = -3: <code>a /= -b++</code> uses -(-3) = 3, then b becomes -2. Both changes count: a AND b.`,
+  v_pre:`<b><code>++x</code> / <code>--x</code> change x FIRST</b> and hand over the new value. With c = 4: <code>a = --c</code> makes c 3 and a 3.`,
+  v_chain:`<b>Assignments group right to left:</b> <code>c = b = a - 11</code> means <code>c = (b = (a - 11))</code>. b gets the value, then c gets the same value. Both change. Same with compound ones: <code>k -= i += x</code> is <code>k -= (i += x)</code>, so i changes FIRST and k subtracts the NEW i.`,
+  v_comp:`<b><code>x op= rhs</code> means <code>x = x op (rhs)</code>:</b> the whole right side is computed first. <code>p *= r - q</code> is <code>p = p * (r - q)</code>, not <code>p * r - q</code>.`,
+  v_div:`<b>int / int cuts the fraction off toward zero:</b> 7 / 2 = 3, -7 / 2 = -3 (not -4), 2 / 5 = 0.`,
+  v_mod:`<b><code>%</code> takes the sign of the LEFT side:</b> -7 % 3 = -1, 7 % -3 = 1, -7 % -3 = -1. Check: (a / b) * b + a % b == a. And * / % go before + -, so <code>8 - 5 % 3</code> = 8 - 2.`,
+  v_neg:`<b>Minus a negative adds.</b> <code>i -= -j++</code> is i = i - (-j) = i + j. With i = 1, j = 8: i = 1 + 8 = <b>9</b>, not 1 - 8. Same for <code>a = b - -c</code> = b + c. Write the right side in brackets first, <code>i = i - (-8)</code>, then flip the two minuses into a plus.`,
+  v_carry:`<b>Each line starts from the state the previous line left.</b> Write a row with all three values after every line. After <code>q = r++ * 9;</code> the next line sees the NEW q and the bumped r.`
+};
+// Each mode is one real mistake: running the block "wrongly" this way gives the number that mistake produces.
+const MODES = [
+  {m:{preForPost:1}, sk:"v_post", why:"That's what you get if x++ handed over the new value. Postfix uses the old value, then bumps."},
+  {m:{noIncStore:1}, sk:"v_post", why:"That forgets that ++ / -- also change the variable itself."},
+  {m:{postForPre:1}, sk:"v_pre", why:"That's what you get if ++x handed over the old value. Prefix changes x first."},
+  {m:{noChain:1}, sk:"v_chain", why:"That leaves the middle variable unchanged. In a = b = x, b gets x too."},
+  {m:{chainSkip:1}, sk:"v_chain", why:"That uses the OLD middle variable. In k -= i += x, the i += x runs FIRST (right to left), then k uses the NEW i."},
+  {m:{compoundNoParen:1}, sk:"v_comp", why:"That reads x op= y - z as x = x op y - z. The whole right side goes first: x = x op (y - z)."},
+  {m:{floorDiv:1}, sk:"v_div", why:"That rounds the division down. C cuts toward zero: -7 / 2 = -3."},
+  {m:{modPos:1}, sk:"v_mod", why:"That makes % positive. In C, % takes the sign of the left side."},
+  {m:{negDrop:1}, sk:"v_neg", why:"That subtracts instead of adding. Minus a negative is a plus: x -= -y is x + y."},
+  {m:{negFlip:1}, sk:"v_neg", why:"That flips the sign of -x + k. The minus belongs to x only: -16 + 12 = -4, not 4. Write it out on paper."},
+  {m:{stale:1}, sk:"v_carry", why:"That runs the line on the starting values. It has to start from what the line above left behind."}
+];
+const STALE = MODES.findIndex(md => md.m.stale);
+
+// Statement templates. p: 1 = exam first line, 2 = exam second line. hard: Beyond only.
+const TPL = [
+  {s:"A = B = C O K;", sk:["v_chain"], p:1},
+  {s:"A += B - C++;", sk:["v_comp","v_post"], p:1},
+  {s:"A = B++ * K;", sk:["v_post"], p:1},
+  {s:"A -= K - B;", sk:["v_comp"], p:1},
+  {s:"A = K - B % C;", sk:["v_mod"], p:1},
+  {s:"A = B-- % K;", sk:["v_post","v_mod"], p:1},
+  {s:"A = -B / K;", sk:["v_div"], p:1},
+  {s:"A = ++B * K;", sk:["v_pre"], p:1},
+  {s:"A = B = --C;", sk:["v_chain","v_pre"], p:1},
+  {s:"A /= -B++;", sk:["v_comp","v_post","v_div"], p:2},
+  {s:"A -= -B;", sk:["v_neg","v_comp"], p:1},
+  {s:"A = K / B--;", sk:["v_div","v_post"], p:1},
+  {s:"A *= B += K;", sk:["v_chain","v_comp"], p:1},
+  {s:"C -= A += -B % K;", sk:["v_chain","v_comp","v_mod"], p:2},
+  {s:"A += B -= C;", sk:["v_chain","v_comp"], p:2},
+  {s:"A -= B /= -C + K;", sk:["v_chain","v_comp","v_div","v_neg"], p:2},
+  {s:"A += B *= -C + K;", sk:["v_chain","v_comp","v_neg"], p:2},
+  {s:"A -= B *= C--;", sk:["v_chain","v_comp","v_post"], hard:1},
+  {s:"A = B - -C--;", sk:["v_neg","v_post"], p:1},
+  {s:"A -= -B++;", sk:["v_neg","v_post","v_comp"], p:1},
+  {s:"A %= -(K / B) + C;", sk:["v_div","v_mod","v_comp"], p:2},
+  {s:"A -= -(B / K) * C;", sk:["v_neg","v_div","v_comp"], p:2},
+  {s:"A -= -B++ - --C;", sk:["v_neg","v_post","v_pre","v_comp"], hard:1},
+  {s:"A /= K * B++;", sk:["v_comp","v_post","v_div"], p:2},
+  {s:"A = -(K / B) % C;", sk:["v_div","v_mod"], p:2},
+  {s:"A %= B--;", sk:["v_mod","v_post","v_comp"], p:2},
+  {s:"A *= B - C++;", sk:["v_comp","v_post"], p:2},
+  {s:"A = B / K * C;", sk:["v_div"], p:2},
+  {s:"A -= B * C--;", sk:["v_comp","v_post"], p:2},
+  {s:"A += --B / K;", sk:["v_comp","v_pre","v_div"], p:2},
+  {s:"A = B % C++;", sk:["v_mod","v_post"], p:2},
+  {s:"A = ++B + C--;", sk:["v_pre","v_post"], hard:1},
+  {s:"A *= --B + K;", sk:["v_pre","v_comp"], hard:1},
+  {s:"A = B = -C++ / K;", sk:["v_chain","v_post","v_div"], hard:1},
+  {s:"A = B-- - --C;", sk:["v_post","v_pre"], hard:1},
+  {s:"A /= B++ - K;", sk:["v_comp","v_post","v_div"], hard:1},
+  {s:"A -= -B % --C;", sk:["v_comp","v_mod","v_pre"], hard:1},
+  {s:"A += B = C O K;", sk:["v_comp","v_chain"], hard:1},
+  {s:"A = (B = C++) * K;", sk:["v_chain","v_post"], hard:1},
+  {s:"A %= B-- - K;", sk:["v_mod","v_comp","v_post"], hard:1},
+  {s:"A = -B++ % -K;", sk:["v_post","v_mod"], hard:1},
+  {s:"A -= B++ / --C;", sk:["v_comp","v_post","v_pre","v_div"], hard:1}
+];
+
+/* ================= generators ================= */
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const VSETS = [["a","b","c"],["p","q","r"],["x","y","z"],["m","n","k"],["i","j","k"],["e","f","g"]];
+const initLine = (names, init) => "int " + names.map((n, k) => `${n} = ${init[k]}`).join(", ") + ";";
+
+// a = b = rhs  →  a = rhs (b untouched); also covers a += b = rhs and (b = rhs)
+const noChainRw = L => L.replace(/^(\s*\w+\s*[+\-*\/%]?=)\s*\w+\s*=(?!=)\s*/, "$1 ").replace(/\((\w+)\s*=(?!=)\s*([^()]+)\)/g, "($2)");
+function runStates(names, init, lines, mode, log){
+  mode = mode || {};
+  const fresh = () => { const e = {}; names.forEach((n, k) => e[n] = {t:"int", v:init[k]}); return e; };
+  const env = fresh(), states = [];
+  lines.forEach((L, li) => {
+    let src = L;
+    if(mode.compoundNoParen) src = noParen(src);
+    if(mode.noChain) src = noChainRw(src);
+    if(mode.chainSkip) src = src.replace(/^(\s*\w+\s*[+\-*\/%]?=)\s*(\w+)\s*[+\-*\/%]=(?!=).*;\s*$/, "$1 $2;");
+    if(mode.negFlip) src = src.replace(/=\s*-(\w+)\s*\+\s*(\d+)\s*;/, "= $1 - $2;");
+    if(mode.negDrop) src = src.replace(/-=\s*-(?!-)/, "-= ").replace(/(\s)-\s+-(?=[\w(])/, "$1- ");
+    const entry = log ? {stmt:L, steps:[]} : null;
+    if(mode.stale && li > 0){
+      const e2 = fresh(); runProgram(parse(src, true), e2, mode, null);
+      const written = new Set([...src.matchAll(/(\w+)\s*[+\-*\/%]?=(?!=)|(?:\+\+|--)(\w+)|(\w+)(?:\+\+|--)/g)].map(m => m[1] || m[2] || m[3]));
+      names.forEach(n => { if(written.has(n)) env[n].v = e2[n].v; });
+    } else runProgram(parse(src, true), env, mode, entry ? entry.steps : null);
+    states.push(names.map(n => env[n].v));
+    if(log){ entry.after = names.map(n => `${n} = ${env[n].v}`).join(", "); log.push(entry); }
+  });
+  return states;
+}
+function fill(t, names){
+  const p = shuffle(names), O = pick(["+","-","*","/","%"]);
+  const src = t.s.replace(/\b(A|B|C|K|O)\b/g, m => ({A:p[0], B:p[1], C:p[2], K:String(ri(2, 9)), O}[m]));
+  const sk = t.sk.slice(); if(t.s.includes(" O ")){ if(O === "/") sk.push("v_div"); if(O === "%") sk.push("v_mod"); }
+  return {src, sk};
+}
+const altOf = (names, init, lines) => MODES.map(md => { try { return runStates(names, init, lines, md.m); } catch(e){ return null; } });
+const bites = (it, sk, cells) => MODES.some((md, j) => md.sk === sk && it.alt[j] && (cells || it.cells).some(([li, vi]) => it.alt[j][li][vi] !== it.states[li][vi]));
+// kind: atomPick (one line, one variable, options) · atom (one line, all variables) · trace (two lines, every row) · block (two lines, final row) · beyond (three lines, final row)
+function genItem(kind, target){
+  const one = kind === "atom" || kind === "atomPick";
+  for(let k = 0; k < 2000; k++){
+    const strict = k < 1500;
+    const names = pick(VSETS), init = names.map(() => ri(-9, 9));
+    let tpls;
+    if(one) tpls = [pick(TPL.filter(t => !t.hard))];
+    else if(kind === "beyond"){ const H = TPL.filter(t => t.hard); tpls = shuffle([pick(H), pick(H), pick(TPL)]); }
+    else tpls = [pick(TPL.filter(t => t.p === 1)), pick(TPL.filter(t => t.p === 2))];
+    const fs = tpls.map(t => fill(t, names)), sk = [...new Set(fs.flatMap(f => f.sk))];
+    if(target && !sk.includes(target)) continue;
+    const lines = fs.map(f => f.src);
+    let states;
+    try { states = runStates(names, init, lines); } catch(e){ if(e && (e.re || e.ce)) continue; throw e; }
+    if(!states.every(s => s.every(v => Math.abs(v) <= 999))) continue;
+    const last = lines.length - 1;
+    const cells = kind === "trace" ? lines.flatMap((_, li) => names.map((_, vi) => [li, vi])) : names.map((_, vi) => [last, vi]);
+    const it = {kind, target:target || pick(sk), names, init, lines, states, cells, sk, alt:altOf(names, init, lines)};
+    // the targeted trap must actually change an answer, and line 2 must read something line 1 changed
+    if(strict && !bites(it, it.target)) continue;
+    if(strict && !one && !bites(it, "v_carry")) continue;
+    if(kind === "atomPick"){
+      const vis = names.map((_, vi) => vi).filter(vi => bites(it, it.target, [[0, vi]]));
+      it.ask = vis.length ? pick(vis) : 0; it.cells = [[0, it.ask]];
+    }
+    it.log = []; runStates(names, init, lines, {}, it.log);
+    return it;
+  }
+}
+</script>
+
+<script>
+/* ================= ladder app ================= */
+const STAGES = [
+  {name:"Spoon-fed", kind:"atomPick", len:12, opts:3, card:true, retry:true, pass:.9,
+   blurb:"One line, one variable, 3 choices. The rule is shown, and the wrong choices are the numbers your mistakes produce. Misses come back later in the round."},
+  {name:"All three", kind:"atom", len:12, hint:true, retry:true, pass:.9,
+   blurb:"Still one line, but you type all three variables, the way the exam asks. The variable that got ++ or -- counts too. The hint shows the rule and counts as a miss."},
+  {name:"Trace table", kind:"trace", len:8, retry:true, pass:.875,
+   blurb:"Two-line blocks. Type every variable's value after line 1 AND after line 2. This is the habit that stops the line-2 mistakes: the second line starts from the first line's results."},
+  {name:"Exam blocks", kind:"block", len:6, timer:true, pass:1,
+   blurb:"Exactly Q5 / Q7 / Q8: two lines, final values only, no hints. Pass = 6 of 6 blocks perfect."},
+  {name:"Streak", kind:"block", streak:10, limit:90, timer:true, pass:1,
+   blurb:"Endless exam blocks. Pass = 10 perfect blocks in a row, each in under 90 seconds. A miss resets the streak to 0. A slow perfect block doesn't count, but doesn't reset it."},
+  {name:"Beyond", kind:"beyond", len:6, timer:true, pass:1,
+   blurb:"Harder than the exam: three lines, prefix and postfix in one line, chains inside op=, % with negative right sides, (b = c++) inside an expression. Pass = 6 of 6 perfect."}
+];
+
+const SKEY = "values-ladder-v1";
+// starting mastery = his PE1 Ladder chips on 2026-11-04 (++x solid, / medium, the rest red)
+const fresh = () => ({m:{v_post:1, v_pre:5, v_chain:1, v_comp:1, v_div:2, v_mod:1}, seen:{v_post:1, v_pre:1, v_chain:1, v_comp:1, v_div:1, v_mod:1}, passed:{}, best:{}, unlocked:1});
+function load(){ try { const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; } catch(e){} return fresh(); }
+function save(){ try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+const $ = id => document.getElementById(id);
+const mOf = k => S.m[k] || 0;
+function record(k, ok){
+  S.seen[k] = 1;
+  S.m[k] = ok ? Math.min(5, mOf(k) + 1) : Math.max(1, mOf(k) - 2);
+}
+function pickSkills(n){
+  const w = DRILL.map(k => S.seen[k] ? 6 - mOf(k) : 7), tot = w.reduce((a, b) => a + b, 0), out = [];
+  while(out.length < n){
+    let x = Math.random() * tot, i = 0;
+    while((x -= w[i]) > 0 && i < DRILL.length - 1) i++;
+    if(out.length >= 1 && out[out.length - 1] === DRILL[i] && Math.random() < .7) continue;
+    out.push(DRILL[i]);
+  }
+  return out;
+}
+const cardHTML = k => `<div class="rule"><span class="lbl">Rule · ${SK[k].label}</span><div>${CARDS[k]}</div></div>`;
+
+/* ----- ladder, mastery, sheet ----- */
+let cur = null;
+function bestText(i){
+  const st = STAGES[i], b = S.best[i];
+  if(b == null) return i + 1 > S.unlocked ? "locked" : "not tried";
+  return st.streak ? `best streak ${Math.round(b * st.streak)}` : `best ${Math.round(b * 100)}%`;
+}
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st, i) => {
+    const locked = i + 1 > S.unlocked, passed = S.passed[i];
+    return `<button class="rung ${cur === i ? "on" : ""} ${locked ? "locked" : ""} ${passed ? "passed" : ""}" data-i="${i}" type="button">
+      <span class="n">Rung ${i + 1}</span><span class="nm">${st.name}</span><span class="st">${passed ? "passed · " : ""}${bestText(i)}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  $("mgrid").innerHTML = `<div class="mgroup">Values (Q5, Q7, Q8)</div><div class="mgrid">` +
+    Object.keys(SK).map(k => `<div class="chip" style="background:${S.seen[k] ? `var(--m${mOf(k)})` : "var(--m0)"}">${SK[k].label}</div>`).join("") + "</div>";
+}
+function renderSheet(){
+  $("sheetBody").innerHTML = Object.keys(SK).map(cardHTML).join("") +
+    `<div class="rule"><span class="lbl">Trace method, every block</span><div>1) Write the start row. 2) Line by line, read the right side from the CURRENT row. <code>x++</code>: the old value goes into the expression, and x's box goes up right away. <code>++x</code>: box first, then use it. 3) <code>x op= rhs</code>: finish the whole right side, then x = x op (that). 4) Write the full new row before you touch the next line. 5) / cuts toward 0, % takes the left side's sign.</div></div>`;
+}
+
+/* ----- stage intro ----- */
+function openStage(i){
+  cur = i; renderLadder(); stopTick();
+  const st = STAGES[i], locked = i + 1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} of 6</span><span>Pass: <b>${st.streak ? st.streak + " in a row" : Math.round(st.pass * 100) + "%"}</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${i === 0 ? `<div class="rule"><span class="lbl">Why this ladder exists: PE1 Ladder rung 4, 38 / 46</span><div>Types 18 / 18 and coding 10 / 10, but values only 10 / 18. Every miss was a line that changes a variable and a later read of it:<br><code>q = r++ * 9;  p *= r - q++;</code> (p = 117, q = 46)<br><code>n = k++ * 2;  m *= k - n++;</code> (n = -13)<br><code>x = z = y % 6;  z %= y--;</code> (z = 0)<br>Real PE1 retake, Q8 (2 / 6): <code>i -= -j++;  j %= -(k / 2) + i;</code> with i = 1, j = 8. You wrote i = 1 - 8 = -7 (it's 1 + 8 = 9), and j = 0 followed from that wrong i. One dropped minus cost 4 points.<br>PE1 again, Q5 (0 / 6): <code>j = 8 / k--;  k -= i += -j % 3;</code> with i = 4, j = 0, k = -5. Key: i = 5, j = -1, k = -11. You did <code>k -= i</code> with the old i and never ran <code>i += 1</code>, so i and k were wrong together.</div></div>` : ""}
+    ${locked ? `<p class="small" style="margin:0">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked ? "Start anyway" : "Start round"}</button>
+    <span class="small">${st.kind === "atomPick" ? "Keys: 1–3 to answer, Enter for next." : "Enter moves to the next box, then checks."}</span></div>`;
+  $("go").onclick = () => startRound(i);
+  $("go").focus();
+}
+
+/* ----- rounds ----- */
+let R = null;
+const makeItem = (st, k) => genItem(st.kind, k);
+function startRound(i){
+  const st = STAGES[i], n = st.streak ? 2 : st.len;
+  R = {i, st, queue:pickSkills(n).map(k => makeItem(st, k)), pos:0, total:st.streak ? 0 : n, clean:0, misses:[], answered:false, hinted:false, streak:0, best:0, times:[]};
+  showItem();
+}
+function stopTick(){ if(R && R.tick){ clearInterval(R.tick); R.tick = null; } }
+function inputTable(it){
+  const rows = it.kind === "trace" ? it.lines.map((_, li) => li) : [it.lines.length - 1];
+  return `<div class="tw"><table class="st"><tr><th>${it.kind === "trace" ? "after line" : ""}</th>${it.names.map(n => `<th>${n}</th>`).join("")}</tr>
+    ${it.kind === "trace" ? `<tr><td class="line">start</td>${it.init.map(v => `<td class="given">${v}</td>`).join("")}</tr>` : ""}
+    ${rows.map(li => `<tr><td class="line">${it.kind === "trace" ? esc(it.lines[li]) : "final"}</td>${it.names.map((n, vi) => `<td><input type="text" id="c${li}_${vi}" autocomplete="off" spellcheck="false" aria-label="${n} after line ${li + 1}"></td>`).join("")}</tr>`).join("")}
+  </table></div>`;
+}
+function pickOptions(it, n){
+  const ans = it.states[0][it.ask], why = new Map(), opts = [ans];
+  const order = MODES.map((_, j) => j).sort((a, b) => (MODES[b].sk === it.target) - (MODES[a].sk === it.target));
+  for(const j of order){ const a = it.alt[j]; if(!a) continue; const r = a[0][it.ask]; if(!why.has(r) && r !== ans) why.set(r, MODES[j]); if(opts.length < n && !opts.includes(r)) opts.push(r); }
+  for(const c of shuffle([ans + 1, ans - 1, -ans, ans + 2, ans - 2])) if(opts.length < n && !opts.includes(c)) opts.push(c);
+  return {list:shuffle(opts).map(String), why};
+}
+function showItem(){
+  stopTick();
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false;
+  const done = R.queue.slice(0, R.pos).filter(q => !q.retry).length;
+  const prog = st.streak ? `streak <b>${R.streak}</b> / ${st.streak} · best ${R.best}` : `<b>${done}</b> / ${R.total} · clean <b>${R.clean}</b>`;
+  const code = `<pre class="code">${esc(initLine(it.names, it.init) + "\n\n" + it.lines.join("\n"))}</pre>`;
+  let body;
+  if(it.kind === "atomPick"){
+    R.opts = pickOptions(it, st.opts);
+    body = `${code}<div class="prompt">What is the <b>value</b> of <code>${it.names[it.ask]}</code> after this line?</div>${st.card ? cardHTML(it.target) : ""}
+      <div class="opts" id="opts">${R.opts.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${j + 1}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+  } else {
+    body = `${code}<div class="prompt">${it.kind === "trace" ? "Type every variable's value <b>after each line</b>." : "What is the <b>value</b> of each variable after the block?"}</div>
+      ${inputTable(it)}<div class="row"><button class="btn" id="check" type="button">Check</button>${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint (counts as a miss)</button>` : ""}</div><div id="hintout"></div>`;
+  }
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i + 1} · ${st.name}${st.timer ? ` · <span class="timer" id="timer">0 s</span>${st.limit ? ` / ${st.limit} s` : ""}` : ""}</span><span>${prog}</span></div>
+    ${st.streak ? `<div class="streak">${Array.from({length:st.streak}, (_, k) => `<i class="${k < R.streak ? "on" : ""}"></i>`).join("")}</div>` : `<div class="bar"><i style="width:${done / R.total * 100}%"></i></div>`}
+    ${it.retry ? `<span class="lbl">Again, a new question on the same rule</span>` : ""}
+    ${body}<div id="fb"></div>
+    ${st.streak ? `<div class="row"><button class="btn ghost" id="stop" type="button">Stop and save best streak</button></div>` : ""}`;
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => pickAnswer(+b.dataset.j));
+  const ins = [...$("stage").querySelectorAll("table.st input")];
+  ins.forEach((el, k) => el.onkeydown = e => {
+    if(e.key !== "Enter") return;
+    e.preventDefault(); e.stopPropagation();
+    if(R.answered) return next();
+    if(k < ins.length - 1) ins[k + 1].focus(); else checkCells();
+  });
+  if(ins[0]) ins[0].focus();
+  if($("check")) $("check").onclick = checkCells;
+  if($("hint")) $("hint").onclick = () => { R.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = it.sk.map(cardHTML).join(""); };
+  if($("stop")) $("stop").onclick = () => { stopTick(); finish(R.i, R.best / st.streak, R.misses); };
+  R.t0 = Date.now();
+  if(st.timer && $("timer")) R.tick = setInterval(() => {
+    const s = Math.floor((Date.now() - R.t0) / 1000), el = $("timer"); if(!el) return stopTick();
+    el.textContent = s + " s"; if(st.limit && s > st.limit) el.classList.add("over");
+  }, 1000);
+}
+function pickAnswer(j){
+  if(R.answered) return;
+  const it = R.queue[R.pos], v = +R.opts.list[j], ans = it.states[0][it.ask], ok = v === ans;
+  $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if(+R.opts.list[k] === ans) b.classList.add("right"); else if(k === j) b.classList.add("wrong"); });
+  settle(it, ok, ok ? [] : [{li:0, vi:it.ask, s:String(v), md:R.opts.why.get(v) || null}]);
+}
+function checkCells(){
+  if(R.answered) return;
+  const it = R.queue[R.pos], wrong = [];
+  it.cells.forEach(([li, vi]) => {
+    const el = $(`c${li}_${vi}`), s = el.value.trim(), right = /^-?\d+$/.test(s) && +s === it.states[li][vi];
+    el.disabled = true; el.classList.add(right ? "ok" : "no");
+    if(!right){ let md = null; it.alt.forEach((a, j) => { if(!md && a && /^-?\d+$/.test(s) && a[li][vi] === +s) md = MODES[j]; }); wrong.push({li, vi, s, md}); }
+  });
+  if($("check")) $("check").disabled = true;
+  settle(it, wrong.length === 0, wrong);
+}
+function stateTable(it, wrong){
+  const bad = new Set(wrong.map(w => w.li + ":" + w.vi));
+  return `<div class="tw"><table class="st"><tr><th>after</th>${it.names.map(n => `<th>${n}</th>`).join("")}</tr>
+    <tr><td class="line">start</td>${it.init.map(v => `<td class="given">${v}</td>`).join("")}</tr>
+    ${it.lines.map((L, li) => `<tr><td class="line">${esc(L)}</td>${it.states[li].map((v, vi) => `<td class="${bad.has(li + ":" + vi) ? "x" : ""}">${v}</td>`).join("")}</tr>`).join("")}</table></div>`;
+}
+function stepsHTML(it){
+  return `<ol>${it.log.map(e => `<li><code>${esc(e.stmt)}</code>${e.steps.length ? `<ul>${e.steps.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}<div class="small">→ ${e.after}</div></li>`).join("")}</ol>`;
+}
+const missLine = it => `<code>${esc(initLine(it.names, it.init))}  ${esc(it.lines.join("  "))}</code> → ${it.names.map((n, vi) => `${n} = ${it.states[it.lines.length - 1][vi]}`).join(", ")}`;
+function settle(it, ok, wrong){
+  const st = R.st, secs = (Date.now() - R.t0) / 1000;
+  stopTick();
+  R.answered = true;
+  if($("hint")) $("hint").disabled = true;
+  const clean = ok && !R.hinted;
+  const diags = [...new Set(wrong.map(w => w.md && w.md.sk).filter(Boolean))];
+  if(!it.retry){
+    if(!st.streak){ if(clean) R.clean++; }
+    if(!clean) R.misses.push({k:diags[0] || it.target, html:missLine(it)});
+    if(clean) (it.kind === "atomPick" ? [it.target] : it.sk).forEach(k => record(k, true));
+    else (diags.length ? diags : [it.target]).forEach(k => record(k, false));
+    save(); renderMastery();
+  }
+  if(st.timer) R.times.push(secs);
+  let streakMsg = "";
+  if(st.streak){
+    if(!clean){ streakMsg = R.streak ? `Streak reset from ${R.streak} to 0.` : "Streak stays at 0."; R.streak = 0; }
+    else if(secs > st.limit) streakMsg = `Right, but ${Math.round(secs)} s is over ${st.limit} s, so it doesn't count. Streak stays at ${R.streak}.`;
+    else { R.streak++; R.best = Math.max(R.best, R.streak); streakMsg = `Streak ${R.streak} / ${st.streak} (${Math.round(secs)} s).`; }
+    if(R.streak < st.streak) R.queue.push(makeItem(st, pickSkills(1)[0]));
+  }
+  if(!ok && st.retry){ const again = Object.assign(makeItem(st, it.target), {retry:true}); R.queue.splice(Math.min(R.pos + 3, R.queue.length), 0, again); }
+  const where = w => it.kind === "atomPick" || it.kind === "atom" ? it.names[w.vi] : `${it.names[w.vi]} after line ${w.li + 1}`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}">
+      <h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : `${it.cells.length - wrong.length} of ${it.cells.length} right`}</h3>
+      ${streakMsg ? `<div><b>${streakMsg}</b></div>` : ""}
+      ${wrong.length ? `<ul class="wl">${wrong.map(w => `<li><b>${where(w)}</b> is <b>${it.states[w.li][w.vi]}</b>${w.s !== "" ? `, you wrote ${esc(w.s)}` : ""}.${w.md ? " " + esc(w.md.why) : ""}</li>`).join("")}</ul>` : ""}
+      ${wrong.length > 1 && wrong.every(w => w.md && w.md === wrong[0].md) ? `<div><b>One mistake explains all ${wrong.length} wrong boxes.</b> The later ones were right given your earlier number. The error carried down.</div>` : ""}
+      ${stateTable(it, wrong)}
+      <details ${ok ? "" : "open"}><summary class="small">step by step</summary>${stepsHTML(it)}</details>
+      ${!ok && diags.length ? diags.map(cardHTML).join("") : ""}
+      ${!ok && st.retry ? `<div class="small">A new question on "${SK[it.target].label}" comes back in a few items.</div>` : ""}
+    </div><div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next;
+  $("next").focus();
+}
+function next(){
+  const st = R.st;
+  R.pos++;
+  if(st.streak && R.streak >= st.streak) return finish(R.i, 1, R.misses);
+  if(R.pos >= R.queue.length) return finish(R.i, R.clean / R.total, R.misses);
+  showItem();
+}
+
+/* ----- results ----- */
+function finish(i, score, misses){
+  stopTick();
+  const st = STAGES[i], passed = score >= st.pass - 1e-9;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(6, i + 2)); }
+  save(); renderLadder();
+  const by = {}; misses.forEach(m => (by[m.k] = by[m.k] || []).push(m.html));
+  const avg = R && R.times.length ? Math.round(R.times.reduce((a, b) => a + b, 0) / R.times.length) : null;
+  const big = st.streak ? `${Math.round(score * st.streak)} in a row` : `${R.clean} / ${R.total}`;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name} · round over</span><span>Pass: ${st.streak ? st.streak + " in a row" : Math.round(st.pass * 100) + "%"}</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${big}</span>
+      <span class="pill ${passed ? "ok" : "no"}">${passed ? (i < 5 ? "Passed · rung " + (i + 2) + " unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${avg != null ? `<div class="small">Average ${avg} s per block.</div>` : ""}
+    ${misses.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Rules to review</h3><ul class="missl">${Object.entries(by).map(([k, l]) => `<li><b>${SK[k].label}</b>: <span class="small">${CARDS[k].replace(/<[^>]+>/g, "")}</span><br>${l.slice(0, 4).join("<br>")}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">
+      ${passed && i < 5 ? `<button class="btn" id="nx" type="button">Go to rung ${i + 2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>`
+                        : `<button class="btn" id="again" type="button">${passed ? "Play again" : "Try again"}</button>`}
+    </div>`;
+  $("again").onclick = () => startRound(i);
+  if($("nx")) $("nx").onclick = () => openStage(i + 1);
+  ($("nx") || $("again")).focus();
+  window.scrollTo({top:0});
+}
+
+/* ----- keyboard ----- */
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if(R && $("opts") && !R.answered && /^[1-3]$/.test(e.key)){
+    const b = document.querySelector(`.opt[data-j="${+e.key - 1}"]`); if(b){ e.preventDefault(); b.click(); }
+  } else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+
+renderMastery(); renderSheet();
+openStage(Math.min(S.unlocked, 6) - 1);
+</script>
+</body>
+</html>
+
+</body></html>

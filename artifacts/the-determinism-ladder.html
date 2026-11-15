@@ -1,0 +1,666 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>The Determinism Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #F5F8F7;
+    --surface:   #FFFFFF;
+    --surface-2: #ECF1EF;
+    --ink:       #17211F;
+    --ink-soft:  #3B4946;
+    --muted:     #5C6B67;
+    --rule:      #D5DEDB;
+    --rule-soft: #E4EBE9;
+    --accent:    #0E6B60;
+    --accent-dim:#B8DBD5;
+    --warn:      #8F5310;
+    --warn-dim:  #F2E2C8;
+    --alert:     #9E2F2F;
+    --alert-dim: #F3D8D8;
+    --shadow:    0 1px 2px rgba(23,33,31,.05), 0 8px 24px -16px rgba(23,33,31,.28);
+
+    --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    --body:    "Newsreader", Georgia, "Times New Roman", serif;
+    --mono:    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0F1513;
+      --surface:   #161E1C;
+      --surface-2: #1E2825;
+      --ink:       #E4EAE7;
+      --ink-soft:  #C3CFCB;
+      --muted:     #8DA09B;
+      --rule:      #2A3633;
+      --rule-soft: #212C29;
+      --accent:    #4CC0AE;
+      --accent-dim:#1D3F3A;
+      --warn:      #DDA25A;
+      --warn-dim:  #3A2C17;
+      --alert:     #E08080;
+      --alert-dim: #3B2020;
+      --shadow:    0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0F1513;
+    --surface:   #161E1C;
+    --surface-2: #1E2825;
+    --ink:       #E4EAE7;
+    --ink-soft:  #C3CFCB;
+    --muted:     #8DA09B;
+    --rule:      #2A3633;
+    --rule-soft: #212C29;
+    --accent:    #4CC0AE;
+    --accent-dim:#1D3F3A;
+    --warn:      #DDA25A;
+    --warn-dim:  #3A2C17;
+    --alert:     #E08080;
+    --alert-dim: #3B2020;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 18px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  .col {
+    max-width: 660px;
+  }
+
+  p { margin: 0 0 1.05em; }
+  p:last-child { margin-bottom: 0; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, .tier:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  strong { font-weight: 500; color: var(--ink); }
+
+  /* ---------- masthead ---------- */
+
+  header.masthead {
+    padding: 76px 0 40px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 22px;
+  }
+  .eyebrow span { color: var(--accent); }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(38px, 6.4vw, 62px);
+    line-height: 1.03;
+    letter-spacing: -.028em;
+    text-wrap: balance;
+    margin: 0 0 26px;
+    max-width: 14ch;
+  }
+
+  .standfirst {
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 54ch;
+  }
+  .standfirst em { font-style: italic; color: var(--ink); }
+
+  /* ---------- section headings ---------- */
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(25px, 3.2vw, 32px);
+    line-height: 1.14;
+    letter-spacing: -.018em;
+    text-wrap: balance;
+    margin: 0 0 18px;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -.01em;
+    margin: 0 0 10px;
+  }
+
+  section { margin-bottom: 68px; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+
+  /* ---------- tier cards ---------- */
+
+  .tiers { display: flex; flex-direction: column; gap: 20px; }
+
+  .tier {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    padding: 28px 30px 30px;
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 30px;
+  }
+
+  @media (max-width: 720px) {
+    .tier { grid-template-columns: 1fr; gap: 20px; padding: 24px 20px 26px; }
+  }
+
+  .tier-id {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* determinism meter: encodes how much of the outcome the platform guarantees */
+  .meter {
+    margin: 14px 0 10px;
+    display: flex;
+    gap: 3px;
+    height: 8px;
+  }
+  .meter i {
+    flex: 1;
+    background: var(--surface-2);
+    border-radius: 1px;
+  }
+  .meter i.on { background: var(--accent); }
+
+  .meter-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .meter-label b { color: var(--ink-soft); font-weight: 600; }
+
+  .tier-body > *:last-child { margin-bottom: 0; }
+
+  .tier-body ul, .prose ul { margin: 0 0 1.05em; padding-left: 20px; }
+  .tier-body li, .prose li { margin-bottom: .4em; }
+
+  .money {
+    font-family: var(--mono);
+    font-size: .88em;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  /* ---------- gotcha callout ---------- */
+
+  .gotcha {
+    border-left: 2px solid var(--warn);
+    background: var(--warn-dim);
+    padding: 14px 18px;
+    margin: 16px 0 0;
+    border-radius: 0 2px 2px 0;
+  }
+  .gotcha p { font-size: 16px; margin: 0; color: var(--ink-soft); }
+  .gotcha .tag {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--warn);
+    margin-bottom: 5px;
+  }
+
+  /* ---------- matrix ---------- */
+
+  .scroller {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 720px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--rule-soft);
+    color: var(--ink-soft);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.name { color: var(--ink); font-weight: 500; white-space: nowrap; }
+
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .pill.open  { background: var(--accent-dim); color: var(--accent); }
+  .pill.part  { background: var(--warn-dim);   color: var(--warn); }
+  .pill.shut  { background: var(--alert-dim);  color: var(--alert); }
+
+  /* ---------- evidence grading ---------- */
+
+  .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+
+  .ev {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 18px 20px;
+    background: var(--surface);
+  }
+  .ev h3 { font-size: 15px; margin-bottom: 8px; }
+  .ev p { font-size: 15px; color: var(--muted); line-height: 1.5; }
+  .ev .grade {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 9px;
+  }
+  .ev.a .grade { color: var(--accent); }
+  .ev.b .grade { color: var(--warn); }
+  .ev.c .grade { color: var(--alert); }
+
+  /* ---------- the run sheet ---------- */
+
+  .runsheet { display: flex; flex-direction: column; gap: 2px; }
+
+  .day {
+    display: grid;
+    grid-template-columns: 108px 1fr;
+    gap: 24px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: baseline;
+  }
+  .day:last-child { border-bottom: 0; }
+  @media (max-width: 620px) {
+    .day { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  .day-when {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .day-what p { font-size: 17px; margin: 0; }
+  .day-what p + p { margin-top: .5em; color: var(--muted); font-size: 15.5px; }
+
+  /* ---------- closing ---------- */
+
+  .verdict {
+    border-top: 2px solid var(--ink);
+    padding-top: 28px;
+    margin-top: 8px;
+  }
+  .verdict p { font-size: 19px; line-height: 1.55; }
+
+  footer {
+    margin-top: 68px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.9;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); }
+  footer .flabel {
+    display: block;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a, .tier { transition: color .15s ease, border-color .15s ease; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Field guide &middot; <span>researched September 2026</span></p>
+    <h1>The Determinism Ladder</h1>
+    <p class="standfirst">You asked for a route where every step is public, every number is checkable, and following it exactly produces money — even one dollar. That route exists. But it only exists at the bottom of this ladder, and <em>the reason is worth more to you than the route is.</em></p>
+  </header>
+
+  <section class="col">
+    <p class="kicker">The finding</p>
+    <h2>Documentation is never the missing ingredient</h2>
+    <p>Every method sold online is documented to death. The steps are public, free, and mostly accurate. What varies is not how well a method is <em>explained</em> — it's how much of the outcome the method actually <em>controls</em>.</p>
+    <p>At the bottom of the ladder, a platform contractually owes you money the moment you finish an approved task. Nothing is left to chance, which is exactly why the ceiling is low — anyone can do it, so it pays what anyone-can-do-it pays.</p>
+    <p>At the top, the payout is enormous and the final step is <strong>a stranger deciding to say yes.</strong> No document can automate that step, which is why every guide goes vague right there. That vagueness isn't a scam; it's the honest edge of what documentation can do.</p>
+    <p>So the ladder below is sorted by one thing only: <strong>what fraction of the result is guaranteed by someone other than you.</strong></p>
+  </section>
+
+  <section>
+    <p class="kicker col">The ladder</p>
+    <h2 class="col">Four rungs, sorted by what's guaranteed</h2>
+
+    <div class="tiers">
+
+      <article class="tier">
+        <div>
+          <div class="tier-id">Rung 0 · Guaranteed</div>
+          <div class="meter" role="img" aria-label="Determinism: 5 of 5">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+          </div>
+          <p class="meter-label"><b>Paid research &amp; microtasks.</b> Finish an approved task, get paid. Enforced by platform policy.</p>
+        </div>
+        <div class="tier-body">
+          <p><strong>Prolific</strong> is the cleanest example on the internet. Academic researchers post studies; you fill them in. Prolific's own researcher rules set a hard floor of <span class="money">£6 / $8 per hour</span> and calculate the effective rate from the <em>median actual completion time</em>, not the researcher's optimistic estimate — if a study runs long, the researcher is forced to top up. Studies are typically 5–30 minutes.</p>
+          <p><strong>UserTesting</strong> pays <span class="money">$10</span> for a standard 15–20 minute unmoderated test, <span class="money">$4</span> for a 5–7 minute short one, and up to <span class="money">$30–$120</span> for longer or live sessions. <strong>Clickworker</strong>, <strong>Microworkers</strong> and <strong>Toloka</strong> are the globally-open equivalents: lower pay, almost no gate.</p>
+          <p><strong>Time to your first dollar:</strong> hours to a few days. This is the only rung where "do the steps exactly and you get paid" is literally true.</p>
+          <div class="gotcha">
+            <span class="tag">What the guides skip</span>
+            <p>UserTesting's screener tax. You attempt roughly 4–5 screeners for every test you qualify for, at 2–5 minutes each, unpaid. That turns a headline $30–$40/hr into a real $15–$25/hr. Prolific has the same dynamic in milder form — study availability, not study pay, is the binding constraint.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="tier">
+        <div>
+          <div class="tier-id">Rung 1 · Gated</div>
+          <div class="meter" role="img" aria-label="Determinism: 3 of 5">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i>
+          </div>
+          <p class="meter-label"><b>AI training work.</b> Payment reliable. Access and workflow are not.</p>
+        </div>
+        <div class="tier-body">
+          <p><strong>DataAnnotation</strong> is the headline name: you grade, correct and write responses that train language models. Published rates run <span class="money">$20–$30/hr</span> for general work and <span class="money">$50–$100+/hr</span> for coding, STEM, law, medicine and finance specialties. It pays weekly by PayPal with no minimum threshold, and reports paying contributors over <span class="money">$20M</span> since 2020.</p>
+          <p>Payment reliability is genuinely strong — an analysis of 6,605 Reddit comments across 1,909 distinct accounts turned up only <strong>four</strong> non-payment allegations. Trustpilot 4.5, Glassdoor 4.0, Indeed 4.1.</p>
+          <p><strong>Time to your first dollar:</strong> days to never. The variance is entirely in the gate, not the payout.</p>
+          <div class="gotcha">
+            <span class="tag">What the guides skip — and this one is serious</span>
+            <p>Two hard walls. First: the Starter Assessment is <strong>one attempt, no retakes.</strong> Fail it and that's the end, permanently. Second: 2026 has been a work drought. Reddit mentions of empty queues and assessment limbo went from 29 in 2025 to <strong>383 in 2026</strong>, with 200+ distinct accounts describing extended dry spells and 400+ reporting silence after submitting the assessment. Passing the gate is not the same as getting work.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="tier">
+        <div>
+          <div class="tier-id">Rung 2 · Formulaic</div>
+          <div class="meter" role="img" aria-label="Determinism: 2 of 5">
+            <i class="on"></i><i class="on"></i><i></i><i></i><i></i>
+          </div>
+          <p class="meter-label"><b>Paid clipping.</b> The payout formula is public arithmetic. The inputs are not guaranteed.</p>
+        </div>
+        <div class="tier-body">
+          <p>This is the closest thing to a fully transparent modern method. Creators and brands fund campaigns; you cut their long-form content into short clips, post them, submit the link, and get paid per 1,000 verified views. Rates are published on each campaign — commonly <span class="money">$0.20–$6 per 1k views</span>, averaging around <span class="money">$1</span>, with premium briefs documented higher. No follower minimum, no watch hours, no subscriber threshold. NPR covered the practice as an established occupation in May 2026.</p>
+          <p>Every step is public: verify your identity (1–5 days), pick a campaign, read the brief and its banned-claims list, cut 20–60 seconds around the strongest moment, lead with a hook, caption it, post, submit, screenshot your analytics, repeat at volume.</p>
+          <p><strong>The honest arithmetic:</strong> a realistic beginner earns <span class="money">$0–$80</span> in month one. Serious operators posting 10–20 clips a day land <span class="money">$400–$1,500/mo</span>. Note that "posting 10–20 clips a day" is the real job description.</p>
+          <div class="gotcha">
+            <span class="tag">What the guides skip</span>
+            <p>Both halves of the formula are outside your control on day one. Views are a lottery you get better at, and campaign budgets empty — a campaign that pays beautifully on Monday can be exhausted by Thursday. Also: your first clips will be rejected for brief violations you didn't notice, and rejected clips pay zero regardless of views.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="tier">
+        <div>
+          <div class="tier-id">Rung 3 · Open-ended</div>
+          <div class="meter" role="img" aria-label="Determinism: 1 of 5">
+            <i class="on"></i><i></i><i></i><i></i><i></i>
+          </div>
+          <p class="meter-label"><b>Selling a service.</b> Highest ceiling. The last step is a human saying yes.</p>
+        </div>
+        <div class="tier-body">
+          <p>Where the actual money is, and where every guide gets vague at exactly the same point. The 2026 demand data is unambiguous about <em>what</em> to sell: AI-related freelance skill demand grew <span class="money">109%</span> year over year while basic writing and translation fell <span class="money">22–28%</span>. Short-form video editing is the largest category by raw demand and the most resistant to AI displacement. Google Business Profile optimization is a genuinely productized service with published market pricing — <span class="money">$300–$500</span> for a one-time audit and optimization, <span class="money">$125–$475/mo</span> for management.</p>
+          <p>All of that is documented. What isn't documented, because it can't be, is the twenty conversations where nineteen people ignore you. The one that answers pays for the rest.</p>
+          <div class="gotcha">
+            <span class="tag">What the guides skip</span>
+            <p>Marketplace timing beats marketplace skill early on. Freelancers who respond within 30 minutes of a job posting see materially higher reply and hire rates. And the survivorship number that should shape your whole plan: <strong>61% of new freelancers who got one paid project inside their first month were still freelancing a year later, versus 23% of those who took three or more months.</strong> Speed to first dollar predicts survival better than skill does.</p>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker col">The silent filter</p>
+    <h2 class="col">Where you live decides most of this</h2>
+    <div class="col" style="margin-bottom:24px">
+      <p>This is the single biggest piece of hidden information in the entire category, and almost no guide leads with it. Half the platforms with the cleanest, most honest documentation will not accept you at all depending on your country of residence — and eligibility is based on where you <em>currently live</em>, not your nationality or your passport.</p>
+      <p>Check this column before you spend a single hour on anything above.</p>
+    </div>
+
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Who can join</th>
+            <th>Reach</th>
+            <th>Realistic rate</th>
+            <th>Payout</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">Clickworker</td>
+            <td><span class="pill open">Global</span></td>
+            <td>140+ countries</td>
+            <td>$3–$7/hr base; $8–$18/hr with UHRS access</td>
+            <td>€5 min, weekly PayPal</td>
+          </tr>
+          <tr>
+            <td class="name">Microworkers</td>
+            <td><span class="pill open">Global</span></td>
+            <td>Most accessible for non-US</td>
+            <td>$3–$8/hr</td>
+            <td>PayPal</td>
+          </tr>
+          <tr>
+            <td class="name">Toloka</td>
+            <td><span class="pill open">Global</span></td>
+            <td>Worldwide</td>
+            <td>Low, task-dependent</td>
+            <td>$0.02 min — PayPal, Payoneer, Skrill</td>
+          </tr>
+          <tr>
+            <td class="name">Prolific</td>
+            <td><span class="pill part">61 countries</span></td>
+            <td>Incl. US, UK, EU, India, Indonesia, Brazil, Mexico, South Africa, UAE, Saudi, Egypt, Israel, Japan, Korea, Taiwan, Chile</td>
+            <td>$8/hr floor; $12+/hr typical</td>
+            <td>Bank / PayPal</td>
+          </tr>
+          <tr>
+            <td class="name">Whop clipping</td>
+            <td><span class="pill part">10 countries</span></td>
+            <td>US, UK, DE, FR, IT, CA, AU, ES, NL, BR (beta)</td>
+            <td>$0.20–$6 per 1k views</td>
+            <td>After approval + view threshold</td>
+          </tr>
+          <tr>
+            <td class="name">UserTesting</td>
+            <td><span class="pill part">Limited</span></td>
+            <td>Mainly Tier-1 English-speaking markets</td>
+            <td>$15–$25/hr after screener tax</td>
+            <td>PayPal, ~7 days after test</td>
+          </tr>
+          <tr>
+            <td class="name">DataAnnotation</td>
+            <td><span class="pill shut">Narrow</span></td>
+            <td>Mainly US, UK, CA, AU, NZ</td>
+            <td>$20–$30/hr general; $50–$100+ specialist</td>
+            <td>Weekly PayPal, no minimum</td>
+          </tr>
+          <tr>
+            <td class="name">Upwork / Fiverr</td>
+            <td><span class="pill open">Global</span></td>
+            <td>Worldwide, but payment rails vary</td>
+            <td>You set it</td>
+            <td>Platform escrow</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="col" style="margin-top:18px; font-size:16px; color:var(--muted)">If you're outside the narrow lists, Rung 0 still works — it just means Clickworker, Microworkers and Toloka rather than Prolific and UserTesting, and it means Rung 3 matters to you sooner, because the global-open microtask platforms pay the least.</p>
+  </section>
+
+  <section>
+    <p class="kicker col">Source quality</p>
+    <h2 class="col">How to tell whether a number is real</h2>
+    <div class="col" style="margin-bottom:24px">
+      <p>You asked for correct information with nothing hidden. Part of delivering that is telling you which of the numbers above I actually trust, because the search results for every one of these queries are dominated by affiliate content farms with a referral link at the bottom.</p>
+      <p>Here's the grading I applied, and the grading you should apply to anything you read next:</p>
+    </div>
+    <div class="evidence">
+      <div class="ev a">
+        <span class="grade">Grade A — trust it</span>
+        <h3>First-party policy pages</h3>
+        <p>Prolific's own researcher and participant help documents. UserTesting's tester support centre. These state rates the company is contractually bound to. Every hard number I gave for Rung 0 comes from here.</p>
+      </div>
+      <div class="ev b">
+        <span class="grade">Grade B — corroborate it</span>
+        <h3>Aggregated user reports</h3>
+        <p>Reddit-corpus analyses, Glassdoor and Trustpilot distributions, NPR's reporting on clipping. Directionally sound and good for spotting problems companies won't publish — the 2026 DataAnnotation drought only shows up here.</p>
+      </div>
+      <div class="ev c">
+        <span class="grade">Grade C — discard it</span>
+        <h3>"Best gigs of 2026" listicles</h3>
+        <p>Almost everything else that ranks. They quote each other in circles, cite headline rates while omitting the screener tax and the country gates, and monetise via referral. Where their numbers conflicted with Grade A sources, I used the Grade A number.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <p class="kicker">The sequence</p>
+    <h2>What I'd actually run, in order</h2>
+    <p style="margin-bottom:28px">The point of the first week is not income. It's to break the seal — to convert "making money online" from an abstraction into a thing that has demonstrably happened to you once. That single event is what the 61%-versus-23% survival statistic is really measuring.</p>
+
+    <div class="runsheet">
+      <div class="day">
+        <div class="day-when">Day 1 · 30 min</div>
+        <div class="day-what">
+          <p>Check the eligibility table against where you live. Sign up for every Rung 0 platform you qualify for — all of them, same sitting.</p>
+          <p>Signup is free everywhere on this page. Anything that asks you to pay to start earning is disqualified on that basis alone.</p>
+        </div>
+      </div>
+      <div class="day">
+        <div class="day-when">Days 1–3</div>
+        <div class="day-what">
+          <p>Earn any non-zero amount and withdraw it to a real account. One dollar is a complete success.</p>
+          <p>Withdraw it even though the fee makes it irrational. You're testing the whole pipe, not the balance.</p>
+        </div>
+      </div>
+      <div class="day">
+        <div class="day-when">Day 2</div>
+        <div class="day-what">
+          <p>If you're eligible and have any coding, STEM, medical, legal or finance background, take the DataAnnotation assessment — <em>rested, unhurried, on a real keyboard.</em></p>
+          <p>One attempt. No retakes. Treat it like a final exam, not a signup form. If you're not eligible or not confident, skip it entirely rather than burning the single try.</p>
+        </div>
+      </div>
+      <div class="day">
+        <div class="day-when">Days 3–7</div>
+        <div class="day-what">
+          <p>Pick <strong>one</strong> Rung 3 service and build three unrequested samples for three real businesses you can name.</p>
+          <p>Short-form video editing is the highest-demand, most AI-resistant choice, and it doubles as clipping practice. Google Business Profile optimization is the easiest to price at $300 because the market rate is published.</p>
+        </div>
+      </div>
+      <div class="day">
+        <div class="day-when">Day 7 onward</div>
+        <div class="day-what">
+          <p>Twenty personalised outreach messages a day, each with the finished sample attached. Not a pitch — the work, already done.</p>
+          <p>This is the undocumented step. It stays undocumented no matter how much you read, and it is the entire job.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col verdict">
+    <p><strong>The trap in the question.</strong> "Find me the method where every step is revealed" is a reasonable request that quietly becomes a way to stay in research forever — because a fully-specified method that requires nothing uncertain of you does exist, and it pays about five dollars an hour. Everything above that price has an irreducible uncertain step in it. That step is not hidden from you. It's just not automatable, and it's what the money is actually paying for.</p>
+    <p>Go get the five-dollar version this week so the abstraction dies. Then spend the rest of your time on the part no document can do for you.</p>
+  </section>
+
+  <footer>
+    <span class="flabel">Primary sources</span>
+    <a href="https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific">Prolific — participant eligibility &amp; country list</a><br>
+    <a href="https://researcher-help.prolific.com/en/articles/445230-prolific-s-payment-model">Prolific — payment model &amp; minimum rates</a><br>
+    <a href="https://testersupport.usertesting.com/hc/en-us/articles/360002074171-How-much-do-I-get-paid-">UserTesting — tester payment rates</a><br>
+    <a href="https://annotation.academy/blog/is-dataannotation-tech-legit">Annotation Academy — DataAnnotation Reddit-corpus analysis (2026)</a><br>
+    <a href="https://www.glassdoor.com/Salary/DataAnnotation-Salaries-E8605843.htm">Glassdoor — DataAnnotation reported pay</a><br>
+    <a href="https://www.sidehustlenation.com/clickworker-review/">Side Hustle Nation — Clickworker earnings review</a><br>
+    <a href="https://www.clipaffiliates.com/blog/get-paid-for-clipping">Clip Affiliates — clipping rates &amp; creator-economy data</a><br>
+    <a href="https://www.merchynt.com/post/google-my-business-management-pricing">Merchynt — Google Business Profile management pricing</a><br>
+    <a href="https://www.upwork.com/resources/best-freelance-jobs-for-beginners">Upwork — beginner freelance categories</a>
+  </footer>
+
+</div>
+
+</body></html>

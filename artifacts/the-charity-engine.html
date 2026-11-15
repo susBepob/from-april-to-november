@@ -1,0 +1,870 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>The Charity Engine</title>
+
+<style>
+  :root {
+    --paper:        #E4E5E1;
+    --raised:       #EFF0EC;
+    --sunk:         #DADCD7;
+    --ink:          #141F1E;
+    --ink-soft:     #4E5A58;
+    --ink-faint:    #7C8785;
+    --rule:         #C2C7C2;
+    --rule-strong:  #A6ADA8;
+    --teal:         #1B5C55;
+    --teal-wash:    #1b5c5514;
+    --brass:        #8A6B1E;
+    --brass-wash:   #8a6b1e14;
+    --shadow:       0 1px 0 #ffffff80, 0 1px 2px #14201f14;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+    --measure: 64ch;
+    --gutter: 8.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:       #14181A;
+      --raised:      #1B2124;
+      --sunk:        #0F1315;
+      --ink:         #DCE3E1;
+      --ink-soft:    #8D9C99;
+      --ink-faint:   #667472;
+      --rule:        #2B3437;
+      --rule-strong: #3D4A4D;
+      --teal:        #5EB9A9;
+      --teal-wash:   #5eb9a91a;
+      --brass:       #C89D42;
+      --brass-wash:  #c89d421a;
+      --shadow:      0 1px 2px #00000040;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:       #14181A;
+    --raised:      #1B2124;
+    --sunk:        #0F1315;
+    --ink:         #DCE3E1;
+    --ink-soft:    #8D9C99;
+    --ink-faint:   #667472;
+    --rule:        #2B3437;
+    --rule-strong: #3D4A4D;
+    --teal:        #5EB9A9;
+    --teal-wash:   #5eb9a91a;
+    --brass:       #C89D42;
+    --brass-wash:  #c89d421a;
+    --shadow:      0 1px 2px #00000040;
+  }
+
+  :root[data-theme="light"] {
+    --paper:       #E4E5E1;
+    --raised:      #EFF0EC;
+    --sunk:        #DADCD7;
+    --ink:         #141F1E;
+    --ink-soft:    #4E5A58;
+    --ink-faint:   #7C8785;
+    --rule:        #C2C7C2;
+    --rule-strong: #A6ADA8;
+    --teal:        #1B5C55;
+    --teal-wash:   #1b5c5514;
+    --brass:       #8A6B1E;
+    --brass-wash:  #8a6b1e14;
+    --shadow:      0 1px 0 #ffffff80, 0 1px 2px #14201f14;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 0 1.75rem 6rem;
+  }
+
+  /* ---- shared type roles ---- */
+  .label {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+
+  .key {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* ---- title block: a drawing sheet's corner stamp ---- */
+  .titleblock {
+    border-bottom: 1px solid var(--rule-strong);
+    padding: 3.5rem 0 0;
+    margin-bottom: 3.5rem;
+  }
+
+  .titleblock h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 7vw, 4.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .titleblock .deck {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 44ch;
+    margin: 0 0 2.75rem;
+    font-style: italic;
+  }
+
+  .stamp {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+
+  .stamp div {
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.7rem 0.85rem 0.8rem;
+  }
+
+  .stamp dt {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.3rem;
+  }
+
+  .stamp dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+
+  /* ---- sections ---- */
+  section { margin-bottom: 5.25rem; }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.55rem;
+    margin-bottom: 2rem;
+  }
+
+  .head h2 {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .head .note {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .prose { max-width: var(--measure); }
+  .prose p { margin: 0 0 1.15rem; }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose em { font-style: italic; }
+  .prose strong { font-weight: 600; }
+
+  .lede {
+    font-size: 1.24rem;
+    line-height: 1.5;
+    max-width: 40ch;
+  }
+
+  /* ---- heuristic cards ---- */
+  .engine {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 1px;
+  }
+
+  .card {
+    background: var(--raised);
+    padding: 1.6rem 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .card .id {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    color: var(--brass);
+    font-weight: 600;
+  }
+
+  .card blockquote {
+    margin: 0;
+    font-size: 1.12rem;
+    line-height: 1.4;
+    font-style: italic;
+    color: var(--ink);
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--brass);
+  }
+
+  .card dl { margin: 0; display: grid; gap: 0.75rem; }
+  .card dt {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.15rem;
+  }
+  .card dd {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .output {
+    background: var(--brass-wash);
+    border: 1px solid var(--rule);
+    border-top: none;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 1rem;
+  }
+  .output .key { color: var(--brass); }
+  .output span:last-child {
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  /* ---- diagram ---- */
+  .figure {
+    border: 1px solid var(--rule);
+    background: var(--raised);
+    padding: 1.5rem 0 0;
+  }
+
+  .scroller {
+    overflow-x: auto;
+    padding: 0 1.5rem;
+  }
+
+  .scroller svg {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+  }
+
+  .caption {
+    border-top: 1px solid var(--rule);
+    margin-top: 1.25rem;
+    padding: 1rem 1.5rem 1.15rem;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .caption p {
+    margin: 0;
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 52ch;
+  }
+
+  /* svg type */
+  .n-title { font-family: var(--mono); font-size: 12px; letter-spacing: 0.13em; font-weight: 600; }
+  .n-sub   { font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em; }
+  .e-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ---- resolution table ---- */
+  .res {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.98rem;
+  }
+  .res caption {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    padding-bottom: 0.75rem;
+  }
+  .res th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0 0 0.6rem;
+    border-bottom: 1px solid var(--rule-strong);
+    width: 50%;
+  }
+  .res th:first-child { color: var(--teal); }
+  .res th:last-child  { color: var(--brass); }
+  .res td {
+    padding: 0.75rem 2rem 0.75rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .res td:last-child { color: var(--ink-soft); padding-right: 0; }
+
+  /* ---- rules ---- */
+  .rules { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .rule {
+    background: var(--raised);
+    display: grid;
+    grid-template-columns: var(--gutter) 1fr;
+    gap: 1.5rem;
+    padding: 1.3rem 1.5rem;
+  }
+  .rule .key { color: var(--teal); padding-top: 0.28rem; }
+  .rule p { margin: 0; font-size: 1rem; line-height: 1.55; max-width: 60ch; }
+
+  @media (max-width: 46rem) {
+    .rule { grid-template-columns: 1fr; gap: 0.5rem; }
+  }
+
+  /* ---- ledger ---- */
+  .ledger { border: 1px solid var(--rule-strong); background: var(--raised); }
+
+  .ledger-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.1rem 1.4rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--sunk);
+  }
+  .metric { display: flex; align-items: baseline; gap: 0.5rem; }
+  .metric b {
+    font-family: var(--mono);
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .metric span { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint); }
+
+  form.entry {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.75rem;
+    padding: 1.25rem 1.4rem;
+    border-bottom: 1px solid var(--rule);
+    align-items: end;
+  }
+  @media (max-width: 52rem) {
+    form.entry { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+  .field label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .field input {
+    font-family: var(--serif);
+    font-size: 0.98rem;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    padding: 0.55rem 0.7rem;
+    width: 100%;
+  }
+  .field input::placeholder { color: var(--ink-faint); opacity: 0.75; }
+  .field input:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+
+  button {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--rule-strong);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 0.62rem 1rem;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  }
+  button:hover { background: var(--teal); border-color: var(--teal); color: var(--raised); }
+
+  .log { list-style: none; margin: 0; padding: 0; }
+  .log li {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr auto;
+    gap: 1.25rem;
+    align-items: start;
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .log li:last-child { border-bottom: none; }
+  @media (max-width: 52rem) {
+    .log li { grid-template-columns: 1fr; gap: 0.6rem; }
+  }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.22rem 0.5rem;
+    border: 1px solid currentColor;
+    justify-self: start;
+    white-space: nowrap;
+  }
+  .pill.open { color: var(--ink-faint); }
+  .pill.hit  { color: var(--teal);  background: var(--teal-wash); }
+  .pill.miss { color: var(--brass); background: var(--brass-wash); }
+
+  .entry-body p { margin: 0; font-size: 1rem; line-height: 1.45; }
+  .entry-body .fals {
+    margin-top: 0.3rem;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+  .entry-body .fals::before { content: "falsifier / "; color: var(--ink-faint); }
+
+  .acts { display: flex; gap: 0.4rem; }
+  .acts button { padding: 0.35rem 0.6rem; font-size: 0.62rem; }
+  .acts button.del { border-color: transparent; color: var(--ink-faint); }
+  .acts button.del:hover { background: transparent; color: var(--ink); border-color: var(--rule-strong); }
+
+  .empty {
+    padding: 2rem 1.4rem;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 0.98rem;
+  }
+
+  /* ---- footer ---- */
+  footer {
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 1.75rem;
+    display: grid;
+    grid-template-columns: var(--gutter) 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 46rem) {
+    footer { grid-template-columns: 1fr; gap: 0.75rem; }
+  }
+  footer p { margin: 0 0 0.9rem; max-width: 58ch; font-size: 0.98rem; color: var(--ink-soft); }
+  footer p:last-child { margin-bottom: 0; }
+  footer .key { color: var(--ink-faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="titleblock">
+    <h1>The Charity Engine</h1>
+    <p class="deck">A working model of one reader's theory of mind — what it resolves, what it cannot see, and the loop it keeps closed.</p>
+
+    <dl class="stamp">
+      <div><dt>Instrument</dt><dd>Theory of mind / self-model</dd></div>
+      <div><dt>Drawn</dt><dd>2026-07-29</dd></div>
+      <div><dt>Basis</dt><dd>Prior session memory,<br>project layout, this conversation</dd></div>
+      <div><dt>Status</dt><dd>Unverified — see falsifiers</dd></div>
+    </dl>
+  </header>
+
+  <section>
+    <div class="head">
+      <h2>01 / The Engine</h2>
+      <span class="note">Two heuristics, one output</span>
+    </div>
+
+    <div class="prose lede" style="margin-bottom:2.25rem;">
+      Both of the moves you rely on are excellent. Both push in the same direction. That shared direction is the whole finding.
+    </div>
+
+    <div class="engine">
+      <div class="card">
+        <div class="id">H1 — INVERSION</div>
+        <blockquote>What would have to be true about someone for this behavior to be normal and reasonable?</blockquote>
+        <dl>
+          <div><dt>Strong at</dt><dd>Dissolving false hostility. Recovering the frame someone is actually operating inside.</dd></div>
+          <div><dt>Structural flaw</dt><dd>It will generate an equally good answer for the opposite behavior. A model that fits every outcome predicted none of them.</dd></div>
+        </dl>
+      </div>
+
+      <div class="card">
+        <div class="id">H2 — ATTRIBUTION REVERSAL</div>
+        <blockquote>Explain their behavior by circumstance, the way you explain your own.</blockquote>
+        <dl>
+          <div><dt>Strong at</dt><dd>Correcting the default bias. More accurate than the untreated instinct, most of the time.</dd></div>
+          <div><dt>Structural flaw</dt><dd>Calibrated for one instance from a stranger. Run as a standing law, it hands repeat offenders a fresh excuse every time.</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="output">
+      <span class="key">Combined output</span>
+      <span>Every input resolves toward <em>benign, situational, explicable.</em> Comfort is the signal you're reading as accuracy.</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>02 / The Loop</h2>
+      <span class="note">Fig. 1 — signal flow, steady state</span>
+    </div>
+
+    <div class="figure">
+      <div class="scroller">
+        <svg viewBox="0 0 900 330" role="img" aria-labelledby="figtitle figdesc">
+          <title id="figtitle">The closed loop: build, send, silence, explain, build again</title>
+          <desc id="figdesc">Four stages form a chain. Silence has a branch toward "update the offer" that never fires, drawn severed. The return edge from Explain back to Build carries no information.</desc>
+
+          <defs>
+            <marker id="ar-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--teal)"/>
+            </marker>
+            <marker id="ar-brass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--brass)"/>
+            </marker>
+            <marker id="ar-ghost" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+            </marker>
+          </defs>
+
+          <!-- stage boxes -->
+          <g>
+            <rect x="16"  y="34" width="176" height="70" fill="var(--sunk)" stroke="var(--teal)" stroke-width="1"/>
+            <text x="32" y="62"  class="n-title" fill="var(--ink)">1 · BUILD</text>
+            <text x="32" y="80"  class="n-sub" fill="var(--ink-soft)">feedback is instant,</text>
+            <text x="32" y="93"  class="n-sub" fill="var(--ink-soft)">honest, non-social</text>
+          </g>
+
+          <g>
+            <rect x="240" y="34" width="176" height="70" fill="var(--sunk)" stroke="var(--teal)" stroke-width="1"/>
+            <text x="256" y="62" class="n-title" fill="var(--ink)">2 · SEND</text>
+            <text x="256" y="80" class="n-sub" fill="var(--ink-soft)">spec demo, DM,</text>
+            <text x="256" y="93" class="n-sub" fill="var(--ink-soft)">paid for in advance</text>
+          </g>
+
+          <g>
+            <rect x="464" y="34" width="176" height="70" fill="var(--sunk)" stroke="var(--brass)" stroke-width="1.5"/>
+            <text x="480" y="62" class="n-title" fill="var(--ink)">3 · SILENCE</text>
+            <text x="480" y="80" class="n-sub" fill="var(--ink-soft)">the only real signal</text>
+            <text x="480" y="93" class="n-sub" fill="var(--ink-soft)">the loop ever emits</text>
+          </g>
+
+          <g>
+            <rect x="688" y="34" width="176" height="70" fill="var(--brass-wash)" stroke="var(--brass)" stroke-width="1.5"/>
+            <text x="704" y="62" class="n-title" fill="var(--brass)">4 · EXPLAIN</text>
+            <text x="704" y="80" class="n-sub" fill="var(--ink-soft)">H1 + H2 convert it</text>
+            <text x="704" y="93" class="n-sub" fill="var(--ink-soft)">to a situational cause</text>
+          </g>
+
+          <!-- forward edges -->
+          <line x1="196" y1="69" x2="232" y2="69" stroke="var(--teal)"  stroke-width="1.5" marker-end="url(#ar-teal)"/>
+          <line x1="420" y1="69" x2="456" y2="69" stroke="var(--teal)"  stroke-width="1.5" marker-end="url(#ar-teal)"/>
+          <line x1="644" y1="69" x2="680" y2="69" stroke="var(--brass)" stroke-width="1.5" marker-end="url(#ar-brass)"/>
+
+          <!-- severed branch -->
+          <path d="M552,104 L552,140" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <line x1="536" y1="150" x2="568" y2="150" stroke="var(--brass)" stroke-width="2"/>
+          <line x1="540" y1="144" x2="564" y2="156" stroke="var(--brass)" stroke-width="2"/>
+          <path d="M552,160 L552,196" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ar-ghost)"/>
+          <text x="580" y="154" class="e-label" fill="var(--brass)">never fires</text>
+
+          <rect x="464" y="202" width="176" height="52" fill="none" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="480" y="226" class="n-title" fill="var(--ink-faint)">UPDATE THE OFFER</text>
+          <text x="480" y="243" class="n-sub" fill="var(--ink-faint)">the one edge that pays</text>
+
+          <!-- return edge -->
+          <path d="M776,104 L776,290 Q776,302 764,302 L116,302 Q104,302 104,290 L104,112"
+                fill="none" stroke="var(--brass)" stroke-width="1.5" marker-end="url(#ar-brass)"/>
+          <rect x="286" y="290" width="308" height="24" fill="var(--raised)"/>
+          <text x="440" y="307" class="e-label" fill="var(--brass)" text-anchor="middle">loop closes · zero information retained</text>
+        </svg>
+      </div>
+
+      <div class="caption">
+        <p><strong>Nothing in this circuit can disconfirm anything.</strong> Stage 4 consumes the only evidence the loop produces and returns a reason the silence wasn't a no. So stage 1 restarts on unchanged assumptions — which is why volume has never converted, and why more volume won't.</p>
+        <p>The severed branch is the whole cost. Every unfired instance of it is a version of the offer you never got to correct.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>03 / Resolution Map</h2>
+      <span class="note">Where the instrument is sharp, and where it is guessing</span>
+    </div>
+
+    <table class="res">
+      <caption>The skill is real. It is pointed backward.</caption>
+      <thead>
+        <tr><th scope="col">Genuinely strong</th><th scope="col">Assumed, not tested</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Understanding why they did it</td><td>Predicting what they do next</td></tr>
+        <tr><td>The person in the room</td><td>The person after the call ends</td></tr>
+        <tr><td>Their frame and their constraints</td><td>Their information state — what they know that you don't</td></tr>
+        <tr><td>Building rapport</td><td>Converting it</td></tr>
+        <tr><td>Reading the individual</td><td>Reading the decision</td></tr>
+      </tbody>
+    </table>
+
+    <div class="prose" style="margin-top:2rem;">
+      <p>Understanding and prediction feel like the same faculty from the inside. They aren't, and the first does not imply the second. Rapport is evidence that you modeled someone accurately in the moment; it is not evidence that you know what they'll do on Thursday.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>04 / Operating Rules</h2>
+      <span class="note">Corrections, not replacements — keep H1 and H2</span>
+    </div>
+
+    <div class="rules">
+      <div class="rule">
+        <div class="key">Disposition</div>
+        <p>One instance is situation. A pattern across <em>independent</em> contexts is character. Independent is load-bearing: late to the same meeting three times is one context; late to meetings, late on invoices, late on a favor is three. Refusing to name character at that point isn't fairness, it's a leak.</p>
+      </div>
+      <div class="rule">
+        <div class="key">Silence</div>
+        <p>No reply <em>is</em> the reading, not the absence of one. Charity requires positive evidence, not merely the lack of contrary evidence. Default interpretation of a non-response: the offer didn't land. Overturn it with something, not with a story.</p>
+      </div>
+      <div class="rule">
+        <div class="key">Falsifier</div>
+        <p>No read is finished until it emits something that could fail. "He's blocked by his boss" is a story. "If so, he'll ask for something forwardable and won't raise price" is a read. Only the second one can pay you back.</p>
+      </div>
+      <div class="rule">
+        <div class="key">Depth</div>
+        <p>Two levels of recursion, held loosely. Past that, accuracy collapses and only the sensation of insight remains — which is indistinguishable from the real thing while you're inside it.</p>
+      </div>
+      <div class="rule">
+        <div class="key">Ask</div>
+        <p>The highest-accuracy instrument available is a question. It stays underused because inferring silently feels more sophisticated than checking. It isn't; it's just cheaper to be wrong that way.</p>
+      </div>
+      <div class="rule">
+        <div class="key">Ship</div>
+        <p>The unit of progress is a person who said yes or no. Not a repo that runs. A new directory is the most comfortable possible way to not find out.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>05 / Prediction Ledger</h2>
+      <span class="note">The only thing here that changes the trajectory</span>
+    </div>
+
+    <div class="prose" style="margin-bottom:1.75rem;">
+      <p>Write the read down <em>before</em> you find out. Being right and being unable to tell that you're wrong look identical from the inside — this is the only instrument that separates them. Saved in this browser only.</p>
+    </div>
+
+    <div class="ledger">
+      <div class="ledger-top">
+        <div class="metric"><b id="rate">—</b><span>hit rate</span></div>
+        <div class="metric"><b id="settled">0</b><span>settled</span></div>
+        <div class="metric"><b id="open">0</b><span>open</span></div>
+      </div>
+
+      <form class="entry" id="form">
+        <div class="field">
+          <label for="claim">The read</label>
+          <input id="claim" type="text" placeholder="Ravshan goes quiet after the demo" required />
+        </div>
+        <div class="field">
+          <label for="fals">What would prove it wrong</label>
+          <input id="fals" type="text" placeholder="He replies within 48h with a question" required />
+        </div>
+        <button type="submit">Log</button>
+      </form>
+
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="key">Falsifiers</div>
+    <div>
+      <p>This model dies if any of the following is true. Kill it cheaply rather than carrying it.</p>
+      <p><strong>A record of specific, dated predictions about named prospects that turned out right.</strong> That collapses the central claim and most of what hangs off it.</p>
+      <p><strong>Revenue that isn't visible from here</strong> — the conversion diagnosis is inferred from what you build, not from your books.</p>
+      <p><strong>A shipped thing that went to a paying client rather than a prospect.</strong> That kills the avoidance thesis outright.</p>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    "use strict";
+    var KEY = "charity-engine-ledger-v1";
+    var logEl = document.getElementById("log");
+    var form = document.getElementById("form");
+    var claimEl = document.getElementById("claim");
+    var falsEl = document.getElementById("fals");
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
+    function save(items) {
+      try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* session-only */ }
+    }
+
+    var items = load();
+
+    function fmt(ts) {
+      var d = new Date(ts);
+      return String(d.getDate()).padStart(2, "0") + "." +
+             String(d.getMonth() + 1).padStart(2, "0") + "." +
+             String(d.getFullYear()).slice(2);
+    }
+
+    function render() {
+      logEl.textContent = "";
+
+      var settled = items.filter(function (i) { return i.status !== "open"; });
+      var hits = settled.filter(function (i) { return i.status === "hit"; });
+
+      document.getElementById("settled").textContent = String(settled.length);
+      document.getElementById("open").textContent = String(items.length - settled.length);
+      document.getElementById("rate").textContent = settled.length
+        ? Math.round((hits.length / settled.length) * 100) + "%"
+        : "—";
+
+      if (!items.length) {
+        var empty = document.createElement("li");
+        empty.className = "empty";
+        empty.style.display = "block";
+        empty.textContent = "No predictions logged. An unfalsified model has a hit rate of nothing.";
+        logEl.appendChild(empty);
+        return;
+      }
+
+      items.forEach(function (item, idx) {
+        var li = document.createElement("li");
+
+        var pill = document.createElement("span");
+        pill.className = "pill " + item.status;
+        pill.textContent = item.status === "open" ? fmt(item.ts) : item.status;
+        li.appendChild(pill);
+
+        var body = document.createElement("div");
+        body.className = "entry-body";
+        var p = document.createElement("p");
+        p.textContent = item.claim;
+        var f = document.createElement("div");
+        f.className = "fals";
+        f.textContent = item.fals;
+        body.appendChild(p);
+        body.appendChild(f);
+        li.appendChild(body);
+
+        var acts = document.createElement("div");
+        acts.className = "acts";
+
+        if (item.status === "open") {
+          acts.appendChild(btn("Hit", function () { settle(idx, "hit"); }));
+          acts.appendChild(btn("Miss", function () { settle(idx, "miss"); }));
+        } else {
+          acts.appendChild(btn("Reopen", function () { settle(idx, "open"); }));
+        }
+        var d = btn("Delete", function () {
+          items.splice(idx, 1); save(items); render();
+        });
+        d.className = "del";
+        acts.appendChild(d);
+
+        li.appendChild(acts);
+        logEl.appendChild(li);
+      });
+    }
+
+    function btn(text, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = text;
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    function settle(idx, status) {
+      items[idx].status = status;
+      save(items);
+      render();
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var claim = claimEl.value.trim();
+      var fals = falsEl.value.trim();
+      if (!claim || !fals) return;
+      items.unshift({ claim: claim, fals: fals, status: "open", ts: Date.now() });
+      save(items);
+      form.reset();
+      claimEl.focus();
+      render();
+    });
+
+    render();
+  })();
+</script>
+
+</body></html>

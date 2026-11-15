@@ -1,0 +1,1277 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PE1 Ladder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* Same layout as the Term and Token ladders: rungs on top, working card left, skill mastery right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+/* JetBrains Mono draws != and -> as ligatures; code must show its real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+code,.mono{font-family:var(--f-mono)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:1.15rem;line-height:1.5}
+.prompt code,.inl{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:pre}
+pre.code{font-family:var(--f-mono);font-size:.98rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+.formula{font-size:1.05rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em;white-space:pre}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700;min-width:0}
+.opts.wide .opt span:last-child{font-family:var(--f-mono);font-weight:400;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:8px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb ol,.fb ul{margin:0;padding-left:1.3em;display:grid;gap:3px;font-size:.93rem}
+.fb code{font-family:var(--f-mono);font-size:.9em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+input[type=text]:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent)}
+input.ok{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good)} input.no{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:170px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4}
+/* exam layout */
+.q{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.q > h3{margin:0;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:1rem;padding:8px 14px;display:flex;justify-content:space-between;gap:10px}
+.q > .qb{padding:14px;display:grid;gap:12px}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:minmax(0,260px) minmax(0,220px) minmax(0,1fr);gap:10px;align-items:center}
+.part .ex{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:pre;overflow-x:auto}
+.part .res{font-size:.88rem}
+.res.ok{color:var(--good)} .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select,.trow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre}
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.trow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:3px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+table.tests{border-collapse:collapse;font-size:.88rem;width:100%}
+table.tests td,table.tests th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+table.tests td.mono{font-family:var(--f-mono);font-size:.85rem;word-break:break-all}
+.tw{overflow-x:auto}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+/* mastery */
+aside .card{gap:10px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgroup{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.82rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink)}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.qscore{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.qscore div{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .res{grid-column:1/-1}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.part,.mrow{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PE1 Ladder</h1>
+    <p>Practice Exam 1 drill. Expression types, values after code, and the coding functions, all generated fresh from C's rules and graded by a small built-in C engine. Rung 5 is the full PE1 format, rung 6 is harder than the exam.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Skill mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div id="mgrid"></div>
+        <p class="small" style="margin:0">Weak skills get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>Rule sheet</summary>
+    <div class="sheetgrid" id="sheetBody"></div>
+  </details>
+</div>
+
+<script id="engine">
+/* ================= mini C engine: types, values, statements ================= */
+const TI = {
+  "char":{r:1,u:false,bits:8}, "signed char":{r:1,u:false,bits:8}, "unsigned char":{r:1,u:true,bits:8},
+  "short":{r:2,u:false,bits:16}, "unsigned short":{r:2,u:true,bits:16},
+  "int":{r:3,u:false,bits:32}, "unsigned int":{r:3,u:true,bits:32},
+  "long":{r:4,u:false,bits:64}, "unsigned long":{r:4,u:true,bits:64},
+  "long long":{r:5,u:false,bits:64}, "unsigned long long":{r:5,u:true,bits:64},
+  "float":{f:1}, "double":{f:2}, "long double":{f:3}
+};
+const isF = t => !!TI[t].f;
+const promote = t => (!isF(t) && TI[t].r < 3) ? "int" : t;
+const CE = msg => ({ce:msg});   // compile error
+const RE = msg => ({re:msg});   // runtime error
+
+// Usual arithmetic conversions. Mistake modes reproduce typical wrong answers for distractors.
+function usual(a, b, mode){
+  mode = mode || {};
+  const fa = isF(a), fb = isF(b);
+  if(fa || fb){
+    if(fa && fb) return TI[a].f >= TI[b].f ? a : b;
+    if(mode.intWins){ const i = fa ? b : a; return mode.noPromo ? i : promote(i); }
+    return fa ? a : b;
+  }
+  if(!mode.noPromo){ a = promote(a); b = promote(b); }
+  if(a === b) return a;
+  const A = TI[a], B = TI[b];
+  if(A.u === B.u) return A.r >= B.r ? a : b;
+  const u = A.u ? a : b, s = A.u ? b : a;
+  if(TI[u].r >= TI[s].r) return u;
+  // these two pairs depend on the platform's sizes, so generated questions avoid them
+  if((s === "long" && u === "unsigned int") || (s === "long long" && u === "unsigned long")){
+    if(mode.lenient) return s === "long" ? "long" : "unsigned long long";
+    throw {ambig:true};
+  }
+  return s;
+}
+
+function conv(v, t){
+  if(isF(t)) return t === "float" ? Math.fround(v) : v;
+  if(!isFinite(v)) throw RE("value out of range for " + t);
+  let x = Math.trunc(v); const I = TI[t];
+  if(I.bits <= 32){ const m = 2 ** I.bits; x = ((x % m) + m) % m; if(!I.u && x >= m / 2) x -= m; }
+  else if(I.u && x < 0) x += 2 ** 64;
+  return x === 0 ? 0 : x;
+}
+
+function litInfo(s){
+  if(/[.eE]/.test(s) && !/^0[xX]/.test(s)){
+    const suf = (s.match(/[fFlL]$/) || [""])[0];
+    const t = !suf ? "double" : /[fF]/.test(suf) ? "float" : "long double";
+    const v = parseFloat(s);
+    return {t, v: t === "float" ? Math.fround(v) : v};
+  }
+  const m = s.match(/^(0[xX][0-9a-fA-F]+|\d+)(.*)$/), d = m[1], suf = m[2];
+  const v = /^0[xX]/.test(d) ? parseInt(d, 16) : (d.length > 1 && d[0] === "0" ? parseInt(d, 8) : parseInt(d, 10));
+  const u = /[uU]/.test(suf), L = (suf.match(/[lL]/g) || []).length;
+  const t = L === 2 ? (u ? "unsigned long long" : "long long") : L === 1 ? (u ? "unsigned long" : "long") : (u ? "unsigned int" : "int");
+  return {t, v};
+}
+
+const TYPEKW = new Set(["char","short","int","long","float","double","signed","unsigned","const"]);
+function canonType(ws){
+  ws = ws.filter(w => w !== "const");
+  const has = w => ws.includes(w), L = ws.filter(w => w === "long").length, U = has("unsigned");
+  if(has("double")) return L ? "long double" : "double";
+  if(has("float")) return "float";
+  if(has("char")) return U ? "unsigned char" : has("signed") ? "signed char" : "char";
+  if(has("short")) return U ? "unsigned short" : "short";
+  if(L >= 2) return U ? "unsigned long long" : "long long";
+  if(L === 1) return U ? "unsigned long" : "long";
+  return U ? "unsigned int" : "int";
+}
+
+function tokenize(src){
+  const out = []; let i = 0;
+  while(i < src.length){
+    const c = src[i];
+    if(/\s/.test(c)){ i++; continue; }
+    if(src.startsWith("//", i)){ const j = src.indexOf("\n", i); i = j < 0 ? src.length : j; continue; }
+    if(src.startsWith("/*", i)){ const j = src.indexOf("*/", i + 2); if(j < 0) throw CE("a /* comment is never closed"); i = j + 2; continue; }
+    if(c === "#"){ const j = src.indexOf("\n", i); i = j < 0 ? src.length : j; continue; } // #include lines
+    const rest = src.slice(i);
+    let m = rest.match(/^(?:\d+\.\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)[fFlL]?(?![\w.])/);
+    if(m){ out.push({k:"num", s:m[0]}); i += m[0].length; continue; }
+    m = rest.match(/^(?:0[xX][0-9a-fA-F]+|\d+)(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?(?![\w.])/);
+    if(m){ out.push({k:"num", s:m[0]}); i += m[0].length; continue; }
+    if(/\d/.test(c)) throw CE(`"${(rest.match(/^[\w.]+/) || [c])[0]}" is not a valid number`);
+    m = rest.match(/^[A-Za-z_]\w*/);
+    if(m){ out.push({k:"id", s:m[0]}); i += m[0].length; continue; }
+    m = rest.match(/^(?:\+\+|--|[+\-*\/%]=|==|!=|<=|>=|&&|\|\||[+\-*\/%()=,;{}<>!])/);
+    if(m){ out.push({k:"p", s:m[0]}); i += m[0].length; continue; }
+    if(c === "^") throw CE("^ is not a power operator in C (it's bitwise XOR, and it doesn't work on doubles). Use pow(x, 2) or x * x.");
+    throw CE(`unexpected character '${c}'`);
+  }
+  return out;
+}
+
+// Recursive-descent parser for the Module 1 subset: + - * / %, unary - +, ++ --, casts, =, op=, calls.
+function parse(src, asProgram){
+  const T = tokenize(src); let i = 0;
+  const isP = (tok, s) => tok && tok.k === "p" && tok.s === s;
+  const accept = s => { if(isP(T[i], s)){ i++; return true; } return false; };
+  const expect = s => { if(!accept(s)) throw CE(`expected '${s}'${T[i] ? ` before '${T[i].s}'` : " at the end"}`); };
+  const typeWords = () => { const ws = []; while(T[i] && T[i].k === "id" && TYPEKW.has(T[i].s)) ws.push(T[i++].s); return canonType(ws); };
+  const lv = (e, op) => { while(e.k === "par") e = e.e; if(e.k !== "var") throw CE(`${op} needs a variable on its left/operand`); return e; };
+  function primary(){
+    const t = T[i];
+    if(!t) throw CE("the expression ends too early");
+    if(t.k === "num"){ i++; const L = litInfo(t.s); return {k:"lit", s:t.s, t:L.t, v:L.v}; }
+    if(t.k === "id"){
+      if(TYPEKW.has(t.s) || t.s === "return") throw CE(`unexpected '${t.s}'`);
+      i++;
+      if(t.s === "M_PI") return {k:"lit", s:"M_PI", t:"double", v:Math.PI};
+      if(isP(T[i], "(")){ i++; const args = []; if(!accept(")")){ do { args.push(assign()); } while(accept(",")); expect(")"); } return {k:"call", name:t.s, args}; }
+      return {k:"var", name:t.s};
+    }
+    if(isP(t, "(")){ i++; const e = assign(); expect(")"); return {k:"par", e}; }
+    throw CE(`unexpected '${t.s}'`);
+  }
+  function postfix(){ let e = primary(); while(isP(T[i], "++") || isP(T[i], "--")){ const op = T[i++].s; e = {k:"post", op, e:lv(e, op)}; } return e; }
+  function unary(){
+    const t = T[i];
+    if(isP(t, "++") || isP(t, "--")){ i++; return {k:"pre", op:t.s, e:lv(unary(), t.s)}; }
+    if(isP(t, "-") || isP(t, "+")){ i++; return {k:"neg", op:t.s, e:unary()}; }
+    if(isP(t, "(") && T[i+1] && T[i+1].k === "id" && TYPEKW.has(T[i+1].s)){ i++; const ty = typeWords(); expect(")"); return {k:"cast", t:ty, e:unary()}; }
+    return postfix();
+  }
+  function mul(){ let l = unary(); while(T[i] && T[i].k === "p" && /^[*\/%]$/.test(T[i].s)){ const op = T[i++].s; l = {k:"bin", op, l, r:unary()}; } return l; }
+  function add(){ let l = mul(); while(T[i] && T[i].k === "p" && /^[+-]$/.test(T[i].s)){ const op = T[i++].s; l = {k:"bin", op, l, r:mul()}; } return l; }
+  function assign(){
+    const l = add(), t = T[i];
+    if(t && t.k === "p" && /^(=|[+\-*\/%]=)$/.test(t.s)){ i++; return {k:"asg", op:t.s, e:lv(l, t.s), r:assign()}; }
+    return l;
+  }
+  function stmt(){
+    const t = T[i];
+    if(t.k === "id" && t.s === "return"){ i++; const e = assign(); expect(";"); return {k:"ret", e}; }
+    if(t.k === "id" && TYPEKW.has(t.s)){
+      const ty = typeWords(), items = [];
+      do {
+        const n = T[i];
+        if(!n || n.k !== "id" || TYPEKW.has(n.s)) throw CE("expected a variable name after the type");
+        i++; items.push({name:n.s, init: accept("=") ? assign() : null});
+      } while(accept(","));
+      expect(";"); return {k:"decl", t:ty, items};
+    }
+    if(isP(t, ";")){ i++; return {k:"empty"}; }
+    const e = assign(); expect(";"); return {k:"expr", e};
+  }
+  if(asProgram){ const out = []; while(i < T.length) out.push(stmt()); return out; }
+  const e = assign();
+  if(i < T.length) throw CE(`unexpected '${T[i].s}'`);
+  return e;
+}
+
+function show(n){
+  switch(n.k){
+    case "lit": return n.s;
+    case "var": return n.name;
+    case "par": return "(" + show(n.e) + ")";
+    case "neg": case "pre": return n.op + show(n.e);
+    case "post": return show(n.e) + n.op;
+    case "cast": return `(${n.t})` + show(n.e);
+    case "bin": return show(n.l) + " " + n.op + " " + show(n.r);
+    case "asg": return show(n.e) + " " + n.op + " " + show(n.r);
+    case "call": return n.name + "(" + n.args.map(show).join(", ") + ")";
+  }
+}
+
+function typeOf(n, env, mode){
+  mode = mode || {};
+  switch(n.k){
+    case "lit": return n.t;
+    case "var": if(!(n.name in env)) throw CE(`'${n.name}' is not declared`); return env[n.name].t;
+    case "par": return typeOf(n.e, env, mode);
+    case "neg": { const t = typeOf(n.e, env, mode); return mode.noPromo ? t : promote(t); }
+    case "pre": case "post": return typeOf(n.e, env, mode);
+    case "cast": typeOf(n.e, env, mode); return n.t;
+    case "bin": {
+      const a = typeOf(n.l, env, mode), b = typeOf(n.r, env, mode);
+      if(n.op === "%" && (isF(a) || isF(b))) throw CE("% only works on integers, not floating values (use fmod)");
+      return usual(a, b, mode);
+    }
+    case "asg": {
+      const lt = typeOf(n.e, env, mode), rt = typeOf(n.r, env, mode);
+      if(n.op === "%=" && (isF(lt) || isF(rt))) throw CE("%= only works on integers");
+      if(mode.asgRight) return n.op === "=" ? rt : usual(lt, rt, mode);
+      return lt;
+    }
+    case "call": n.args.forEach(a => typeOf(a, env, mode)); return "double";
+  }
+}
+
+function whyType(a, b, t){
+  if(isF(a) !== isF(b)) return "Floating beats integer.";
+  if(isF(a)) return a === b ? "Same type." : "The bigger floating type wins.";
+  const pa = promote(a), pb = promote(b);
+  const pre = (pa !== a || pb !== b) ? "char/short become int first. " : "";
+  if(pa === pb) return pre + "Same type.";
+  if(TI[pa].u === TI[pb].u) return pre + "Higher rank wins.";
+  const u = TI[pa].u ? pa : pb, s = TI[pa].u ? pb : pa;
+  if(TI[u].r >= TI[s].r) return pre + "Same or higher rank and unsigned, so unsigned wins.";
+  return pre + "The signed type is bigger and holds every value, so it wins.";
+}
+function typeSteps(n, env){
+  const steps = [];
+  (function walk(n){
+    switch(n.k){
+      case "lit": case "var": return typeOf(n, env);
+      case "par": return walk(n.e);
+      case "neg": { const t = walk(n.e), p = promote(t); if(p !== t) steps.push(`<code>${esc(show(n))}</code>: unary minus promotes ${t} to <b>int</b>`); return p; }
+      case "pre": case "post": return walk(n.e);
+      case "cast": { const t = walk(n.e); steps.push(`<code>${esc(show(n))}</code>: the cast turns only <code>${esc(show(n.e))}</code> (${t}) into <b>${n.t}</b>`); return n.t; }
+      case "bin": { const a = walk(n.l), b = walk(n.r), t = usual(a, b, {lenient:true}); steps.push(`<code>${esc(show(n))}</code>: ${a} ${n.op} ${b} → <b>${t}</b>. ${whyType(a, b, t)}`); return t; }
+      case "asg": { const rt = walk(n.r), lt = typeOf(n.e, env); steps.push(`<code>${esc(show(n))}</code>: an assignment has the left variable's type → <b>${lt}</b>${rt !== lt ? ` (the ${rt} value is converted into ${n.e.name})` : ""}`); return lt; }
+    }
+  })(n);
+  return steps;
+}
+function typeSkills(n, env){
+  const sk = new Set();
+  (function walk(n){
+    switch(n.k){
+      case "lit": if(n.s !== "M_PI" && /[uUlLfF]$/.test(n.s)) sk.add("ty_suffix"); return n.t;
+      case "var": return env[n.name].t;
+      case "par": return walk(n.e);
+      case "neg": { const t = walk(n.e); if(promote(t) !== t) sk.add("ty_promo"); return promote(t); }
+      case "pre": case "post": return walk(n.e);
+      case "cast": walk(n.e); sk.add("ty_cast"); return n.t;
+      case "bin": {
+        const a = walk(n.l), b = walk(n.r);
+        if(isF(a) !== isF(b)) sk.add("ty_float");
+        else if(isF(a)){ if(a !== b) sk.add("ty_frank"); }
+        else { if(promote(a) !== a || promote(b) !== b) sk.add("ty_promo"); if(promote(a) !== promote(b)) sk.add("ty_uns"); }
+        return usual(a, b, {lenient:true});
+      }
+      case "asg": walk(n.r); sk.add("ty_assign"); return env[n.e.name].t;
+    }
+  })(n);
+  return [...sk];
+}
+
+const fmt = v => Number.isInteger(v) ? String(v) : String(+v.toPrecision(10));
+function arith(op, a, b, mode, log){
+  const t = usual(a.t, b.t, {lenient:true}), x = conv(a.v, t), y = conv(b.v, t); let v;
+  if(op === "+") v = x + y; else if(op === "-") v = x - y; else if(op === "*") v = x * y;
+  else if(op === "/"){
+    if(isF(t)) v = x / y;
+    else {
+      if(y === 0) throw RE("integer division by zero");
+      v = mode.floorDiv ? Math.floor(x / y) : Math.trunc(x / y);
+      if(log && x % y !== 0) log.push(`${x} / ${y} = ${v} (int division cuts the fraction toward 0)`);
+    }
+  } else if(op === "%"){
+    if(isF(t)) throw CE("% only works on integers");
+    if(y === 0) throw RE("% by zero");
+    v = mode.modPos ? ((x % y) + Math.abs(y)) % Math.abs(y) : x % y;
+    if(log && (x < 0 || y < 0) && v !== 0) log.push(`${x} % ${y} = ${v} (the sign follows the left side)`);
+  }
+  return {t, v:conv(v, t)};
+}
+function evalE(n, env, mode, log){
+  mode = mode || {};
+  const getVar = name => { const x = env[name]; if(!x) throw CE(`'${name}' is not declared`); if(x.v === undefined) throw RE(`'${name}' is used before it has a value`); return x; };
+  switch(n.k){
+    case "lit": return {t:n.t, v:n.v};
+    case "var": { const x = getVar(n.name); return {t:x.t, v:x.v}; }
+    case "par": return evalE(n.e, env, mode, log);
+    case "neg": { const x = evalE(n.e, env, mode, log), t = promote(x.t); return {t, v: n.op === "-" ? conv(-conv(x.v, t), t) : conv(x.v, t)}; }
+    case "pre": case "post": {
+      const x = getVar(n.e.name), old = x.v, nv = conv(old + (n.op === "++" ? 1 : -1), x.t);
+      const asPre = n.k === "pre" ? !mode.postForPre : !!mode.preForPost;
+      if(!mode.noIncStore) x.v = nv;
+      if(log) log.push(n.k === "pre"
+        ? `<code>${n.op}${n.e.name}</code>: ${n.e.name} becomes ${nv} first, and the expression uses ${nv}`
+        : `<code>${n.e.name}${n.op}</code>: the expression uses the old value ${old}, then ${n.e.name} becomes ${nv}`);
+      return {t:x.t, v: asPre ? nv : old};
+    }
+    case "cast": { const x = evalE(n.e, env, mode, log); return {t:n.t, v:conv(x.v, n.t)}; }
+    case "bin": { const a = evalE(n.l, env, mode, log), b = evalE(n.r, env, mode, log); return arith(n.op, a, b, mode, log); }
+    case "asg": {
+      const x = env[n.e.name]; if(!x) throw CE(`'${n.e.name}' is not declared`);
+      const rv = evalE(n.r, env, mode, log); let nv;
+      if(n.op === "="){ nv = conv(rv.v, x.t); if(log) log.push(`<code>${n.e.name} = ${fmt(nv)}</code>`); }
+      else {
+        if(x.v === undefined) throw RE(`'${n.e.name}' is used before it has a value`);
+        const op = n.op[0]; nv = conv(arith(op, {t:x.t, v:x.v}, rv, mode, null).v, x.t);
+        if(log) log.push(`<code>${n.e.name} ${n.op} ${fmt(rv.v)}</code> → ${n.e.name} = ${fmt(x.v)} ${op} ${fmt(rv.v)} = ${fmt(nv)}`);
+      }
+      x.v = nv; return {t:x.t, v:nv};
+    }
+    case "call": {
+      const F = {pow:[2, Math.pow], sqrt:[1, Math.sqrt], fabs:[1, Math.abs], cbrt:[1, Math.cbrt]};
+      if(!F[n.name]) throw CE(`unknown function '${n.name}'`);
+      if(n.args.length !== F[n.name][0]) throw CE(`${n.name} takes ${F[n.name][0]} argument${F[n.name][0] > 1 ? "s" : ""}`);
+      const args = n.args.map(a => conv(evalE(a, env, mode, log).v, "double"));
+      return {t:"double", v:F[n.name][1](...args)};
+    }
+  }
+}
+function compileCheck(stmts, env){
+  const tenv = {}; for(const k in env) tenv[k] = {t:env[k].t};
+  for(const s of stmts){
+    if(s.k === "decl") for(const it of s.items){ if(it.init) typeOf(it.init, tenv, {lenient:true}); tenv[it.name] = {t:s.t}; }
+    else if(s.k === "expr" || s.k === "ret") typeOf(s.e, tenv, {lenient:true});
+  }
+}
+function runProgram(stmts, env, mode, log){
+  for(const s of stmts){
+    if(s.k === "decl") for(const it of s.items){ const v = it.init ? conv(evalE(it.init, env, mode, log).v, s.t) : undefined; env[it.name] = {t:s.t, v}; }
+    else if(s.k === "expr") evalE(s.e, env, mode, log);
+    else if(s.k === "ret") return {done:true, val:evalE(s.e, env, mode, log)};
+  }
+  return {done:false};
+}
+const noParen = line => line.replace(/^\s*(\w+)\s*([+\-*\/%])=\s*(.+);\s*$/, "$1 = $1 $2 $3;");
+function runVals(names, init, lines, mode, log){
+  mode = mode || {};
+  const env = {}; names.forEach((n, k) => env[n] = {t:"int", v:init[k]});
+  for(const L of lines){
+    const st = parse(mode.compoundNoParen ? noParen(L) : L, true);
+    const entry = log ? {stmt:L, steps:[]} : null;
+    runProgram(st, env, mode, entry ? entry.steps : null);
+    if(log){ entry.after = names.map(n => `${n} = ${env[n].v}`).join(", "); log.push(entry); }
+  }
+  return names.map(n => env[n].v);
+}
+function closeEnough(g, e){
+  if(typeof g !== "number" || !isFinite(g)) return false;
+  if(e === 0) return Math.abs(g) < 1e-12;
+  return Math.abs(g - e) / Math.abs(e) < 1e-6;
+}
+function gradeCode(prob, src){
+  let body = src; const a = src.indexOf("{"), b = src.lastIndexOf("}");
+  if(a >= 0 && b > a) body = src.slice(a + 1, b);
+  const paramEnv = () => { const env = {}; prob.params.forEach(([t, n]) => env[n] = {t}); return env; };
+  let stmts;
+  try {
+    stmts = parse(body, true);
+    if(!stmts.some(s => s.k === "ret")) throw CE("there is no return statement");
+    compileCheck(stmts, paramEnv());
+  } catch(e){
+    if(e && e.ce) return {compiled:false, err:e.ce, results:[], frac:0};
+    if(e && e.ambig) return {compiled:false, err:"unsupported type mix", results:[], frac:0};
+    throw e;
+  }
+  const results = prob.tests.map(([name, args]) => {
+    const exp = prob.ref(...args); let got, err;
+    try {
+      const env = {}; prob.params.forEach(([t, n], k) => env[n] = {t, v:conv(args[k], t)});
+      const r = runProgram(stmts, env, {}, null);
+      if(!r.done) err = "no value returned"; else got = conv(r.val.v, "double");
+    } catch(e){ if(e && (e.re || e.ce)) err = e.re || e.ce; else throw e; }
+    return {name, args, exp, got, err, ok: err === undefined && closeEnough(got, exp)};
+  });
+  return {compiled:true, results, frac:(1 + results.filter(r => r.ok).length) / (results.length + 1)};
+}
+</script>
+
+<script>
+/* ================= content: skills, cards, problem bank ================= */
+const SK = {
+  ty_float:{g:"Types (Q3, Q4, Q6)", label:"Floating beats integer"},
+  ty_frank:{g:"Types (Q3, Q4, Q6)", label:"float < double < long double"},
+  ty_assign:{g:"Types (Q3, Q4, Q6)", label:"(x = …) has x's type"},
+  ty_cast:{g:"Types (Q3, Q4, Q6)", label:"A cast grabs one operand"},
+  ty_promo:{g:"Types (Q3, Q4, Q6)", label:"char/short → int"},
+  ty_uns:{g:"Types (Q3, Q4, Q6)", label:"Integer rank and unsigned"},
+  ty_suffix:{g:"Types (Q3, Q4, Q6)", label:"Literal suffixes"},
+  v_post:{g:"Values (Q5, Q7, Q8)", label:"x++ gives the old value"},
+  v_pre:{g:"Values (Q5, Q7, Q8)", label:"++x gives the new value"},
+  v_chain:{g:"Values (Q5, Q7, Q8)", label:"a = b = … right to left"},
+  v_comp:{g:"Values (Q5, Q7, Q8)", label:"x op= the whole right side"},
+  v_div:{g:"Values (Q5, Q7, Q8)", label:"int / cuts toward 0"},
+  v_mod:{g:"Values (Q5, Q7, Q8)", label:"% sign follows the left"},
+  c_intdiv:{g:"Coding (Q9–Q11)", label:"1/2 → 0 (int fractions)"},
+  c_intparam:{g:"Coding (Q9–Q11)", label:"int parameters divided"},
+  c_formula:{g:"Coding (Q9–Q11)", label:"Formula copied exactly"},
+  q_tok:{g:"Exam replica only", label:"Q1 tokens"},
+  q_term:{g:"Exam replica only", label:"Q2 terms"}
+};
+const DRILL = Object.keys(SK).filter(k => !k.startsWith("q_"));
+const CARDS = {
+  ty_float:`<b>Floating beats integer.</b> If one side is <code>float</code>, <code>double</code> or <code>long double</code> and the other is any integer type (even <code>unsigned long long</code>), the result is the floating type. <code>g * 5.19L</code> with <code>unsigned long long g</code> → <b>long double</b>.`,
+  ty_frank:`<b>The bigger floating type wins:</b> <code>float</code> &lt; <code>double</code> &lt; <code>long double</code>. <code>3.7f</code> is float, <code>3.7</code> is double, <code>3.7L</code> is long double, so a float variable × <code>3.7</code> → <b>double</b>.`,
+  ty_assign:`<b>An assignment is an expression with the left variable's type.</b> <code>(e = f * 5.19L)</code> with <code>int e</code> is an <b>int</b>: the long double value is squeezed into e. What the right side was doesn't matter any more.`,
+  ty_cast:`<b>A cast binds tighter than * and /,</b> so it grabs only the next operand. <code>(T)f / 3.7L</code> means <code>((T)f) / 3.7L</code>, and the division still happens in long double. Only <code>(T)(f / 3.7L)</code> converts the whole result.`,
+  ty_promo:`<b>Integer promotion:</b> <code>char</code>, <code>unsigned char</code>, <code>short</code> and <code>unsigned short</code> become <code>int</code> before any arithmetic, including unary minus. <code>j / 22U</code> with <code>unsigned char j</code> → int / unsigned int → <b>unsigned int</b>.`,
+  ty_uns:`<b>Two integer types (after promotion):</b> the higher rank wins (int &lt; long &lt; long long). Same rank → the <b>unsigned</b> one wins: int vs unsigned int → <b>unsigned int</b>. A lower-rank unsigned vs a bigger signed type → the signed type wins: unsigned int vs long long → <b>long long</b>.`,
+  ty_suffix:`<b>A literal's type comes from its suffix:</b> <code>22</code> int · <code>22U</code> unsigned int · <code>22L</code> long · <code>22UL</code> unsigned long · <code>22LL</code> long long · <code>22ULL</code> unsigned long long · <code>5.19</code> double · <code>5.19f</code> float · <code>5.19L</code> long double. Lowercase works too (<code>5.19l</code> ends in the letter l).`,
+  v_post:`<b><code>x++</code> / <code>x--</code> hand over the OLD value</b>, then change x. With b = -3: <code>a /= -b++</code> uses -(-3) = 3, then b becomes -2.`,
+  v_pre:`<b><code>++x</code> / <code>--x</code> change x FIRST</b> and hand over the new value. With c = 4: <code>a = --c</code> makes c 3 and a 3.`,
+  v_chain:`<b>Assignments group right to left:</b> <code>c = b = a - 11</code> means <code>c = (b = (a - 11))</code>. b gets the value, then c gets the same value.`,
+  v_comp:`<b><code>x op= rhs</code> means <code>x = x op (rhs)</code>:</b> the whole right side is computed first. <code>p /= 2 * r++</code> is <code>p = p / (2 * r)</code>, not <code>p / 2 * r</code>.`,
+  v_div:`<b>int / int cuts the fraction off toward zero:</b> 7 / 2 = 3, -7 / 2 = -3 (not -4), 2 / 5 = 0.`,
+  v_mod:`<b><code>%</code> takes the sign of the LEFT side:</b> -7 % 3 = -1, 7 % -3 = 1. Check: (a / b) * b + a % b == a. And * / % go before + -, so <code>8 - 5 % 3</code> = 8 - 2.`,
+  c_intdiv:`<b>A fraction written with two integer literals is integer division:</b> 1/2 → 0, 1/3 → 0, 4/3 → 1, 5/9 → 0. Write <code>1.0 / 2</code>, <code>4.0 / 3</code>. Never precompute the decimal by hand (0.33 is not 1/3).`,
+  c_intparam:`<b>int parameters stay ints.</b> <code>payout / cost</code> and <code>(a + b + c) / 3</code> drop the fraction. Make one side floating BEFORE dividing: <code>(double)payout / cost</code>, <code>payout * 1.0 / cost</code>, <code>/ 3.0</code>. <code>(double)(a / b)</code> is too late.`,
+  c_formula:`<b>Copy the formula exactly.</b> v² is <code>v * v</code> or <code>pow(v, 2)</code>, and <code>^</code> is not power in C. a / b² needs <code>a / (b * b)</code>, because <code>a / b * b</code> is just a. Use <code>M_PI</code>, not 3.14. Watch signs: −(1 + r) is <code>- (1 + rate)</code>.`,
+  q_tok:`Q1 token classification. Drill it in the Token Ladder.`,
+  q_term:`Q2 term matching. Drill it in the Term Ladder.`
+};
+const TMODES = [
+  {m:{intWins:1}, sk:"ty_float", why:"That's the answer if the integer type won. Against a floating type it never does."},
+  {m:{asgRight:1}, sk:"ty_assign", why:"That's the right side's type. An assignment has the LEFT variable's type."},
+  {m:{noPromo:1}, sk:"ty_promo", why:"That skips integer promotion. char and short become int before any arithmetic."},
+  {m:{intWins:1, asgRight:1}, sk:"ty_float", why:"That lets the integer type win and also ignores the assignment."}
+];
+const VMODES = [
+  {m:{preForPost:1}, sk:"v_post", why:"That's what you'd get if x++ handed over the new value. Postfix uses the old value first."},
+  {m:{postForPre:1}, sk:"v_pre", why:"That's what you'd get if ++x handed over the old value. Prefix changes x first."},
+  {m:{noIncStore:1}, sk:"v_post", why:"That forgets that ++ and -- also change the variable itself."},
+  {m:{floorDiv:1}, sk:"v_div", why:"That rounds the division down. C cuts toward zero: -7 / 2 = -3."},
+  {m:{modPos:1}, sk:"v_mod", why:"That makes % positive. In C, % takes the sign of the left side."},
+  {m:{compoundNoParen:1}, sk:"v_comp", why:"That reads x op= y * z as x = x op y * z. The whole right side goes first: x = x op (y * z)."}
+];
+
+// Coding bank. Each problem: reference formula, tests, one correct line and bug lines tagged with the skill they break.
+const PROBS = [
+ {name:"kinetic_energy", params:[["double","mass"],["double","velocity"]], desc:"the kinetic energy of a moving object from its mass (kg) and velocity (m/s)", formula:"KE = ½ · m · v²",
+  ref:(m,v)=>0.5*m*v*v, sk:["c_intdiv","c_formula"],
+  tests:[["Zero mass",[0,12]],["Zero velocity",[70,0]],["Negative velocity",[2,-3]],["Walking human",[70,1.4]],["Bullet train",[400000,89]],["Fast electron",[9.109e-31,2.998e6]]],
+  good:"return 0.5 * mass * velocity * velocity;",
+  bugs:[["return 1 / 2 * mass * velocity * velocity;","c_intdiv","1 / 2 is integer division, so it is 0 and every answer is 0."],
+        ["return 0.5 * mass * velocity;","c_formula","velocity is never squared."],
+        ["return 0.5 * mass * velocity ^ 2;","c_formula","^ is XOR in C, not power. It doesn't even compile with doubles."],
+        ["return (1 / 2) * mass * pow(velocity, 2);","c_intdiv","pow is fine, but (1 / 2) is still 0."]]},
+ {name:"pyramid_volume", params:[["double","base"],["double","height"]], desc:"the volume of a square pyramid from its base side length and its height", formula:"V = ⅓ · b² · h",
+  ref:(b,h)=>b*b*h/3, sk:["c_intdiv","c_formula"],
+  tests:[["Zero height",[4,0]],["Unit pyramid",[1,1]],["Great Pyramid",[230.3,146.6]],["Tiny",[0.01,0.02]],["Wide and flat",[100,0.5]]],
+  good:"return 1.0 / 3 * base * base * height;",
+  bugs:[["return 1 / 3 * base * base * height;","c_intdiv","1 / 3 is integer division, so it is 0."],
+        ["return 1.0 / 3 * base * height;","c_formula","The base is not squared."],
+        ["return 0.33 * base * base * height;","c_intdiv","0.33 is a hand-rounded 1/3, so every answer is about 1% off. Write 1.0 / 3."]]},
+ {name:"irr", params:[["int","cost"],["int","payout"],["double","rate"],["int","periods"]], desc:"the internal rate of return of an investment from its cost, payout, discount rate and number of periods. Use pow from math.h", formula:"IRR = (p / c)<sup>1/n</sup> − (1 + r)",
+  ref:(c,p,r,n)=>Math.pow(p/c,1/n)-(1+r), sk:["c_intparam","c_intdiv","c_formula"], hard:1,
+  tests:[["Zero discount rate",[1000,1500,0,3]],["One period",[100,110,0.05,1]],["Doubling in 5",[500,1000,0.03,5]],["Loss",[2000,1500,0.02,4]],["Long horizon",[1200,5000,0.04,30]]],
+  good:"return pow((double)payout / cost, 1.0 / periods) - (1 + rate);",
+  bugs:[["return pow(payout / cost, 1.0 / periods) - (1 + rate);","c_intparam","payout / cost divides two ints, so 1500 / 1000 becomes 1."],
+        ["return pow((double)payout / cost, 1 / periods) - (1 + rate);","c_intdiv","1 / periods is integer division: 0 for every periods > 1, so pow(x, 0) = 1."],
+        ["return pow((double)payout / cost, 1.0 / periods) - 1 + rate;","c_formula","−(1 + r) is −1 − r. Writing - 1 + rate adds the rate instead."]]},
+ {name:"sphere_volume", params:[["double","radius"]], desc:"the volume of a sphere from its radius. Use M_PI from math.h", formula:"V = 4/3 · π · r³",
+  ref:r=>4/3*Math.PI*r*r*r, sk:["c_intdiv","c_formula"],
+  tests:[["Zero radius",[0]],["Unit sphere",[1]],["Tennis ball",[0.033]],["Earth",[6.371e6]],["Half",[0.5]]],
+  good:"return 4.0 / 3 * M_PI * radius * radius * radius;",
+  bugs:[["return 4 / 3 * M_PI * radius * radius * radius;","c_intdiv","4 / 3 is integer division, so it is 1."],
+        ["return 4.0 / 3 * M_PI * radius * radius;","c_formula","r³ needs three radius factors."],
+        ["return 4.0 / 3 * 3.14 * radius * radius * radius;","c_formula","3.14 is a rounded π. Use M_PI."]]},
+ {name:"f_to_c", params:[["int","fahrenheit"]], ret:"double", desc:"a temperature in Celsius from a whole-number Fahrenheit temperature", formula:"C = (F − 32) · 5 / 9",
+  ref:f=>(f-32)*5/9, sk:["c_intparam","c_intdiv","c_formula"], hard:1,
+  tests:[["Freezing",[32]],["Boiling",[212]],["Body temperature",[98]],["Minus forty",[-40]],["Cold day",[10]]],
+  good:"return (fahrenheit - 32) * 5.0 / 9;",
+  bugs:[["return (fahrenheit - 32) * 5 / 9;","c_intparam","Everything is int, so the division drops the fraction (98 °F → 36 instead of 36.67)."],
+        ["return 5 / 9 * (fahrenheit - 32);","c_intdiv","5 / 9 is integer division, so it is 0."],
+        ["return fahrenheit - 32 * 5.0 / 9;","c_formula","Without parentheses only the 32 gets multiplied by 5/9."]]},
+ {name:"average3", params:[["int","a"],["int","b"],["int","c"]], desc:"the exact average of three whole numbers", formula:"avg = (a + b + c) / 3",
+  ref:(a,b,c)=>(a+b+c)/3, sk:["c_intparam","c_formula"], hard:1,
+  tests:[["All equal",[5,5,5]],["Not divisible",[1,2,2]],["Negatives",[-4,-5,0]],["Zeros",[0,0,0]],["Big",[100,200,301]]],
+  good:"return (a + b + c) / 3.0;",
+  bugs:[["return (a + b + c) / 3;","c_intparam","int / int drops the fraction: (1 + 2 + 2) / 3 = 1."],
+        ["return a + b + c / 3.0;","c_formula","Only c gets divided. The sum needs parentheses."],
+        ["return (double)((a + b + c) / 3);","c_intparam","The cast comes after the int division, too late."]]},
+ {name:"bmi", params:[["double","kg"],["double","meters"]], desc:"the body mass index from weight (kg) and height (m)", formula:"BMI = kg / m²",
+  ref:(k,m)=>k/(m*m), sk:["c_formula"],
+  tests:[["Average adult",[70,1.75]],["Light",[45,1.6]],["Heavy",[120,1.9]],["Child",[25,1.2]],["Exact",[81,1.8]]],
+  good:"return kg / (meters * meters);",
+  bugs:[["return kg / meters * meters;","c_formula","Left to right, that is (kg / m) * m = kg. m² needs parentheses."],
+        ["return kg / meters ^ 2;","c_formula","^ is XOR in C, not power."],
+        ["return kg / 2 * meters;","c_formula","That divides by 2 instead of squaring."]]},
+ {name:"compound_interest", params:[["double","principal"],["double","rate"],["int","years"]], desc:"the final amount after compound interest. Use pow from math.h", formula:"A = P · (1 + r)<sup>n</sup>",
+  ref:(p,r,n)=>p*Math.pow(1+r,n), sk:["c_formula"],
+  tests:[["Zero years",[1000,0.05,0]],["One year",[1000,0.05,1]],["Ten years",[2500,0.03,10]],["Zero rate",[500,0,7]],["Thirty years",[10000,0.07,30]]],
+  good:"return principal * pow(1 + rate, years);",
+  bugs:[["return principal * (1 + rate) * years;","c_formula","That multiplies by n instead of raising to the power n."],
+        ["return pow(principal * (1 + rate), years);","c_formula","The principal must not be raised to the power."],
+        ["return principal * pow(rate, years);","c_formula","The base is (1 + r), not r."]]},
+ {name:"percent_change", params:[["int","old_value"],["int","new_value"]], ret:"double", desc:"the percent change from an old whole-number value to a new one", formula:"change = (new − old) / old · 100",
+  ref:(o,n)=>(n-o)*100/o, sk:["c_intparam","c_formula"], hard:1,
+  tests:[["No change",[50,50]],["Small rise",[80,85]],["Drop",[200,150]],["Triple",[10,30]],["Odd split",[3,4]]],
+  good:"return (new_value - old_value) * 100.0 / old_value;",
+  bugs:[["return (new_value - old_value) / old_value * 100;","c_intparam","(85 − 80) / 80 is int division = 0, so the result is 0."],
+        ["return (new_value - old_value) / old_value * 100.0;","c_intparam","The int division already happened before the 100.0 arrives."],
+        ["return new_value - old_value / old_value * 100.0;","c_formula","Without parentheses only old_value gets divided."]]},
+ {name:"gravity_force", params:[["double","m1"],["double","m2"],["double","distance"]], desc:"the gravitational force between two masses, with G = 6.674e-11", formula:"F = G · m₁ · m₂ / d²",
+  ref:(a,b,d)=>6.674e-11*a*b/(d*d), sk:["c_formula"],
+  tests:[["Earth and Moon",[5.972e24,7.348e22,3.844e8]],["Two people",[70,80,1]],["Apple",[0.1,5.972e24,6.371e6]],["Close masses",[1000,1000,0.5]],["Far apart",[1,1,1e6]]],
+  good:"return 6.674e-11 * m1 * m2 / (distance * distance);",
+  bugs:[["return 6.674e-11 * m1 * m2 / distance * distance;","c_formula","Left to right, that divides by d and then multiplies by d again."],
+        ["return 6.674e-11 * m1 * m2 / (2 * distance);","c_formula","d² is d · d, not 2 · d."],
+        ["return 6.674 * m1 * m2 / (distance * distance);","c_formula","G lost its e-11."]]},
+ {name:"harmonic_mean", params:[["int","a"],["int","b"]], ret:"double", desc:"the harmonic mean of two positive whole numbers", formula:"H = 2ab / (a + b)",
+  ref:(a,b)=>2*a*b/(a+b), sk:["c_intparam","c_formula"], hard:1,
+  tests:[["Equal",[4,4]],["Simple",[1,2]],["Uneven",[3,7]],["Big gap",[1,100]],["Large",[40,60]]],
+  good:"return 2.0 * a * b / (a + b);",
+  bugs:[["return 2 * a * b / (a + b);","c_intparam","All ints, so 4 / 3 becomes 1."],
+        ["return 2.0 * a * b / a + b;","c_formula","Without parentheses it divides by a, then adds b."],
+        ["return (double)(2 * a * b / (a + b));","c_intparam","The cast comes after the int division, too late."]]},
+ {name:"pendulum_period", params:[["double","length"]], desc:"the period of a pendulum from its length, with g = 9.81. Use sqrt and M_PI from math.h", formula:"T = 2π · √(L / g)",
+  ref:L=>2*Math.PI*Math.sqrt(L/9.81), sk:["c_formula"],
+  tests:[["Zero length",[0]],["One meter",[1]],["Clock",[0.994]],["Long",[67]],["Short",[0.25]]],
+  good:"return 2 * M_PI * sqrt(length / 9.81);",
+  bugs:[["return 2 * M_PI * sqrt(length) / 9.81;","c_formula","g belongs inside the square root."],
+        ["return 2 * 3.14 * sqrt(length / 9.81);","c_formula","3.14 is a rounded π. Use M_PI."],
+        ["return 2 * M_PI * length / 9.81;","c_formula","The square root is missing."]]},
+ {name:"trapezoid_area", params:[["int","a"],["int","b"],["int","h"]], ret:"double", desc:"the area of a trapezoid from its two whole-number parallel sides and height", formula:"A = (a + b) / 2 · h",
+  ref:(a,b,h)=>(a+b)/2*h, sk:["c_intparam","c_intdiv","c_formula"], hard:1,
+  tests:[["Rectangle",[4,4,3]],["Odd sum",[3,4,5]],["Triangle",[0,6,4]],["Flat",[10,7,0]],["Big",[101,50,9]]],
+  good:"return (a + b) / 2.0 * h;",
+  bugs:[["return (a + b) / 2 * h;","c_intparam","(3 + 4) / 2 is int division = 3."],
+        ["return 1 / 2 * (a + b) * h;","c_intdiv","1 / 2 is integer division, so it is 0."],
+        ["return a + b / 2.0 * h;","c_formula","Without parentheses only b gets halved."]]},
+ {name:"kmh_to_ms", params:[["int","kmh"]], ret:"double", desc:"a speed in m/s from a whole-number speed in km/h", formula:"v = kmh · 1000 / 3600",
+  ref:k=>k*1000/3600, sk:["c_intparam","c_intdiv"], hard:1,
+  tests:[["Zero",[0]],["Walking",[5]],["City",[50]],["Highway",[100]],["Odd",[7]]],
+  good:"return kmh * 1000.0 / 3600;",
+  bugs:[["return kmh * 1000 / 3600;","c_intparam","All ints: 5000 / 3600 = 1."],
+        ["return kmh / 3600 * 1000.0;","c_intparam","kmh / 3600 is int division = 0 before the 1000.0 arrives."],
+        ["return 1000 / 3600 * kmh;","c_intdiv","1000 / 3600 is integer division, so it is 0."]]},
+ {name:"cylinder_volume", params:[["double","radius"],["double","height"]], desc:"the volume of a cylinder. Use M_PI from math.h", formula:"V = π · r² · h",
+  ref:(r,h)=>Math.PI*r*r*h, sk:["c_formula"],
+  tests:[["Zero height",[2,0]],["Unit",[1,1]],["Can",[0.033,0.12]],["Tank",[3.5,10]],["Thin",[0.001,50]]],
+  good:"return M_PI * radius * radius * height;",
+  bugs:[["return M_PI * radius * height;","c_formula","r² needs radius twice."],
+        ["return 3.14 * radius * radius * height;","c_formula","3.14 is a rounded π. Use M_PI."],
+        ["return M_PI * (radius + radius) * height;","c_formula","r² is r · r, not r + r."]]}
+];
+
+/* ----- Q1 token rules (same engine as the Token Ladder) ----- */
+const KW = new Set("auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while _Bool _Complex _Imaginary".split(" "));
+const OPNAME = {"+":"addition","-":"subtraction","*":"multiplication","/":"division","%":"remainder","++":"increment","--":"decrement","==":"equal to","!=":"not equal to","<":"less than",">":"greater than","<=":"less or equal",">=":"greater or equal","&&":"logical AND","||":"logical OR","!":"logical NOT","&":"bitwise AND","|":"bitwise OR","^":"bitwise XOR","~":"bitwise NOT","<<":"left shift",">>":"right shift","=":"assignment","+=":"add-assign","-=":"subtract-assign","*=":"multiply-assign","/=":"divide-assign","%=":"remainder-assign","->":"member access through pointer"};
+const FAKE = {"=>":"C has >=, not =>.","=<":"C writes <=, never =<.","<>":"Not-equal in C is !=.","**":"C has no power operator.","===":"C only has ==.",":=":"C assigns with plain =.",">>>":"C has >> but no >>>.","=!":"Not-equal is !=."};
+const INT_SUF = /^(?:[uU](?:ll|LL|[lL])?|(?:ll|LL|[lL])[uU]?)?$/;
+function tokClass(s){
+  if(KW.has(s)) return ["Keyword", `${s} is a reserved word.`];
+  if(/^[A-Za-z_][A-Za-z0-9_]*$/.test(s)) return ["Identifier", KW.has(s.toLowerCase()) ? `C is case-sensitive: ${s} is not the keyword ${s.toLowerCase()}.` : "A clean name that is not a reserved word."];
+  if(OPNAME[s]) return ["Operator", `${s} is ${OPNAME[s]}.`];
+  if(s[0] === '"') return /^"(?:[^"\\]|\\.)*"$/.test(s) ? ["Literal","String literal."] : ["Syntax error","The string is not closed properly."];
+  if(s[0] === "'") return /^'(?:[^'\\]|\\.)'$/.test(s) ? ["Literal","Character literal."] : ["Syntax error","A char literal holds exactly one character."];
+  let m = s.match(/^0[xX]([0-9a-fA-F]+)(.*)$/);
+  if(m) return INT_SUF.test(m[2]) ? ["Literal",`Hex integer${m[2] ? " with suffix " + m[2] : ""}.`] : ["Syntax error",`"${m[2]}" is not a hex digit or a valid suffix.`];
+  if(/^0[xX]/.test(s)) return ["Syntax error","0x needs hex digits."];
+  m = s.match(/^(?:(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)(.*)$/);
+  if(m) return /^[fFlL]?$/.test(m[1]) ? ["Literal","Floating-point literal."] : ["Syntax error",`"${m[1]}" is not a valid float suffix.`];
+  m = s.match(/^(\d+)(.*)$/);
+  if(m){
+    if(m[1].length > 1 && m[1][0] === "0" && /[89]/.test(m[1])) return ["Syntax error","Leading 0 means octal, which has no 8 or 9."];
+    return INT_SUF.test(m[2]) ? ["Literal",`Integer${m[2] ? " with suffix " + m[2] : ""}.`] : ["Syntax error", /^[a-zA-Z_]/.test(m[2]) && !/^[uUlL]+$/.test(m[2]) ? "A name can't start with a digit." : `"${m[2]}" is not a valid integer suffix.`];
+  }
+  if(/^[A-Za-z_]/.test(s)) return ["Syntax error","Names may only use letters, digits and _."];
+  return ["Syntax error", FAKE[s] || "Not a C operator."];
+}
+const TOKPOOL = {
+  kw:"auto break case char const continue default do double else enum extern float for goto if int long register return short signed static struct switch typedef union unsigned void volatile while".split(" "),
+  idc:["Int","GOTO","Double","WHILE","Char","Return","Long"],
+  id:["count","MAX","decimal","signedInt","unsigned_int","main","printf","string","then","_temp","x1","total_2","Q","returnValue","float2"],
+  op:Object.keys(OPNAME), fake:Object.keys(FAKE),
+  lit:["8.293","'F'",'"return"',"0xdeadball","0xBEEF","42UL","017","1e5",".5","5.","3.0f","2.5L","'\\n'",'"hi"',"0x1Fu","100LL","0xfull","6.0l"],
+  err:["128.171.145.73","2nd","1.2.3","08","0x1G","3.14u","10lL","1e","4f","my@var","'ab'",'"abc',"0xgood","1.5UL","099"]
+};
+function genTokens(n){
+  const kinds = ["kw","kw","idc","id","id","id","op","op","fake","lit","lit","lit","lit","err","err","err"];
+  const used = new Set(), out = [];
+  while(out.length < n){ const s = pick(TOKPOOL[pick(kinds)]); if(used.has(s)) continue; used.add(s); const [cls, why] = tokClass(s); out.push({tok:s, cls, why}); }
+  return out;
+}
+/* ----- Q2 terms (same definitions as the Term Ladder) ----- */
+const TERMS = [
+ ["binding","the association between a name and the thing it refers to, or between an operator and its operands",["associativity","precedence","assignment","declaration"]],
+ ["argument","value supplied as input to a function call",["parameter","value","literal","operand"]],
+ ["keyword","words that have a pre-defined meaning in a programming language and cannot be used as identifiers",["identifier","token","symbol","literal"]],
+ ["value","a single data element; the result of evaluating an expression",["literal","variable","evaluation","operand","expression"]],
+ ["parameter","variable declared in a function definition that receives the input value of a function call",["argument","variable","declaration","identifier"]],
+ ["type","determines the size, structure, and interpretation of a value stored in a variable or produced by an expression",["cast","coercion","value","declaration","semantics"]],
+ ["variable","a named data object or storage location that may be used as an operand in expressions",["identifier","operand","value","parameter","binding"]],
+ ["operand","token or expression representing a value that is acted on by an operator",["operator","argument","value","variable","expression"]],
+ ["assignment","storing or updating a value in an object, typically as a side effect of expression evaluation",["initialization","declaration","binding","evaluation"]],
+ ["cast","an operator that explicitly converts a value to a specified type",["coercion","type","operator"]],
+ ["operator","symbol that represents a basic computation and can be used to form expressions",["operand","symbol","token","keyword","cast"]],
+ ["coercion","automatic conversion of a value to match the type required by an operator; also called implicit conversion",["cast","type","assignment"]],
+ ["identifier","name assigned to a variable, function, or type",["keyword","variable","symbol","token","declaration"]],
+ ["expression","sequence of operands and operators that describes a computation resulting in a value",["statement","evaluation","value","block","operand"]],
+ ["statement","sequence of tokens that describes a complete executable instruction in a program",["expression","block","syntax","token"]],
+ ["syntax","rules for how words and groups of words may be arranged to form meaningful statements",["semantics","statement","keyword"]],
+ ["token","smallest well-defined term or symbol in a programming language",["symbol","keyword","identifier","literal","operator"]],
+ ["symbol","smallest unit of a written language",["token","operator","identifier","keyword"]],
+ ["whitespace","characters that separate tokens but are otherwise meaningless, including spaces, tabs, and newlines",["comment","token","symbol","syntax"]],
+ ["initialization","declaration which also provides an initial value for the declared object",["declaration","assignment","binding"]],
+ ["function","procedure which also produces an output value so it may be called as an expression",["procedure","expression","block","statement"]],
+ ["declaration","introduces an identifier and specifies its meaning and properties in a program",["initialization","identifier","assignment","type","binding"]],
+ ["evaluation","the process of computing the value of an expression",["expression","value","assignment","statement"]],
+ ["procedure","named, reusable block of code that may accept input values and performs a specific task",["function","block","statement","parameter"]],
+ ["block","group of statements enclosed in braces; also called a compound statement",["statement","procedure","function","expression"]],
+ ["semantics","describes the meaning of words and statements in a language",["syntax","statement","evaluation"]],
+ ["associativity","sequential order for binding operands to operators of the same precedence; may be left-to-right or right-to-left",["precedence","binding","evaluation"]],
+ ["precedence","priority order for binding operands to operators in a mixed expression",["associativity","binding","evaluation","operator"]],
+ ["literal","fixed value written directly as a token in source code",["value","token","keyword","variable","identifier"]],
+ ["comment","descriptive text in source code that is not part of the program and is ignored by the compiler or interpreter",["whitespace","token","statement"]]
+];
+const TERMBY = Object.fromEntries(TERMS.map(t => [t[0], t]));
+function genTermMatch(){
+  const terms = shuffle(TERMS.map(t => t[0])).slice(0, 12);
+  const near = shuffle([...new Set(terms.flatMap(t => TERMBY[t][2]))].filter(t => !terms.includes(t)));
+  const fill = shuffle(TERMS.map(t => t[0]).filter(t => !terms.includes(t) && !near.includes(t)));
+  return {rows:shuffle(terms), bank:shuffle(terms.concat(near.concat(fill).slice(0, 3)))};
+}
+
+/* ================= generators ================= */
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const VARSETS = [["i","j","k"],["e","f","g"],["a","b","c"],["x","y","z"],["p","q","r"],["u","v","w"]];
+const VTYPES = ["char","unsigned char","short","unsigned short","int","unsigned int","long","unsigned long","long long","unsigned long long","float","double","long double"];
+const CASTS = ["int","unsigned int","long","long long","unsigned long long","unsigned short","char","double","float"];
+const TGROUPS = [
+  ["(A = B o1 L) o2 C", "(A = B) o1 L o2 C", "A = B o1 (L o2 C)"],
+  ["(A = B o1 L) o2 C", "(A = B) o1 L o2 C", "(A = B) o1 (L o2 C)"],
+  ["A o1 (T)B o2 L", "A o1 ((T)B o2 L)", "A o1 (T)(B o2 L)"]
+];
+const TBEYOND = ["(T)(A = B o1 L) o2 C", "-A o1 B", "(A += L) o1 B", "A o1 (B = C o2 L)", "(T)A o1 B o2 L", "A o1 B++ o2 L", "(A = (T)B o1 L) o2 C", "A o1 -B o2 L", "(A = B) o1 (C = L)", "-(T)A o1 L"];
+const genLit = () => Math.random() < .55
+  ? pick(["5.19","3.7","2.5","0.5","1.25","8.6"]) + pick(["","f","F","L","L","l"])
+  : String(pick([2,3,5,7,12,22,40])) + pick(["","U","U","L","UL","LL","ULL","u"]);
+const fillT = (tpl, ctx) => tpl.replace(/\b(A|B|C|L|T|o1|o2)\b/g, m => ctx[m]);
+
+function typeCtx(){
+  const n = pick(VARSETS);
+  return {ctx:{A:n[0], B:n[1], C:n[2], L:genLit(), T:pick(CASTS), o1:pick(["*","/"]), o2:pick(["*","/"])},
+          types:{[n[0]]:pick(VTYPES), [n[1]]:pick(VTYPES), [n[2]]:pick(VTYPES)}, names:n};
+}
+function typePart(src, env){
+  const ast = parse(src, false);
+  return {src, ast, ans:typeOf(ast, env), skills:typeSkills(ast, env), steps:typeSteps(ast, env)};
+}
+function declsFor(names, types, srcs){
+  return names.filter(n => srcs.some(s => new RegExp("\\b" + n + "\\b").test(s))).map(n => `${types[n]} ${n};`);
+}
+function genTypeGroup(gi){
+  for(let k = 0; k < 400; k++){
+    const {ctx, types, names} = typeCtx(), srcs = TGROUPS[gi].map(t => fillT(t, ctx));
+    const env = {}; names.forEach(n => env[n] = {t:types[n]});
+    try {
+      const parts = srcs.map(s => typePart(s, env));
+      if(new Set(parts.map(p => p.ans)).size < 2) continue;
+      return {kind:"typeQ", decls:declsFor(names, types, srcs), env, parts};
+    } catch(e){ if(e && (e.ambig || e.ce)) continue; throw e; }
+  }
+}
+function genTypeSingle(target, hard){
+  for(let k = 0; k < 600; k++){
+    const {ctx, types, names} = typeCtx();
+    const tpl = hard && Math.random() < .65 ? pick(TBEYOND) : pick(pick(TGROUPS));
+    const src = fillT(tpl, ctx), env = {}; names.forEach(n => env[n] = {t:types[n]});
+    try {
+      const p = typePart(src, env);
+      if(target && !p.skills.includes(target)) continue;
+      return Object.assign({kind:"type", target:target || pick(p.skills), decls:declsFor(names, types, [src]), env}, p);
+    } catch(e){ if(e && (e.ambig || e.ce)) continue; throw e; }
+  }
+}
+function typeWrongs(p, env){
+  const out = new Map();
+  for(const md of TMODES){
+    try { const t = typeOf(p.ast, env, Object.assign({lenient:true}, md.m)); if(t !== p.ans && !out.has(t)) out.set(t, md); } catch(e){}
+  }
+  return out;
+}
+
+const VSETS = [["a","b","c"],["p","q","r"],["x","y","z"],["m","n","k"]];
+const S1 = [
+  {s:"A = B = C O K;", sk:["v_chain"]},
+  {s:"A += B - C++;", sk:["v_comp","v_post"]},
+  {s:"A = B++ * K;", sk:["v_post"]},
+  {s:"A -= K - B;", sk:["v_comp"]},
+  {s:"A = K - B % C;", sk:["v_mod"]},
+  {s:"A = ++B + C--;", sk:["v_pre","v_post"], hard:1},
+  {s:"A *= --B + K;", sk:["v_pre","v_comp"], hard:1},
+  {s:"A = B = -C++ / K;", sk:["v_chain","v_post","v_div"], hard:1}
+];
+const S2 = [
+  {s:"A /= -B++;", sk:["v_comp","v_post","v_div"]},
+  {s:"A /= K * B++;", sk:["v_comp","v_post","v_div"]},
+  {s:"A = -(K / B) % C;", sk:["v_div","v_mod"]},
+  {s:"A %= B--;", sk:["v_mod","v_post","v_comp"]},
+  {s:"A *= B - C++;", sk:["v_comp","v_post"]},
+  {s:"A = B / K * C;", sk:["v_div"]},
+  {s:"A = B-- - --C;", sk:["v_post","v_pre"], hard:1},
+  {s:"A /= B++ - K;", sk:["v_comp","v_post","v_div"], hard:1},
+  {s:"A -= -B % --C;", sk:["v_comp","v_mod","v_pre"], hard:1}
+];
+function fillV(t, names){
+  const p = shuffle(names), O = pick(["+","-","*","/","%"]);
+  const src = t.s.replace(/\b(A|B|C|K|O)\b/g, m => ({A:p[0], B:p[1], C:p[2], K:String(ri(2, 12)), O}[m]));
+  const sk = t.sk.slice(); if(/=\s*\w+\s*=/.test(t.s) && t.s.includes("O")){ if(O === "/") sk.push("v_div"); if(O === "%") sk.push("v_mod"); }
+  return {src, sk, asked:[p[0], ...(/[BC](\+\+|--)|(\+\+|--)[BC]/.test(t.s) ? [p[1], p[2]].filter((n, k) => new RegExp(`${["B","C"][k]}(\\+\\+|--)|(\\+\\+|--)${["B","C"][k]}`).test(t.s)) : [])]};
+}
+const initLine = (names, init) => "int " + names.map((n, k) => `${n} = ${init[k]}`).join(", ") + ";";
+function valid(vals){ return vals.every(v => Math.abs(v) <= 999); }
+function genValExam(){
+  for(let k = 0; k < 600; k++){
+    const names = pick(VSETS), init = names.map(() => ri(-9, 9));
+    const a = fillV(pick(S1.filter(t => !t.hard)), names), b = fillV(pick(S2.filter(t => !t.hard)), names);
+    try {
+      const lines = [a.src, b.src], ans = runVals(names, init, lines);
+      if(!valid(ans)) continue;
+      const log = []; runVals(names, init, lines, {}, log);
+      return {kind:"valQ", names, init, lines, ans, skills:[...new Set(a.sk.concat(b.sk))], log};
+    } catch(e){ if(e && (e.re || e.ce)) continue; throw e; }
+  }
+}
+function genValSingle(target, hard){
+  let pool = S1.concat(S2).filter(t => hard || !t.hard);
+  for(let k = 0; k < 600; k++){
+    if(k === 300) pool = S1.concat(S2);
+    const names = pick(VSETS), init = names.map(() => ri(-9, 9)), f = fillV(pick(pool), names);
+    if(target && !f.sk.includes(target)) continue;
+    try {
+      const ans = runVals(names, init, [f.src]);
+      if(!valid(ans)) continue;
+      const v = Math.random() < .35 && f.asked.length > 1 ? pick(f.asked.slice(1)) : f.asked[0];
+      const log = []; runVals(names, init, [f.src], {}, log);
+      return {kind:"val", target:target || pick(f.sk), names, init, lines:[f.src], v, ans:ans[names.indexOf(v)], skills:f.sk, log};
+    } catch(e){ if(e && (e.re || e.ce)) continue; throw e; }
+  }
+}
+function genCode(target, hard){
+  let pool = PROBS.filter(p => (!target || p.sk.includes(target)) && (hard ? p.hard : true));
+  if(!pool.length) pool = PROBS.filter(p => !target || p.sk.includes(target));
+  const p = pick(pool);
+  return {kind:"code", target:target || pick(p.sk), prob:p, skills:p.sk};
+}
+const sigOf = p => `${p.ret || "double"} ${p.name}(${p.params.map(x => x.join(" ")).join(", ")})`;
+const starter = p => `${sigOf(p)} {\n    \n}`;
+</script>
+
+<script>
+/* ================= ladder app ================= */
+const STAGES = [
+  {name:"Spoon-fed", kind:"single", len:12, opts:3, card:true, hint:null, pass:.8, retry:true,
+   blurb:"One question at a time: one expression's type, one variable's value, or the right line of code. The rule is shown and you pick from 3 answers, one of them the classic mistake. Misses come back later in the round."},
+  {name:"Guided", kind:"single", len:15, opts:4, card:false, hint:"card", pass:.85, retry:true,
+   blurb:"Same questions, 4 choices, and every wrong choice is a real mistake pattern. The rule is behind a hint, and a hinted answer doesn't count."},
+  {name:"Bare", kind:"single", len:15, typed:true, hint:"card", pass:.9, retry:false,
+   blurb:"No choices. Type the type name or the number, and write the coding answers yourself. The tests run on a built-in C engine. The hint counts as a miss."},
+  {name:"Section set", kind:"exam", sections:"mid", hint:true, pass:.9,
+   blurb:"The exam format for Q3–Q8 (three type questions, three value questions, 3 parts each) plus one coding question. Each part has a hint, and a hinted part counts as wrong."},
+  {name:"Exam replica", kind:"exam", sections:"full", hint:false, pass:.95,
+   blurb:"Full PE1: Q1 tokens, Q2 terms, Q3–Q8, three coding questions, scored out of 100 with the real points. One submit, no hints, no test feedback until the end. Pass = 95."},
+  {name:"Beyond", kind:"single", len:15, typed:true, hard:true, hint:null, pass:.9, retry:false,
+   blurb:"Harder than the exam: casts of whole assignments, unary minus on small types, prefix and postfix in one line, negative %, and the coding problems built around int-division traps. Typed, no hints."}
+];
+
+const SKEY = "pe1-ladder-v1";
+const fresh = () => ({m:{}, seen:{}, passed:{}, best:{}, unlocked:1});
+function load(){ try { const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; } catch(e){} return fresh(); }
+function save(){ try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+const $ = id => document.getElementById(id);
+const mOf = k => S.m[k] || 0;
+function record(k, ok){
+  S.seen[k] = 1;
+  S.m[k] = ok ? Math.min(5, mOf(k) + 1) : Math.max(1, mOf(k) - 2);
+}
+function pickSkills(n){
+  const w = DRILL.map(k => S.seen[k] ? 6 - mOf(k) : 7), tot = w.reduce((a, b) => a + b, 0), out = [];
+  while(out.length < n){
+    let x = Math.random() * tot, i = 0;
+    while((x -= w[i]) > 0 && i < DRILL.length - 1) i++;
+    if(out.length >= 1 && out[out.length - 1] === DRILL[i] && Math.random() < .7) continue;
+    out.push(DRILL[i]);
+  }
+  return out;
+}
+const cardHTML = k => `<div class="rule"><span class="lbl">Rule · ${SK[k].label}</span><div>${CARDS[k]}</div></div>`;
+
+/* ----- ladder, mastery, sheet ----- */
+let cur = null;
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st, i) => {
+    const locked = i + 1 > S.unlocked, passed = S.passed[i];
+    const best = S.best[i] != null ? "best " + Math.round(S.best[i] * 100) + "%" : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur === i ? "on" : ""} ${locked ? "locked" : ""} ${passed ? "passed" : ""}" data-i="${i}" type="button">
+      <span class="n">Rung ${i + 1}</span><span class="nm">${st.name}</span><span class="st">${passed ? "passed · " : ""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  let html = "", g = null;
+  for(const k of Object.keys(SK)){
+    if(SK[k].g !== g){ if(g) html += "</div>"; g = SK[k].g; html += `<div class="mgroup">${g}</div><div class="mgrid">`; }
+    html += `<div class="chip" style="background:${S.seen[k] ? `var(--m${mOf(k)})` : "var(--m0)"}">${SK[k].label}</div>`;
+  }
+  $("mgrid").innerHTML = html + "</div>";
+}
+function renderSheet(){
+  $("sheetBody").innerHTML = DRILL.map(cardHTML).join("") +
+    `<div class="rule"><span class="lbl">Type method in 4 steps</span><div>1) Find the innermost parentheses. 2) Casts and unary minus bind first, then * / %, then + -, then = (right to left). 3) At each operator: float present? → biggest float. Otherwise promote char/short to int, then rank and unsigned. 4) An assignment's type is always its left variable's type.</div></div>`;
+}
+
+/* ----- stage intro ----- */
+function openStage(i){
+  cur = i; renderLadder();
+  const st = STAGES[i], locked = i + 1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} of 6</span><span>Pass mark: <b>${Math.round(st.pass * 100)}%</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${i === 0 ? `<div class="rule"><span class="lbl">What your old PE1 attempt lost points on</span><div>Q4 and Q6 (−8): letting <code>unsigned long long</code> beat <code>5.19L</code>, and writing <code>double long</code>. Q9 (−5.7): velocity not squared. Q11 (−10.3): <code>1/periods</code> is integer division. Q5, Q7 and Q8 were full marks. The ladder weights toward these.</div></div>` : ""}
+    ${locked ? `<p class="small" style="margin:0">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked ? "Start anyway" : "Start round"}</button>
+    ${st.kind === "single" && !st.typed ? `<span class="small">Keys: 1–4 to answer, Enter for next.</span>` : `<span class="small">Enter checks or moves on.</span>`}</div>`;
+  $("go").onclick = () => start(i);
+  $("go").focus();
+}
+function start(i){ return STAGES[i].kind === "exam" ? startExam(i) : startSingle(i); }
+
+/* ----- one-at-a-time rounds ----- */
+let R = null;
+function makeSingle(target, st){
+  const cat = target.split("_")[0];
+  if(cat === "ty") return genTypeSingle(target, st.hard);
+  if(cat === "v") return genValSingle(target, st.hard);
+  return genCode(target, st.hard);
+}
+function startSingle(i){
+  const st = STAGES[i];
+  const queue = pickSkills(st.len).map(k => makeSingle(k, st));
+  R = {i, st, queue, pos:0, total:queue.length, clean:0, misses:[], answered:false, hinted:false};
+  showItem();
+}
+function itemOptions(it, n){
+  if(it.kind === "type"){
+    const w = typeWrongs(it, it.env), opts = [it.ans, ...w.keys()];
+    const pad = shuffle([...new Set([...Object.values(it.env).map(x => x.t), "int", "unsigned int", "double", "long double", "float", "unsigned long long", "long"])]);
+    for(const t of pad) if(opts.length < n && !opts.includes(t)) opts.push(t);
+    return {list:shuffle(opts.slice(0, n)).map(String), why:w};
+  }
+  if(it.kind === "val"){
+    const vi = it.names.indexOf(it.v), w2 = new Map();
+    for(const md of VMODES){ try { const r = runVals(it.names, it.init, it.lines, md.m)[vi]; if(r !== it.ans && !w2.has(r)) w2.set(r, md); } catch(e){} }
+    const opts = [it.ans, ...w2.keys()];
+    for(const c of shuffle([it.ans + 1, it.ans - 1, -it.ans, it.ans + 2, it.ans - 2])) if(opts.length < n && !opts.includes(c)) opts.push(c);
+    return {list:shuffle(opts.slice(0, n)).map(String), why:w2};
+  }
+  const p = it.prob, bugs = shuffle(p.bugs).sort((a, b) => (b[1] === it.target) - (a[1] === it.target));
+  const opts = [p.good, ...bugs.slice(0, n - 1).map(b => b[0])];
+  return {list:shuffle(opts), why:new Map(p.bugs.map(b => [b[0], b]))};
+}
+function showItem(){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false;
+  const firstCount = R.queue.slice(0, R.pos).filter(q => !q.retry).length;
+  let body = "";
+  if(it.kind === "type") body = `<div><span class="lbl">Given</span><pre class="code">${esc(it.decls.join("\n"))}</pre></div>
+      <div class="prompt">What is the <b>type</b> of <code>${esc(it.src)}</code> ?</div>`;
+  else if(it.kind === "val") body = `<div><span class="lbl">After executing</span><pre class="code">${esc(initLine(it.names, it.init) + "\n\n" + it.lines.join("\n"))}</pre></div>
+      <div class="prompt">What is the <b>value</b> of <code>${it.v}</code> ?</div>`;
+  else body = `<div class="prompt">Implement <code>${it.prob.name}</code> that computes ${esc(it.prob.desc)}.</div>
+      <div class="formula">${it.prob.formula}</div>
+      ${st.typed ? "" : `<div class="small">Function: <code class="inl">${esc(sigOf(it.prob))}</code>. Which line is the correct body?</div>`}`;
+  let ans = "";
+  if(!st.typed){
+    R.opts = itemOptions(it, st.opts);
+    ans = `<div class="opts ${it.kind === "code" ? "wide" : ""}" id="opts">${R.opts.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${j + 1}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+  } else if(it.kind === "code"){
+    ans = `<textarea class="ed" id="ed" spellcheck="false" aria-label="Your function">${esc(starter(it.prob))}</textarea>
+      <div class="row"><button class="btn" id="check" type="button">Save &amp; grade</button><span class="small">Write the whole function body. pow, sqrt and M_PI work.</span></div>`;
+  } else {
+    ans = `<div class="row" style="flex-wrap:nowrap"><input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="${it.kind === "type" ? "type name, e.g. long double" : "a whole number"}" aria-label="Your answer"><button class="btn" id="check" type="button">Check</button></div>`;
+  }
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i + 1} · ${st.name} · ${SK[it.target].g.split(" (")[0]}</span><span><b>${firstCount}</b> / ${R.total} · clean <b>${R.clean}</b></span></div>
+    <div class="bar"><i style="width:${firstCount / R.total * 100}%"></i></div>
+    ${it.retry ? `<span class="lbl">Again, a new question on the same rule</span>` : ""}
+    ${body}${st.card ? cardHTML(it.target) : ""}${ans}
+    <div class="row">${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint${st.typed ? " (counts as a miss)" : ""}</button>` : ""}<div id="hintout" style="flex-basis:100%"></div></div>
+    <div id="fb"></div>`;
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.j));
+  if($("typed")){
+    $("typed").focus();
+    $("typed").onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); R.answered ? next() : answer($("typed").value); } };
+    $("check").onclick = () => answer($("typed").value);
+  }
+  if($("ed")){ tabbable($("ed")); $("ed").focus(); const p = $("ed").value.indexOf("\n    ") + 5; $("ed").setSelectionRange(p, p); $("check").onclick = () => answer($("ed").value); }
+  if($("hint")) $("hint").onclick = () => { R.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = cardHTML(it.target); };
+}
+function tabbable(ta){
+  ta.addEventListener("keydown", e => {
+    if(e.key === "Tab" && !e.shiftKey){ e.preventDefault(); const s = ta.selectionStart; ta.setRangeText("    ", s, ta.selectionEnd, "end"); }
+  });
+}
+function checkType(input, ans){
+  const n = input.toLowerCase().trim().replace(/\s+/g, " ");
+  if(n === ans) return {ok:true};
+  const ws = n.split(" ");
+  if(n && ws.every(w => TYPEKW.has(w)) && canonType(ws) === ans)
+    return {ok:false, note:`<b>${esc(n)}</b> names the same type, but the grader wants the standard spelling <b>${ans}</b>. Your old PE1 marked "double long" as 0%.`};
+  return {ok:false};
+}
+function stepsHTML(it){
+  if(it.kind === "type" || it.ast) return `<ol>${it.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+  return `<ol>${it.log.map(e => `<li><code>${esc(e.stmt)}</code>${e.steps.length ? `<ul>${e.steps.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}<div class="small">→ ${e.after}</div></li>`).join("")}</ol>`;
+}
+function testsHTML(g, p){
+  if(!g.compiled) return `<div><b class="no-t">Compilation failed:</b> ${esc(g.err)}</div>`;
+  return `<div class="tw"><table class="tests"><tr><th>Test</th><th>Input</th><th>Expected</th><th>Yours</th><th></th></tr>
+    <tr><td>Compilation</td><td></td><td></td><td></td><td class="ok-t">✓</td></tr>
+    ${g.results.map(r => `<tr><td>${esc(r.name)}</td><td class="mono">${r.args.map(fmt).join(", ")}</td><td class="mono">${fmt(r.exp)}</td><td class="mono">${r.err ? esc(r.err) : fmt(r.got)}</td><td class="${r.ok ? "ok-t" : "no-t"}">${r.ok ? "✓" : "✗"}</td></tr>`).join("")}</table></div>`;
+}
+function answer(choice){
+  if(R.answered) return;
+  const it = R.queue[R.pos], st = R.st;
+  let ok, note = "", why = null, diag = null, extra = "";
+  if(it.kind === "code"){
+    if(st.typed){
+      const g = gradeCode(it.prob, choice); ok = g.compiled && g.results.every(r => r.ok);
+      $("ed").readOnly = true; $("check").disabled = true;
+      extra = testsHTML(g, it.prob) + (ok ? "" : `<div class="small">One correct version: <code>${esc(it.prob.good)}</code></div>`);
+    } else {
+      const line = R.opts.list[choice]; ok = line === it.prob.good;
+      if(!ok){ const b = R.opts.why.get(line); why = b[2]; diag = b[1]; }
+      extra = `<div>Correct: <code>${esc(it.prob.good)}</code></div>`;
+    }
+  } else {
+    const v = st.typed ? choice : R.opts.list[choice];
+    if(it.kind === "type"){
+      const c = st.typed ? checkType(v, it.ans) : {ok:v === it.ans}; ok = c.ok; note = c.note || "";
+      const md = typeWrongs(it, it.env).get(v.trim().toLowerCase().replace(/\s+/g, " "));
+      if(!ok && md){ why = md.why; diag = md.sk; }
+    } else {
+      const num = String(v).trim();
+      ok = /^-?\d+$/.test(num) && +num === it.ans;
+      if(!ok){ const vi = it.names.indexOf(it.v); for(const md of VMODES){ try { if(runVals(it.names, it.init, it.lines, md.m)[vi] === +num){ why = md.why; diag = md.sk; break; } } catch(e){} } }
+    }
+    extra = stepsHTML(it);
+    if($("typed")){ $("typed").disabled = true; $("check").disabled = true; }
+  }
+  if($("opts")){
+    const right = it.kind === "code" ? it.prob.good : String(it.ans);
+    $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if(R.opts.list[k] === right) b.classList.add("right"); else if(k === choice) b.classList.add("wrong"); });
+  }
+  if($("hint")) $("hint").disabled = true;
+  R.answered = true;
+  const clean = ok && !R.hinted;
+  if(!it.retry){
+    if(clean) R.clean++; else R.misses.push(it);
+    record(it.target, clean); if(diag && diag !== it.target) record(diag, false);
+    save(); renderMastery();
+  }
+  if(!ok && st.retry){ const again = Object.assign(makeSingle(it.target, st), {retry:true}); R.queue.splice(Math.min(R.pos + 3, R.queue.length), 0, again); }
+  const head = it.kind === "type" ? `the type is <code>${it.ans}</code>` : it.kind === "val" ? `${it.v} = ${it.ans}` : "";
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}">
+      <h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}${head ? ": " + head : ""}</h3>
+      ${why ? `<div><b>Your answer:</b> ${esc(why)}</div>` : ""}${note ? `<div>${note}</div>` : ""}
+      ${extra}
+      <div class="small">Rule: ${SK[it.target].label}${!ok && st.retry ? " · a new question on this rule comes back in a few items" : ""}</div>
+    </div><div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next;
+  $("next").focus();
+}
+function next(){
+  R.pos++;
+  if(R.pos >= R.queue.length) finish(R.i, R.clean / R.total, R.misses.map(it => ({k:it.target, html:missLine(it)})));
+  else showItem();
+}
+function missLine(it){
+  if(it.kind === "type") return `<code>${esc(it.src)}</code> → ${it.ans}`;
+  if(it.kind === "val") return `<code>${esc(it.lines.join(" "))}</code> → ${it.v} = ${it.ans}`;
+  return `<code>${esc(it.prob.good)}</code>`;
+}
+
+/* ----- exam-format rounds ----- */
+let X = null;
+function startExam(i){
+  const st = STAGES[i], full = st.sections === "full", qs = [];
+  if(full){ qs.push({kind:"tokQ", items:genTokens(20), pts:20}); qs.push(Object.assign({kind:"termQ", pts:12}, genTermMatch())); }
+  qs.push(Object.assign(genTypeGroup(0), {pts:6}), Object.assign(genTypeGroup(1), {pts:6}), Object.assign(genValExam(), {pts:6}),
+          Object.assign(genTypeGroup(2), {pts:6}), Object.assign(genValExam(), {pts:6}), Object.assign(genValExam(), {pts:6}));
+  const easy = shuffle(PROBS.filter(p => !p.hard)), hardP = shuffle(PROBS.filter(p => p.hard));
+  if(full) qs.push({kind:"code", prob:easy[0], pts:10}, {kind:"code", prob:easy[1], pts:10}, {kind:"code", prob:hardP[0], pts:12});
+  else qs.push({kind:"code", prob:pick(PROBS), pts:10});
+  X = {i, st, qs, hinted:new Set(), done:false};
+  const total = qs.reduce((a, q) => a + q.pts, 0);
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name}</span><span>${qs.length} questions · ${total} points</span></div>
+    ${qs.map((q, n) => `<section class="q"><h3><span>Question ${n + 1}</span><span id="qs${n}">${q.pts} pts</span></h3><div class="qb">${examQHTML(q, n)}</div></section>`).join("")}
+    <div class="row"><button class="btn" id="grade" type="button">Save &amp; grade all</button><span class="small" id="gmsg"></span></div>
+    <div id="fb"></div>`;
+  $("stage").querySelectorAll("textarea.ed").forEach(tabbable);
+  $("stage").querySelectorAll(".hintb").forEach(b => b.onclick = () => {
+    const key = b.dataset.key, [n, p] = key.split(":").map(Number), q = X.qs[n];
+    X.hinted.add(key);
+    const sk = q.kind === "typeQ" ? q.parts[p].skills : q.kind === "valQ" ? q.skills : q.prob.sk;
+    b.outerHTML = sk.map(cardHTML).join("");
+  });
+  $("grade").onclick = gradeExam;
+  window.scrollTo({top:0});
+}
+function examQHTML(q, n){
+  const hintOK = STAGES[cur].hint;
+  const hb = key => hintOK ? `<button class="hintb" data-key="${key}" type="button">hint</button>` : "";
+  if(q.kind === "tokQ") return `<p style="margin:0">Classify each of the following tokens as a valid C <b>keyword</b>, <b>identifier</b>, <b>literal</b>, or <b>operator</b>. Tokens which are not valid C syntax should be classified as <b>syntax error</b>.</p>
+    <div class="mrows">${q.items.map((it, r) => `<div class="mrow"><select id="x${n}_${r}" aria-label="Class for token ${r + 1}"><option value=""></option>${["Keyword","Identifier","Literal","Operator","Syntax error"].map(c => `<option>${c}</option>`).join("")}</select><div class="t"><code>${esc(it.tok)}</code><div class="res" id="xr${n}_${r}"></div></div></div>`).join("")}</div>`;
+  if(q.kind === "termQ") return `<p style="margin:0">Match each definition on the left with its corresponding term on the right. Not all terms will be used.</p>
+    <div class="match"><div class="mrows">${q.rows.map((t, r) => `<div class="trow"><select id="x${n}_${r}" aria-label="Term number for definition ${r + 1}"><option value="">—</option>${q.bank.map((_, j) => `<option value="${j}">${j + 1}</option>`).join("")}</select><div>${esc(TERMBY[t][1])}<div class="res" id="xr${n}_${r}"></div></div></div>`).join("")}</div>
+    <ol class="bank">${q.bank.map((t, j) => `<li><b>${j + 1}.</b><span>${t}</span></li>`).join("")}</ol></div>`;
+  if(q.kind === "typeQ") return `<div>Given the following variable declarations:</div><pre class="code">${esc(q.decls.join("\n"))}</pre><div>What is the <i>type</i> of each expression?</div>
+    <div class="parts">${q.parts.map((p, r) => `<div class="part"><div class="ex">${esc(p.src)}</div><input type="text" id="x${n}_${r}" placeholder="type" autocomplete="off" spellcheck="false" aria-label="Type of ${esc(p.src)}"><div class="res" id="xr${n}_${r}">${hb(n + ":" + r)}</div></div>`).join("")}</div>`;
+  if(q.kind === "valQ") return `<div>After executing the following block of code:</div><pre class="code">${esc(initLine(q.names, q.init) + "\n\n" + q.lines.join("\n"))}</pre><div>What is the <i>value</i> of each variable?</div>
+    <div class="parts">${q.names.map((v, r) => `<div class="part"><div class="ex">${v}</div><input type="text" id="x${n}_${r}" inputmode="numeric" autocomplete="off" aria-label="Value of ${v}"><div class="res" id="xr${n}_${r}">${r === 0 ? hb(n + ":0") : ""}</div></div>`).join("")}</div>`;
+  return `<div>Implement the function <code class="inl">${q.prob.name}</code> that computes ${esc(q.prob.desc)}.</div><div class="formula">${q.prob.formula}</div>
+    <textarea class="ed" id="x${n}_0" spellcheck="false" aria-label="Function ${q.prob.name}">${esc(starter(q.prob))}</textarea>
+    <div class="row">${hb(n + ":0")}</div><div id="xr${n}_0"></div>`;
+}
+function gradeExam(){
+  if(X.done) return;
+  const blanks = [...$("stage").querySelectorAll("input[type=text], select")].filter(e => e.value.trim() === "").length;
+  if(blanks && $("gmsg").dataset.warned !== "1"){ $("gmsg").textContent = `${blanks} answers left blank. Press again to grade anyway.`; $("gmsg").dataset.warned = "1"; return; }
+  X.done = true;
+  let got = 0, total = 0; const misses = [], per = [];
+  const rec = (k, ok) => record(k, ok);
+  X.qs.forEach((q, n) => {
+    let pts = 0; total += q.pts;
+    const hinted = r => X.hinted.has(n + ":" + r);
+    const res = (r, ok, html) => { const el = $(`xr${n}_${r}`); if(el){ el.className = "res " + (ok ? "ok" : "no"); el.innerHTML = html; } };
+    if(q.kind === "tokQ"){
+      q.items.forEach((it, r) => { const v = $(`x${n}_${r}`).value, ok = v === it.cls; $(`x${n}_${r}`).disabled = true;
+        if(ok) pts += 1; else misses.push({k:"q_tok", html:`<code>${esc(it.tok)}</code> → ${it.cls}. ${esc(it.why)}`});
+        rec("q_tok", ok); res(r, ok, ok ? "✓" : `✗ ${it.cls}: ${esc(it.why)}`); });
+    } else if(q.kind === "termQ"){
+      q.rows.forEach((t, r) => { const v = $(`x${n}_${r}`).value, ok = v !== "" && q.bank[+v] === t; $(`x${n}_${r}`).disabled = true;
+        if(ok) pts += 1; else misses.push({k:"q_term", html:`<b>${t}</b>: ${esc(TERMBY[t][1])}`});
+        rec("q_term", ok); res(r, ok, ok ? "✓" : `✗ ${q.bank.indexOf(t) + 1}. ${t}`); });
+    } else if(q.kind === "typeQ"){
+      q.parts.forEach((p, r) => {
+        const el = $(`x${n}_${r}`), c = checkType(el.value, p.ans), ok = c.ok && !hinted(r); el.disabled = true; el.classList.add(c.ok ? "ok" : "no");
+        if(ok) pts += 2;
+        const md = typeWrongs(p, q.env).get(el.value.trim().toLowerCase().replace(/\s+/g, " "));
+        if(ok) p.skills.forEach(k => rec(k, true)); else (md ? [md.sk] : p.skills).forEach(k => rec(k, false));
+        if(!ok) misses.push({k:md ? md.sk : p.skills[0] || "ty_float", html:`<code>${esc(p.src)}</code> → ${p.ans}`});
+        res(r, ok, `${c.ok ? (hinted(r) ? "✓ (hinted, not counted)" : "✓") : `✗ <b>${p.ans}</b>`}${c.note ? " · " + c.note : ""}${md && !c.ok ? " · " + esc(md.why) : ""}<details><summary class="small">steps</summary>${stepsHTML(p)}</details>`);
+      });
+    } else if(q.kind === "valQ"){
+      const modeVals = VMODES.map(md => { try { return runVals(q.names, q.init, q.lines, md.m); } catch(e){ return null; } });
+      let allOk = true;
+      q.names.forEach((v, r) => {
+        const el = $(`x${n}_${r}`), s = el.value.trim(), right = /^-?\d+$/.test(s) && +s === q.ans[r], ok = right && !hinted(0);
+        el.disabled = true; el.classList.add(right ? "ok" : "no");
+        if(ok) pts += 2; else allOk = false;
+        let md = null; if(!right) VMODES.forEach((m, j) => { if(!md && modeVals[j] && modeVals[j][r] === +s) md = m; });
+        if(!ok){ (md ? [md.sk] : q.skills).forEach(k => rec(k, false)); misses.push({k:md ? md.sk : q.skills[0], html:`<code>${esc(q.lines.join(" "))}</code> → ${v} = ${q.ans[r]}`}); }
+        res(r, ok, right ? (hinted(0) ? "✓ (hinted, not counted)" : "✓") : `✗ <b>${q.ans[r]}</b>${md ? " · " + esc(md.why) : ""}`);
+      });
+      if(allOk) q.skills.forEach(k => rec(k, true));
+      const el = $(`xr${n}_0`); el.insertAdjacentHTML("beforeend", `<details><summary class="small">trace</summary>${stepsHTML(q)}</details>`);
+    } else {
+      const ta = $(`x${n}_0`), g = gradeCode(q.prob, ta.value); ta.readOnly = true;
+      const frac = hinted(0) ? 0 : g.frac, allOk = frac === 1;
+      pts += q.pts * frac;
+      q.prob.sk.forEach(k => rec(k, allOk));
+      if(!allOk) misses.push({k:q.prob.sk[0], html:`${q.prob.name}: <code>${esc(q.prob.good)}</code>`});
+      $(`xr${n}_0`).innerHTML = `<div class="fb ${allOk ? "" : "bad"}"><h3>${(g.frac * 100).toFixed(0)}% of tests${hinted(0) ? " (hinted, not counted)" : ""}</h3>${testsHTML(g, q.prob)}${allOk ? "" : `<div class="small">One correct version: <code>${esc(q.prob.good)}</code></div>`}</div>`;
+    }
+    got += pts; per.push(pts);
+    $(`qs${n}`).textContent = `${+pts.toFixed(2)} / ${q.pts}`;
+  });
+  save(); renderMastery();
+  $("grade").disabled = true;
+  X.result = {score:got / total, got, total, per, misses};
+  $("fb").innerHTML = `<div class="row"><b>${+got.toFixed(2)} / ${total}</b><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(X.i, X.result.score, X.result.misses, X.result);
+  $("next").focus();
+}
+
+/* ----- results ----- */
+function finish(i, score, misses, exam){
+  const st = STAGES[i], passed = score >= st.pass - 1e-9;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(6, i + 2)); }
+  save(); renderLadder();
+  const by = {}; misses.forEach(m => (by[m.k] = by[m.k] || []).push(m.html));
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name} · round over</span><span>Pass mark ${Math.round(st.pass * 100)}%</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${exam ? +exam.got.toFixed(2) + " / " + exam.total : Math.round(score * 100) + "%"}</span>
+      <span class="pill ${passed ? "ok" : "no"}">${passed ? (i < 5 ? "Passed · rung " + (i + 2) + " unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${exam ? `<div class="qscore">${exam.per.map((p, n) => `<div>Q${n + 1}: <b>${+p.toFixed(2)}</b> / ${X.qs[n].pts}</div>`).join("")}</div>` : ""}
+    ${misses.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Rules to review</h3><ul class="missl">${Object.entries(by).map(([k, l]) => `<li><b>${SK[k].label}</b>: <span class="small">${CARDS[k].replace(/<[^>]+>/g, "")}</span><br>${l.slice(0, 4).join("<br>")}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">
+      ${passed && i < 5 ? `<button class="btn" id="nx" type="button">Go to rung ${i + 2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>`
+                        : `<button class="btn" id="again" type="button">${passed ? "Play again" : "Try again"}</button>`}
+    </div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i + 1);
+  ($("nx") || $("again")).focus();
+  window.scrollTo({top:0});
+}
+
+/* ----- keyboard ----- */
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if(R && $("opts") && !R.answered && /^[1-5]$/.test(e.key)){
+    const b = document.querySelector(`.opt[data-j="${+e.key - 1}"]`); if(b){ e.preventDefault(); b.click(); }
+  } else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+
+renderMastery(); renderSheet();
+openStage(Math.min(S.unlocked, 6) - 1);
+</script>
+</body>
+</html>
+
+</body></html>

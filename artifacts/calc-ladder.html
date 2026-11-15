@@ -1,0 +1,1079 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calc Ladder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<script>window.MathJax = {tex:{inlineMath:[["\\(","\\)"]], displayMath:[["\\[","\\]"]]}, svg:{fontCache:"global"}, startup:{typeset:false}};</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+
+/* Same layout as the Term and Token ladders: rungs on top, working card left, skill mastery right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+/* JetBrains Mono draws != and -> as ligatures; code must show its real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+code,.mono{font-family:var(--f-mono)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:1.15rem;line-height:1.5}
+.prompt code,.inl{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:pre}
+pre.code{font-family:var(--f-mono);font-size:.98rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+.formula{font-size:1.05rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em;white-space:pre}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700;min-width:0}
+.opts.wide .opt span:last-child{font-family:var(--f-mono);font-weight:400;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:8px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb ol,.fb ul{margin:0;padding-left:1.3em;display:grid;gap:3px;font-size:.93rem}
+.fb code{font-family:var(--f-mono);font-size:.9em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+input[type=text]:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent)}
+input.ok{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good)} input.no{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:170px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4}
+/* exam layout */
+.q{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.q > h3{margin:0;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:1rem;padding:8px 14px;display:flex;justify-content:space-between;gap:10px}
+.q > .qb{padding:14px;display:grid;gap:12px}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:minmax(0,260px) minmax(0,220px) minmax(0,1fr);gap:10px;align-items:center}
+.part .ex{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:pre;overflow-x:auto}
+.part .res{font-size:.88rem}
+.res.ok{color:var(--good)} .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select,.trow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre}
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.trow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:3px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+table.tests{border-collapse:collapse;font-size:.88rem;width:100%}
+table.tests td,table.tests th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+table.tests td.mono{font-family:var(--f-mono);font-size:.85rem;word-break:break-all}
+.tw{overflow-x:auto}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+/* mastery */
+aside .card{gap:10px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgroup{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.82rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink)}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.qscore{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.qscore div{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .res{grid-column:1/-1}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.part,.mrow{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+.ladder{grid-template-columns:repeat(5,minmax(0,1fr))}
+.big{font-size:1.25rem;padding:14px;background:var(--code-bg);border:1px solid var(--line);border-radius:12px;text-align:center;overflow-x:auto}
+.opt span:last-child{font-weight:400}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.preview{font-size:.85rem;color:var(--muted);min-height:1.2em}
+.timer{font-family:var(--f-mono)} .timer.over{color:var(--bad);font-weight:700}
+mjx-container{color:inherit}
+@media (max-width:900px){.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Calc Ladder</h1>
+    <p>Math 1042 Test 2 drill, sections 6.2–7.8 plus u-substitution, built on the review-problem types. Work on paper and type only the final answer. The page checks it by differentiating your antiderivative numerically, or by comparing values, so any correct form is accepted.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Skill mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div id="mgrid"></div>
+        <p class="small" style="margin:0">Weak skills get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>How to type answers · rule sheet</summary>
+    <div id="sheetBody" style="margin-top:12px"></div>
+  </details>
+</div>
+
+<script id="core">
+/* ================= helpers ================= */
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while(b) [a, b] = [b, a % b]; return a || 1; };
+class Q {
+  constructor(n, d = 1){ if(d < 0){ n = -n; d = -d; } const g = gcd(n, d); this.n = n / g; this.d = d / g; }
+  add(o){ o = q(o); return new Q(this.n * o.d + o.n * this.d, this.d * o.d); }
+  sub(o){ o = q(o); return this.add(new Q(-o.n, o.d)); }
+  mul(o){ o = q(o); return new Q(this.n * o.n, this.d * o.d); }
+  div(o){ o = q(o); return new Q(this.n * o.d, this.d * o.n); }
+  neg(){ return new Q(-this.n, this.d); }
+  get v(){ return this.n / this.d; }
+  zero(){ return this.n === 0; }
+  tex(){ return this.d === 1 ? String(this.n) : (this.n < 0 ? "-" : "") + `\\frac{${Math.abs(this.n)}}{${this.d}}`; }
+  str(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d}`; }
+}
+const q = x => x instanceof Q ? x : new Q(x);
+const binom = (n, k) => { let r = 1; for(let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); };
+// a sum of terms {c:Q, tex, str, f}; tex/str/f describe the term's body ("" / "1" / 1 for a constant)
+const T = (c, tex, str, f) => ({c:q(c), tex, str, f});
+function texSum(ts){
+  let s = "";
+  ts.filter(t => !t.c.zero()).forEach((t, i) => {
+    const neg = t.c.n < 0, a = new Q(Math.abs(t.c.n), t.c.d);
+    const coef = t.tex ? (a.n === 1 && a.d === 1 ? "" : a.tex()) : a.tex();
+    s += (i === 0 ? (neg ? "-" : "") : (neg ? " - " : " + ")) + coef + (coef && t.tex && /^[a-z\\(]/i.test(t.tex) && a.d !== 1 ? "\\," : "") + (t.tex || "");
+  });
+  return s || "0";
+}
+const strSum = ts => ts.filter(t => !t.c.zero()).map(t => `(${t.c.str()})*(${t.str})`).join(" + ") || "0";
+const fSum = ts => x => ts.reduce((a, t) => a + t.c.v * t.f(x), 0);
+const lin = a => a === 0 ? "x" : a > 0 ? `x-${a}` : `x+${-a}`;            // x - a
+const lnAbs = a => `\\ln|${lin(a)}|`;
+const kx = k => k === 1 ? "x" : k === -1 ? "-x" : `${k}x`;
+const piQ = (Qv, m = 1) => { const r = Qv.mul(m); if(r.zero()) return "0"; const s = r.n < 0 ? "-" : "", n = Math.abs(r.n); return r.d === 1 ? `${s}${n === 1 ? "" : n}\\pi` : `${s}\\frac{${n === 1 ? "" : n}\\pi}{${r.d}}`; };
+// polynomial (array of coefficients, index = power) to TeX
+function polyTex(c){
+  const ts = []; for(let p = c.length - 1; p >= 0; p--) if(c[p]) ts.push(T(c[p], p === 0 ? "" : p === 1 ? "x" : `x^{${p}}`, "", null));
+  return texSum(ts);
+}
+const pmul = (a, b) => { const r = Array(a.length + b.length - 1).fill(0); a.forEach((x, i) => b.forEach((y, j) => r[i + j] += x * y)); return r; };
+const padd = (a, b) => { const r = Array(Math.max(a.length, b.length)).fill(0); a.forEach((x, i) => r[i] += x); b.forEach((x, i) => r[i] += x); return r; };
+const pscale = (a, k) => a.map(x => x * k);
+const peval = (c, x) => c.reduce((s, v, i) => s + v * x ** i, 0);
+const L = a => [-a, 1];   // x - a
+
+/* ================= skills ================= */
+const G = {u:"Substitution (pre-6.2)", v:"Volumes (6.2)", b:"By parts (7.1)", t:"Trig integrals (7.2)", s:"Trig substitution (7.3)", p:"Partial fractions (7.4)", r:"Strategy (7.5)", i:"Improper (7.8)"};
+const SK = {
+  u_sub:{g:"u", label:"Spot the inner derivative"},
+  v_wash:{g:"v", label:"Washers: radii from the axis"},
+  v_shell:{g:"v", label:"Vertical axis: washers in y"},
+  b_choose:{g:"b", label:"Choose u (LIATE)"},
+  b_repeat:{g:"b", label:"Twice / cyclic by parts"},
+  t_odd:{g:"t", label:"Odd power: save one, convert"},
+  t_even:{g:"t", label:"Even powers: half-angle"},
+  t_sectan:{g:"t", label:"sec / tan powers"},
+  s_pick:{g:"s", label:"Pick the substitution"},
+  s_back:{g:"s", label:"Triangle: back to x"},
+  p_form:{g:"p", label:"Decomposition form"},
+  p_solve:{g:"p", label:"Solve A, B, C and integrate"},
+  p_div:{g:"p", label:"Long division first"},
+  r_recog:{g:"r", label:"Which technique?"},
+  i_limit:{g:"i", label:"Write the limit, evaluate"},
+  i_split:{g:"i", label:"Discontinuity inside: split"},
+  i_comp:{g:"i", label:"Comparison and p-test"}
+};
+const DRILL = Object.keys(SK);
+const CARDS = {
+  u_sub:`Look for a function and (a multiple of) its derivative: \\(x\\) with \\(x^2+a\\), \\(\\frac{1}{x}\\) with \\(\\ln x\\), \\(\\sin x\\) with \\(\\cos x\\). Set \\(u\\) = the inside, rewrite every piece in \\(u\\), and for definite integrals change the limits too.`,
+  v_wash:`Rotating about a horizontal line \\(y=c\\): \\(V=\\pi\\int_a^b\\big(R^2-r^2\\big)dx\\), where each radius = distance from the curve to the axis. Below the region (\\(c=-1\\)): \\(R = \\text{top}+1\\), \\(r=\\text{bottom}+1\\). Above it (\\(c=2\\)): \\(R=2-\\text{bottom}\\), \\(r=2-\\text{top}\\). \\(R^2-r^2\\), never \\((R-r)^2\\).`,
+  v_shell:`Rotating about a vertical line \\(x=h\\) (6.2 method, no shells): slice horizontally, \\(V=\\pi\\int_c^d(R^2-r^2)\\,dy\\). Solve each curve for \\(x\\) (\\(y=\\sqrt x\\Rightarrow x=y^2\\)), use \\(y\\)-limits. Axis to the right (\\(x=2\\)): radius \\(=2-x\\). Axis to the left (\\(x=-1\\)): radius \\(=x+1\\). The y-axis: radius \\(=x\\).`,
+  b_choose:`\\(\\int u\\,dv = uv-\\int v\\,du\\). Choose \\(u\\) by LIATE: Log, Inverse trig, Algebraic, Trig, Exponential. \\(\\ln x\\) and \\(\\arctan x\\) are always \\(u\\) (with \\(dv=dx\\) if nothing else is there).`,
+  b_repeat:`\\(x^2\\sin x\\): parts twice, \\(u\\) = the polynomial each time. \\(e^{ax}\\sin bx\\): parts twice until the original integral comes back, then solve for it like an equation (\\(I = \\ldots - kI\\)).`,
+  t_odd:`\\(\\int\\sin^m x\\cos^n x\\,dx\\) with an odd power: save one factor (\\(\\sin x\\,dx\\) or \\(\\cos x\\,dx\\)), convert the rest with \\(\\sin^2=1-\\cos^2\\), then \\(u=\\cos x\\) (or \\(\\sin x\\)).`,
+  t_even:`Both powers even: half-angle. \\(\\cos^2x=\\frac{1+\\cos 2x}{2}\\), \\(\\sin^2x=\\frac{1-\\cos 2x}{2}\\), \\(\\sin x\\cos x=\\frac12\\sin 2x\\).`,
+  t_sectan:`\\(\\int\\sec^m\\tan^n\\): sec power even → save \\(\\sec^2x\\), convert the rest with \\(\\sec^2=1+\\tan^2\\), \\(u=\\tan x\\). tan power odd → save \\(\\sec x\\tan x\\), convert with \\(\\tan^2=\\sec^2-1\\), \\(u=\\sec x\\). \\(\\tan^2x=\\sec^2x-1\\).`,
+  s_pick:`\\(\\sqrt{a^2-x^2}\\): \\(x=a\\sin\\theta\\). \\(\\sqrt{a^2+x^2}\\): \\(x=a\\tan\\theta\\). \\(\\sqrt{x^2-a^2}\\): \\(x=a\\sec\\theta\\). If an \\(x\\) outside the root is the derivative of the inside (\\(x\\sqrt{x^2+9}\\)), plain u-sub is faster.`,
+  s_back:`Back to \\(x\\) with a right triangle: from \\(\\sin\\theta=\\frac{x}{a}\\), opposite \\(=x\\), hypotenuse \\(=a\\), adjacent \\(=\\sqrt{a^2-x^2}\\). Read off \\(\\cos\\theta\\), \\(\\tan\\theta\\), \\(\\cot\\theta\\); \\(\\theta=\\arcsin\\frac{x}{a}\\).`,
+  p_form:`One term per factor power: \\((x-a)^3\\) → \\(\\frac{A}{x-a}+\\frac{B}{(x-a)^2}+\\frac{C}{(x-a)^3}\\). Irreducible \\((x^2+bx+c)^2\\) → \\(\\frac{Bx+C}{x^2+bx+c}+\\frac{Dx+E}{(x^2+bx+c)^2}\\). Quadratics get \\(Bx+C\\) on top, never just a constant.`,
+  p_solve:`Factor the denominator, write the form, multiply through, then plug in the roots (cover-up) or match coefficients. \\(\\int\\frac{A}{x-a}=A\\ln|x-a|\\), \\(\\int\\frac{B}{(x-a)^2}=-\\frac{B}{x-a}\\), \\(\\int\\frac{Cx}{x^2+k^2}=\\frac C2\\ln(x^2+k^2)\\), \\(\\int\\frac{D}{x^2+k^2}=\\frac Dk\\arctan\\frac xk\\).`,
+  p_div:`If deg(top) ≥ deg(bottom), divide first: \\(\\frac{P}{Q}=\\text{quotient}+\\frac{\\text{remainder}}{Q}\\). Then partial fractions on the remainder only.`,
+  r_recog:`Order of checks: (1) simplify / identity, (2) u-sub (inner derivative present?), (3) rational → partial fractions (divide first if needed), (4) product of different types → by parts, (5) trig powers → identities, (6) \\(\\sqrt{a^2\\pm x^2}\\), \\(\\sqrt{x^2-a^2}\\) → trig sub.`,
+  i_limit:`Infinite limit: \\(\\int_a^\\infty f=\\lim_{t\\to\\infty}\\int_a^t f\\). Write the limit explicitly (it's graded). \\(\\int_1^\\infty\\frac{dx}{x^p}\\) converges iff \\(p>1\\); \\(\\int_0^1\\frac{dx}{x^p}\\) converges iff \\(p<1\\). Both infinite ends: split at a point, each half must converge.`,
+  i_split:`Check the integrand on the interval first. Blows up at an endpoint → limit from inside. Blows up INSIDE → split there, and if either piece diverges the whole integral diverges. \\(\\int_0^3\\frac{dx}{(x-1)^2}\\) diverges, even though plugging in gives a number.`,
+  i_comp:`Comparison: \\(0\\le f\\le g\\) and \\(\\int g\\) converges ⇒ \\(\\int f\\) converges. \\(f\\ge g\\ge0\\) and \\(\\int g\\) diverges ⇒ \\(\\int f\\) diverges. The other two directions prove nothing. Find \\(g\\) from the dominant powers, and use \\(0\\le\\sin^2x\\le1\\).`
+};
+
+/* ================= answer parser (what you type) ================= */
+const FN = {sin:Math.sin, cos:Math.cos, tan:Math.tan, sec:x => 1 / Math.cos(x), csc:x => 1 / Math.sin(x), cot:x => 1 / Math.tan(x),
+  arcsin:Math.asin, asin:Math.asin, arccos:Math.acos, acos:Math.acos, arctan:Math.atan, atan:Math.atan, arcsec:x => Math.acos(1 / x),
+  ln:x => Math.log(Math.abs(x)), log:x => Math.log(Math.abs(x)), exp:Math.exp, sqrt:Math.sqrt, abs:Math.abs, cbrt:Math.cbrt};
+const NAMES = Object.keys(FN).concat(["pi","e","x","t","θ"]).sort((a, b) => b.length - a.length);
+function tokenizeX(s){
+  s = s.toLowerCase().replace(/π/g, "pi").replace(/√/g, "sqrt").replace(/\*\*/g, "^").replace(/θ|theta/g, "x").replace(/\+\s*c\s*$/, "");
+  const out = []; let i = 0;
+  while(i < s.length){
+    const c = s[i];
+    if(/\s/.test(c)){ i++; continue; }
+    const num = s.slice(i).match(/^(\d+\.?\d*|\.\d+)/);
+    if(num){ out.push({t:"n", v:+num[0]}); i += num[0].length; continue; }
+    if(/[a-z]/.test(c)){
+      const nm = NAMES.find(n => s.startsWith(n, i));
+      if(!nm) throw new Error(`I don't know "${s.slice(i).match(/^[a-z]+/)[0]}"`);
+      out.push(FN[nm] ? {t:"f", v:nm} : {t:"id", v:nm === "t" ? "x" : nm}); i += nm.length; continue;
+    }
+    if("+-*/^(),|".includes(c)){ out.push({t:c}); i++; continue; }
+    throw new Error(`Unexpected "${c}"`);
+  }
+  // implicit multiplication: 2x, x(…), )(, 3sin(x), x e^x
+  const r = [];
+  out.forEach((tk, k) => {
+    const pv = r[r.length - 1];
+    const fnPow = pv && pv.t === "n" && tk.t === "(" && r.length >= 3 && r[r.length - 2].t === "^" && r[r.length - 3].t === "f";  // sin^2(x)
+    if(pv && !fnPow && (pv.t === "n" || pv.t === "id" || pv.t === ")") && (tk.t === "n" || tk.t === "id" || tk.t === "(" || tk.t === "f")) r.push({t:"*", imp:true});
+    r.push(tk);
+  });
+  return r;
+}
+// tight: a function without parentheses takes only the next atom, so "cos x^6" = (cos x)^6; loose: cos(x^6)
+function parseExpr(src, tight, fracExp, argDiv){
+  const t = tokenizeX(src); let i = 0;
+  const peek = () => t[i] && t[i].t, eat = x => { if(peek() !== x) throw new Error(`Expected "${x}"`); i++; };
+  const expr = () => { let a = term(); while(peek() === "+" || peek() === "-"){ const op = t[i++].t, b = term(), A = a; a = op === "+" ? x => A(x) + b(x) : x => A(x) - b(x); } return a; };
+  const term = () => { let a = unary(); while(peek() === "*" || peek() === "/"){ const op = t[i++].t, b = unary(), A = a; a = op === "*" ? x => A(x) * b(x) : x => A(x) / b(x); } return a; };
+  const unary = () => { if(peek() === "-"){ i++; const a = unary(); return x => -a(x); } if(peek() === "+"){ i++; return unary(); } return power(); };
+  // fracExp: "^3/2" is read as ^(3/2), as people type it for fractional powers
+  const fexp = () => { if(!fracExp) return null; let j = i, sg = 1; if(t[j] && t[j].t === "-"){ sg = -1; j++; } if(t[j] && t[j].t === "n" && t[j + 1] && t[j + 1].t === "/" && t[j + 2] && t[j + 2].t === "n"){ const v = sg * t[j].v / t[j + 2].v; i = j + 3; return () => v; } return null; };
+  const power = () => { const a = atom(); if(peek() === "^"){ i++; const b = fexp() || unary(); return x => Math.pow(a(x), b(x)); } return a; };
+  const atom = () => {
+    const tk = t[i++]; if(!tk) throw new Error("The answer ends too early");
+    if(tk.t === "n") return () => tk.v;
+    if(tk.t === "id") return tk.v === "x" ? x => x : tk.v === "pi" ? () => Math.PI : () => Math.E;
+    if(tk.t === "("){ const a = expr(); eat(")"); return a; }
+    if(tk.t === "|"){ const a = expr(); eat("|"); return x => Math.abs(a(x)); }
+    if(tk.t === "f"){
+      let pw = null;
+      if(peek() === "^"){ i++; pw = fexp() || atom(); }
+      let arg;
+      if(peek() === "("){ i++; arg = expr(); eat(")"); }
+      else {
+        const startsNum = peek() === "n";
+        arg = peek() === "|" || tight ? atom() : power();
+        // "sin 3x" = sin(3x): a leading number absorbs the implicit product that follows (but not another function)
+        while(startsNum && t[i] && t[i].t === "*" && t[i].imp && t[i + 1] && t[i + 1].t !== "f"){ i++; const b = tight ? atom() : power(), A = arg; arg = x => A(x) * b(x); }
+        // argDiv: "arcsin x/4" = arcsin(x/4)
+        if(argDiv && peek() === "/" && t[i + 1] && t[i + 1].t === "n"){ i++; const v = t[i++].v, A = arg; arg = x => A(x) / v; }
+      }
+      const F = FN[tk.v];
+      return pw ? x => Math.pow(F(arg(x)), pw(x)) : x => F(arg(x));
+    }
+    throw new Error(`Unexpected "${tk.t}"`);
+  };
+  const f = expr(); if(i < t.length) throw new Error(`Unexpected "${t[i].t}" near the end`);
+  return f;
+}
+function checkAnti(F, f, dom){
+  for(let k = 0; k < 7; k++){
+    const x = dom[0] + (dom[1] - dom[0]) * (0.07 + 0.86 * k / 6), h = 1e-5 * Math.max(1, Math.abs(x));
+    const d = (F(x + h) - F(x - h)) / (2 * h), y = f(x);
+    if(!isFinite(d) || !isFinite(y) || Math.abs(d - y) > 2e-4 * (1 + Math.abs(y))) return false;
+  }
+  return true;
+}
+const closeV = (a, b) => isFinite(a) && Math.abs(a - b) <= 1e-6 * (1 + Math.abs(b));
+const DIV = /^\s*(diverge[sd]?|div|divergent|infinite|infinity|inf|dne|∞|-?inf|undefined)\s*$/i;
+
+/* ================= problem templates ================= */
+const TECH = {u:"u-substitution", ubp:"u-substitution, then by parts", bp:"Integration by parts", tr:"Trig identities (powers of sin/cos/sec/tan)", ts:"Trig substitution", pf:"Partial fractions", pfd:"Long division, then partial fractions", simp:"Simplify first (identity / algebra)"};
+const TPL = [];
+const add = t => TPL.push(t);
+const I = (inner, lo, hi) => `\\displaystyle\\int${lo != null ? `_{${lo}}^{${hi}}` : ""} ${inner}\\,dx`;
+const mv = (q, right, wrongs) => ({q, right, wrongs});
+
+// ---- substitution ----
+add({id:"u1", sk:"u_sub", tech:"u", recog:"\\(x\\) is half the derivative of \\(x^2+a\\).", gen(){
+  const a = ri(1, 5), n = ri(2, 4);
+  return {q:I(`x\\,(x^2+${a})^{${n}}`), kind:"anti", f:x => x * (x * x + a) ** n, dom:[0.2, 2],
+    ansTex:`\\frac{(x^2+${a})^{${n + 1}}}{${2 * (n + 1)}}+C`, ansStr:`(x^2+${a})^${n + 1}/${2 * (n + 1)}`,
+    steps:[`\\(u=x^2+${a}\\), \\(du=2x\\,dx\\), so \\(x\\,dx=\\tfrac12du\\).`, `\\(\\tfrac12\\int u^{${n}}du=\\frac{u^{${n + 1}}}{${2 * (n + 1)}}+C\\), then put \\(u=x^2+${a}\\) back.`],
+    move:mv("Best first move?", `\\(u=x^2+${a}\\)`, [[`By parts with \\(u=x\\)`, "x is (half) the derivative of the inside: that's the signal for u-substitution."], [`\\(x=\\sqrt{${a}}\\tan\\theta\\)`, "No square root of a quadratic here, and the inner derivative is present: u-sub."], [`Expand \\((x^2+${a})^{${n}}\\)`, "Works but slow; u = x² + a does it in one line."]])};
+}});
+add({id:"u2", sk:"u_sub", tech:"u", recog:"\\(\\sin x\\) is (minus) the derivative of \\(\\cos x\\).", gen(){
+  const n = ri(2, 5);
+  return {q:I(`\\sin x\\cos^{${n}}x`), kind:"anti", f:x => Math.sin(x) * Math.cos(x) ** n, dom:[0.1, 1.4],
+    ansTex:`-\\frac{\\cos^{${n + 1}}x}{${n + 1}}+C`, ansStr:`-cos(x)^${n + 1}/${n + 1}`,
+    steps:[`\\(u=\\cos x\\), \\(du=-\\sin x\\,dx\\).`, `\\(-\\int u^{${n}}du=-\\frac{u^{${n + 1}}}{${n + 1}}+C\\).`],
+    move:mv("Best first move?", `\\(u=\\cos x\\)`, [[`\\(u=\\sin x\\)`, "Then du = cos x dx, which isn't there. The lone sin x pairs with u = cos x."], [`Half-angle formula`, "Half-angle is for even powers of both; here sin has power 1."], [`By parts`, "No need: the derivative of cos x is already a factor."]])};
+}});
+add({id:"u3", sk:"u_sub", tech:"u", recog:"\\(\\frac1x\\) is the derivative of \\(\\ln x\\).", gen(){
+  const n = ri(2, 4);
+  return {q:I(`\\frac{(\\ln x)^{${n}}}{x}`), kind:"anti", f:x => Math.log(x) ** n / x, dom:[1.5, 5],
+    ansTex:`\\frac{(\\ln x)^{${n + 1}}}{${n + 1}}+C`, ansStr:`ln(x)^${n + 1}/${n + 1}`,
+    steps:[`\\(u=\\ln x\\), \\(du=\\frac{dx}{x}\\).`, `\\(\\int u^{${n}}du=\\frac{u^{${n + 1}}}{${n + 1}}+C\\).`],
+    move:mv("Best first move?", `\\(u=\\ln x\\)`, [[`By parts with \\(u=\\ln x\\)`, "Overkill: 1/x dx is exactly du for u = ln x."], [`\\(u=\\frac1x\\)`, "du = −1/x² dx, which isn't there."], [`Partial fractions`, "Not a rational function."]])};
+}});
+add({id:"u4", sk:"u_sub", tech:"u", recog:"The numerator is a constant times the derivative of the denominator: check this BEFORE partial fractions.", gen(){
+  const a = ri(1, 3);
+  return {q:I(`\\frac{x^2+${a}}{x^3+${3 * a}x}`), kind:"anti", f:x => (x * x + a) / (x ** 3 + 3 * a * x), dom:[0.5, 3],
+    ansTex:`\\frac13\\ln|x^3+${3 * a}x|+C`, ansStr:`ln(x^3+${3 * a}x)/3`,
+    steps:[`\\(u=x^3+${3 * a}x\\), \\(du=(3x^2+${3 * a})dx=3(x^2+${a})dx\\).`, `\\(\\frac13\\int\\frac{du}{u}=\\frac13\\ln|u|+C\\).`],
+    move:mv("Best first move?", `\\(u=x^3+${3 * a}x\\)`, [[`Partial fractions on \\(x(x^2+${3 * a})\\)`, "Works but long. Always check first whether the top is a multiple of the bottom's derivative."], [`Long division`, "deg top < deg bottom, so no division."], [`\\(x=\\sqrt{${3 * a}}\\tan\\theta\\)`, "No square root; u-sub is immediate."]])};
+}});
+add({id:"u7", sk:"u_sub", tech:"u", recog:"A function and its derivative sit together (arctan with 1/(1+x²), x⁵ with x⁶, eˣ inside and out).", gen(){
+  const n = ri(3, 7), k = ri(2, 4), a = ri(2, 7);
+  const c = pick([
+    [`\\frac{(\\arctan x)^{${n}}}{1+x^2}`, x => Math.atan(x) ** n / (1 + x * x), `\\frac{(\\arctan x)^{${n + 1}}}{${n + 1}}`, `atan(x)^${n + 1}/${n + 1}`, [-1, 2], `\\(u=\\arctan x\\), \\(du=\\frac{dx}{1+x^2}\\): \\(\\int u^{${n}}du\\).`, "u = arctan x"],
+    [`\\frac{x^{${k - 1}}}{1+x^{${2 * k}}}`, x => x ** (k - 1) / (1 + x ** (2 * k)), `\\frac{1}{${k}}\\arctan(x^{${k}})`, `atan(x^${k})/${k}`, [0.2, 1.5], `\\(u=x^{${k}}\\), \\(du=${k}x^{${k - 1}}dx\\): \\(\\frac1{${k}}\\int\\frac{du}{1+u^2}=\\frac1{${k}}\\arctan u\\).`, `u = x^${k}`],
+    [`\\frac{e^x}{(${a}-e^x)^2}`, x => Math.exp(x) / (a - Math.exp(x)) ** 2, `\\frac{1}{${a}-e^x}`, `1/(${a}-exp(x))`, [-2, Math.log(a) - 0.4], `\\(u=${a}-e^x\\), \\(du=-e^xdx\\): \\(-\\int u^{-2}du=\\frac1u\\).`, `u = ${a} − eˣ`],
+    [`\\frac{\\sin x}{\\sqrt{1+\\cos x}}`, x => Math.sin(x) / Math.sqrt(1 + Math.cos(x)), `-2\\sqrt{1+\\cos x}`, `-2sqrt(1+cos(x))`, [0.2, 2.5], `\\(u=1+\\cos x\\), \\(du=-\\sin x\\,dx\\): \\(-\\int u^{-1/2}du=-2\\sqrt u\\).`, "u = 1 + cos x"],
+    [`x(2x+${a})^{${n}}`, x => x * (2 * x + a) ** n, `\\frac{(2x+${a})^{${n + 2}}}{${4 * (n + 2)}}-\\frac{${a}(2x+${a})^{${n + 1}}}{${4 * (n + 1)}}`, `(2x+${a})^${n + 2}/${4 * (n + 2)} - ${a}*(2x+${a})^${n + 1}/${4 * (n + 1)}`, [-1, 1], `\\(u=2x+${a}\\), so \\(x=\\frac{u-${a}}{2}\\), \\(dx=\\frac{du}{2}\\): \\(\\frac14\\int(u-${a})u^{${n}}du\\).`, `u = 2x + ${a} (then x = (u − ${a})/2)`]]);
+  return {q:I(c[0]), kind:"anti", f:c[1], dom:c[4], ansTex:c[2] + "+C", ansStr:c[3], steps:[c[5], `Integrate and put \\(x\\) back: \\(${c[2]}+C\\).`],
+    move:mv("Best first move?", esc(c[6]), [["By parts", "One piece is the derivative of another piece: substitution."], ["Partial fractions", "Check for u-sub first; here it's immediate."], ["Trig substitution", "No √(a² ± x²) to remove."]])};
+}});
+add({id:"u5", sk:"u_sub", tech:"ubp", recog:"\\(u=x^2\\) turns \\(x^3e^{x^2}dx\\) into \\(\\tfrac12 u e^u du\\), which then needs by parts.", gen(){
+  return {q:I(`x^3e^{x^2}`), kind:"anti", f:x => x ** 3 * Math.exp(x * x), dom:[0.2, 1.5],
+    ansTex:`\\frac12e^{x^2}(x^2-1)+C`, ansStr:`exp(x^2)*(x^2-1)/2`,
+    steps:[`\\(u=x^2\\), \\(du=2x\\,dx\\): \\(\\int x^2e^{x^2}\\,x\\,dx=\\tfrac12\\int ue^u\\,du\\).`, `Parts (\\(w=u\\), \\(dv=e^udu\\)): \\(\\tfrac12(ue^u-e^u)\\).`, `\\(=\\tfrac12e^{x^2}(x^2-1)+C\\).`],
+    move:mv("Best first move?", `\\(u=x^2\\), then by parts`, [[`By parts with \\(dv=e^{x^2}dx\\)`, "e^{x²} has no elementary antiderivative, so it can't be dv."], [`\\(u=x^3\\)`, "du = 3x² dx doesn't match; x dx pairs with u = x²."], [`\\(u=e^{x^2}\\)`, "du = 2x e^{x²} dx leaves x² = ln u: messy. u = x² is cleaner."]])};
+}});
+add({id:"u6", sk:"u_sub", tech:"simp", recog:"Rewrite in sin and cos first: the integrand collapses.", gen(){
+  const c = pick([["\\tan x\\cos x", x => Math.tan(x) * Math.cos(x), "-\\cos x", "-cos(x)", "\\(\\tan x\\cos x=\\frac{\\sin x}{\\cos x}\\cos x=\\sin x\\)."],
+                  ["\\cot x\\sin x", x => Math.sin(x) / Math.tan(x), "\\sin x", "sin(x)", "\\(\\cot x\\sin x=\\frac{\\cos x}{\\sin x}\\sin x=\\cos x\\)."],
+                  ["\\sec x\\sin x", x => Math.tan(x), "-\\ln|\\cos x|", "-ln(cos(x))", "\\(\\sec x\\sin x=\\tan x\\), and \\(\\int\\tan x=-\\ln|\\cos x|\\) (u = cos x)."]]);
+  return {q:I(c[0]), kind:"anti", f:c[1], dom:[0.2, 1.3], ansTex:`${c[2]}+C`, ansStr:c[3], steps:[c[4]],
+    move:mv("Best first move?", "Rewrite in sin and cos", [["By parts", "Simplify first: the product collapses to one trig function."], ["Trig substitution", "No square root of a quadratic."], ["Half-angle formula", "Not even powers; just simplify."]])};
+}});
+
+// ---- volumes ----
+const VF = [{tex:"\\sqrt{x}", p:new Q(1, 2), f:x => Math.sqrt(x), s:"sqrt(x)"}, {tex:"x", p:new Q(1), f:x => x, s:"x"}, {tex:"x^2", p:new Q(2), f:x => x * x, s:"x^2"}, {tex:"x^3", p:new Q(3), f:x => x ** 3, s:"x^3"}];
+const VPAIRS = [[0, 1], [0, 2], [1, 2], [1, 3], [2, 3], [0, 3]];
+// power sums over [0,1]: [{c:Q, e:Q}]
+const ps = (c, e) => [{c:q(c), e:q(e)}];
+const psAdd = (a, b) => a.concat(b), psNeg = a => a.map(t => ({c:t.c.neg(), e:t.e}));
+const psMul = (a, b) => a.flatMap(s => b.map(t => ({c:s.c.mul(t.c), e:s.e.add(t.e)})));
+const psInt = a => a.reduce((s, t) => s.add(t.c.div(t.e.add(1))), new Q(0));
+const wrapT = (s, k) => k === 0 ? s : k > 0 ? `${s}+${k}` : `${s}-${-k}`;
+const kMinus = (k, s) => `${k}-${s}`;
+function genVolume(kind, hard){
+  const [ti, bi] = pick(VPAIRS), top = VF[ti], bot = VF[bi];
+  const P = v => ps(1, v.p);
+  if(kind === "wash"){
+    const c = hard ? pick([-2, -1, 2, 3]) : pick([-1, -2, 2, 0]);
+    let R, r, Rt, rt;
+    if(c <= 0){ R = psAdd(P(top), ps(-c, 0)); r = psAdd(P(bot), ps(-c, 0)); Rt = wrapT(top.tex, -c); rt = wrapT(bot.tex, -c); }
+    else { R = psAdd(ps(c, 0), psNeg(P(bot))); r = psAdd(ps(c, 0), psNeg(P(top))); Rt = kMinus(c, bot.tex); rt = kMinus(c, top.tex); }
+    const V = psInt(psAdd(psMul(R, R), psNeg(psMul(r, r))));
+    const setup = `\\pi\\int_0^1\\left[(${Rt})^2-(${rt})^2\\right]dx`;
+    const noShift = `\\pi\\int_0^1\\left[(${top.tex})^2-(${bot.tex})^2\\right]dx`;
+    const swapped = `\\pi\\int_0^1\\left[(${rt})^2-(${Rt})^2\\right]dx`;
+    const diffSq = `\\pi\\int_0^1(${Rt}-(${rt}))^2dx`;
+    const fR = c <= 0 ? x => top.f(x) - c : x => c - bot.f(x), fr = c <= 0 ? x => bot.f(x) - c : x => c - top.f(x);
+    return {num:x => Math.PI * (fR(x) ** 2 - fr(x) ** 2), sk:"v_wash", region:`\\(y=${top.tex}\\) and \\(y=${bot.tex}\\) for \\(0\\le x\\le1\\)`, axis:`\\(y=${c}\\)`, setup, value:V.v * Math.PI, valTex:piQ(V),
+      steps:[`Washers (axis horizontal, slices \\(dx\\)). ${c <= 0 ? `The axis is below: each radius = curve − (${c}).` : `The axis is above: each radius = ${c} − curve.`}`, `Outer \\(R=${Rt}\\) (farther curve), inner \\(r=${rt}\\).`, `\\(V=${setup}=${piQ(V)}\\).`],
+      move:mv("Which integral gives the volume?", `\\(${setup}\\)`, [c === 0 ? [`\\(\\pi\\int_0^1\\left[${top.tex}-${bot.tex}\\right]dx\\)`, "Missing the squares: a washer's area is π(R² − r²), so each radius gets squared."] : [`\\(${noShift}\\)`, `That rotates about the x-axis. About y = ${c}, every radius is measured from y = ${c}.`], [`\\(${swapped}\\)`, "Outer and inner are swapped: R is the curve FARTHER from the axis."], [`\\(${diffSq}\\)`, "(R − r)² is not R² − r². A washer's area is πR² − πr²."]])};
+  }
+  // vertical axis x = h: washers in y (shells are 6.3, which this course skipped)
+  const VY = [{tex:"y^2", p:new Q(2), f:y => y * y}, {tex:"y", p:new Q(1), f:y => y}, {tex:"\\sqrt{y}", p:new Q(1, 2), f:Math.sqrt}, {tex:"\\sqrt[3]{y}", p:new Q(1, 3), f:Math.cbrt}];
+  const lf = VY[ti], rt_ = VY[bi];   // the upper curve is the LEFT one when solved for x
+  const h = hard ? pick([2, 3, -1, -2]) : pick([2, -1, 0]);
+  let R, r, Rt, rt;
+  if(h >= 1){ R = psAdd(ps(h, 0), psNeg(ps(1, lf.p))); r = psAdd(ps(h, 0), psNeg(ps(1, rt_.p))); Rt = kMinus(h, lf.tex); rt = kMinus(h, rt_.tex); }
+  else { R = psAdd(ps(1, rt_.p), ps(-h, 0)); r = psAdd(ps(1, lf.p), ps(-h, 0)); Rt = wrapT(rt_.tex, -h); rt = wrapT(lf.tex, -h); }
+  const V = psInt(psAdd(psMul(R, R), psNeg(psMul(r, r))));
+  const setup = `\\pi\\int_0^1\\left[(${Rt})^2-(${rt})^2\\right]dy`;
+  const fR = h >= 1 ? y => h - lf.f(y) : y => rt_.f(y) - h, fr = h >= 1 ? y => h - rt_.f(y) : y => lf.f(y) - h;
+  return {num:y => Math.PI * (fR(y) ** 2 - fr(y) ** 2), sk:"v_shell", region:`\\(y=${top.tex}\\) and \\(y=${bot.tex}\\) for \\(0\\le x\\le1\\)`, axis:h === 0 ? "the y-axis" : `\\(x=${h}\\)`, setup, value:V.v * Math.PI, valTex:piQ(V),
+    steps:[`Vertical axis → slice horizontally (\\(dy\\)) and write each curve as \\(x\\) in terms of \\(y\\): \\(y=${top.tex}\\Rightarrow x=${lf.tex}\\) (left curve), \\(y=${bot.tex}\\Rightarrow x=${rt_.tex}\\) (right curve). The region runs from \\(y=0\\) to \\(y=1\\).`,
+      h >= 1 ? `The axis \\(x=${h}\\) is to the right, so radius = \\(${h}-x\\). Outer (farther) \\(R=${Rt}\\), inner \\(r=${rt}\\).` : `The axis ${h === 0 ? "\\(x=0\\)" : `\\(x=${h}\\)`} is to the left, so radius = \\(x${h === 0 ? "" : `+${-h}`}\\). Outer (farther) \\(R=${Rt}\\), inner \\(r=${rt}\\).`,
+      `\\(V=${setup}=${piQ(V)}\\).`],
+    move:mv("Which integral gives the volume?", `\\(${setup}\\)`, [[`\\(\\pi\\int_0^1\\left[(${h >= 1 ? kMinus(h, bot.tex) : wrapT(top.tex, -h)})^2-(${h >= 1 ? kMinus(h, top.tex) : wrapT(bot.tex, -h)})^2\\right]dx\\)`, "Around a vertical axis the slices are horizontal: integrate in y, with each curve solved for x."], [`\\(\\pi\\int_0^1\\left[(${rt})^2-(${Rt})^2\\right]dy\\)`, "Outer and inner swapped: R belongs to the curve FARTHER from the axis."], [`\\(\\pi\\int_0^1(${Rt}-(${rt}))^2dy\\)`, "(R − r)² is not R² − r²."]])};
+}
+
+// ---- by parts ----
+add({id:"b1", sk:"b_choose", tech:"bp", recog:"Polynomial × exponential: by parts with u = polynomial.", gen(){
+  const k = pick([2, 3, -1, -2]), ek = `e^{${kx(k)}}`, kk = new Q(1, k), kk2 = new Q(-1, k * k);
+  const ts = [T(kk, `x${ek}`, `x*exp(${k}*x)`, x => x * Math.exp(k * x)), T(kk2, ek, `exp(${k}*x)`, x => Math.exp(k * x))];
+  return {q:I(`x${ek}`), kind:"anti", f:x => x * Math.exp(k * x), dom:[-1, 1.5], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(u=x\\), \\(dv=${ek}dx\\) → \\(du=dx\\), \\(v=${kk.tex()}${ek}\\).`, `\\(uv-\\int v\\,du=${kk.tex()}x${ek}-${kk.tex()}\\int ${ek}dx\\).`, `\\(=${texSum(ts)}+C\\).`],
+    move:mv("Choose u and dv:", `\\(u=x,\\ dv=${ek}dx\\)`, [[`\\(u=${ek},\\ dv=x\\,dx\\)`, "Then v = x²/2 and the new integral is worse. LIATE: Algebraic before Exponential."], [`\\(u=${kx(k)}\\) (u-sub)`, "u-sub needs the inner derivative as a factor; here x isn't the derivative of anything inside."], [`\\(u=x\\,${ek},\\ dv=dx\\)`, "Then du is a product again; nothing gets simpler."]])};
+}});
+add({id:"b2", sk:"b_choose", tech:"bp", recog:"Polynomial × trig: by parts with u = polynomial.", gen(){
+  const k = ri(1, 3), s = Math.random() < .5, K = new Q(1, k), K2 = new Q(1, k * k), arg = k === 1 ? "x" : `${k}x`;
+  const ts = s ? [T(K.neg(), `x\\cos ${arg}`, `x*cos(${k}*x)`, x => x * Math.cos(k * x)), T(K2, `\\sin ${arg}`, `sin(${k}*x)`, x => Math.sin(k * x))]
+               : [T(K, `x\\sin ${arg}`, `x*sin(${k}*x)`, x => x * Math.sin(k * x)), T(K2, `\\cos ${arg}`, `cos(${k}*x)`, x => Math.cos(k * x))];
+  const fn = s ? "\\sin" : "\\cos";
+  return {q:I(`x${fn} ${arg}`), kind:"anti", f:x => x * (s ? Math.sin : Math.cos)(k * x), dom:[0.2, 2], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(u=x\\), \\(dv=${fn} ${arg}\\,dx\\) → \\(v=${s ? K.neg().tex() + "\\cos " + arg : K.tex() + "\\sin " + arg}\\).`, `\\(uv-\\int v\\,du\\) → \\(${texSum(ts)}+C\\).`],
+    move:mv("Choose u and dv:", `\\(u=x,\\ dv=${fn} ${arg}\\,dx\\)`, [[`\\(u=${fn} ${arg},\\ dv=x\\,dx\\)`, "That raises the power of x each time. LIATE: Algebraic before Trig."], [`\\(u=${arg}\\) (u-sub)`, "The x outside isn't the derivative of the inside."], [`Trig identity first`, "There's no power of trig to reduce; it's a product of x and trig: parts."]])};
+}});
+add({id:"b3", sk:"b_repeat", tech:"bp", recog:"\\(x^2\\) × trig/exp: by parts twice, \\(u\\) = the polynomial each time.", gen(){
+  const c = pick([
+    ["x^2\\sin x", x => x * x * Math.sin(x), [T(-1, "x^2\\cos x", "x^2*cos(x)", x => x * x * Math.cos(x)), T(2, "x\\sin x", "x*sin(x)", x => x * Math.sin(x)), T(2, "\\cos x", "cos(x)", Math.cos)]],
+    ["x^2\\cos x", x => x * x * Math.cos(x), [T(1, "x^2\\sin x", "x^2*sin(x)", x => x * x * Math.sin(x)), T(2, "x\\cos x", "x*cos(x)", x => x * Math.cos(x)), T(-2, "\\sin x", "sin(x)", Math.sin)]],
+    ["x^2e^{x}", x => x * x * Math.exp(x), [T(1, "x^2e^{x}", "x^2*exp(x)", x => x * x * Math.exp(x)), T(-2, "xe^{x}", "x*exp(x)", x => x * Math.exp(x)), T(2, "e^{x}", "exp(x)", Math.exp)]]]);
+  return {q:I(c[0]), kind:"anti", f:c[1], dom:[0.2, 2], ansTex:texSum(c[2]) + "+C", ansStr:strSum(c[2]), ansF:fSum(c[2]),
+    steps:[`Parts with \\(u=x^2\\): leaves \\(\\int 2x\\cdot(\\ldots)\\,dx\\).`, `Parts again with \\(u=2x\\).`, `Collect: \\(${texSum(c[2])}+C\\). Watch the sign of each \\(\\int\\sin=-\\cos\\).`],
+    move:mv("Plan?", "Parts twice, u = polynomial both times", [["Parts once, then u-sub", "After one round you still have x × trig; that needs parts again."], ["Parts with u = trig / exp", "Then the power of x grows forever."], ["Tabular is wrong here", "Tabular (DI) method IS valid for this; the point is u must be the polynomial."]])};
+}});
+add({id:"b4", sk:"b_choose", tech:"bp", recog:"\\(x^n\\ln x\\): by parts with \\(u=\\ln x\\) (L comes first in LIATE).", gen(hard){
+  const n = pick(hard ? [-3, -4, 3, 2] : [1, 2, -2, -3, -4]), m = n + 1;
+  const ts = [T(new Q(1, m), `x^{${m}}\\ln x`, `x^(${m})*ln(x)`, x => x ** m * Math.log(x)), T(new Q(-1, m * m), `x^{${m}}`, `x^(${m})`, x => x ** m)];
+  const q0 = n > 0 ? `x^{${n}}\\ln x` : `\\frac{\\ln x}{x^{${-n}}}`;
+  return {q:I(n === 1 ? "x\\ln x" : q0), kind:"anti", f:x => x ** n * Math.log(x), dom:[1.2, 4], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(u=\\ln x\\) (\\(du=\\frac{dx}{x}\\)), \\(dv=x^{${n}}dx\\) (\\(v=\\frac{x^{${m}}}{${m}}\\)).`, `\\(uv-\\int v\\,du=\\frac{x^{${m}}\\ln x}{${m}}-\\int \\frac{x^{${m}}}{${m}}\\cdot\\frac{1}{x}\\,dx\\). The integral is \\(v\\) times \\(du\\), not \\(dv\\).`, `\\(\\frac{x^{${m}}}{${m}}\\cdot\\frac1x=\\frac{x^{${n}}}{${m}}\\) (one power of \\(x\\) cancels), so it is \\(\\frac{x^{${m}}\\ln x}{${m}}-\\frac1{${m}}\\int x^{${n}}dx\\).`, `\\(=${texSum(ts)}+C\\).`],
+    move:mv("Choose u and dv:", `\\(u=\\ln x,\\ dv=x^{${n}}dx\\)`, [[`\\(u=x^{${n}},\\ dv=\\ln x\\,dx\\)`, "You'd need ∫ln x first, and it gets worse. LIATE: Log first."], [`\\(u=\\ln x\\) as a u-sub`, `du = dx/x, but the remaining x^{${m}} doesn't vanish.`], [`Partial fractions`, "Not a rational function."]])};
+}});
+add({id:"b5", sk:"b_choose", tech:"bp", recog:"A lone \\(\\ln x\\) or inverse-trig function: by parts with \\(dv=dx\\).", gen(){
+  const c = pick([
+    {q:I("\\arctan x", 0, 1), ab:[0, 1], kind:"def", value:Math.PI / 4 - Math.log(2) / 2, valTex:"\\frac{\\pi}{4}-\\frac12\\ln 2", f:Math.atan, s:[`\\(u=\\arctan x\\), \\(dv=dx\\): \\(x\\arctan x-\\int\\frac{x}{1+x^2}dx\\).`, `\\(=\\left[x\\arctan x-\\tfrac12\\ln(1+x^2)\\right]_0^1=\\frac\\pi4-\\frac12\\ln2\\).`]},
+    {q:I("\\ln x", 1, "e"), ab:[1, Math.E], kind:"def", value:1, valTex:"1", f:Math.log, s:[`\\(u=\\ln x\\), \\(dv=dx\\): \\(x\\ln x-\\int dx\\).`, `\\(\\left[x\\ln x-x\\right]_1^e=(e-e)-(0-1)=1\\).`]},
+    {q:I("\\arcsin x"), kind:"anti", f:Math.asin, dom:[-0.8, 0.8], ansTex:"x\\arcsin x+\\sqrt{1-x^2}+C", ansStr:"x*asin(x)+sqrt(1-x^2)", s:[`\\(u=\\arcsin x\\), \\(dv=dx\\): \\(x\\arcsin x-\\int\\frac{x}{\\sqrt{1-x^2}}dx\\).`, `The last integral is u-sub (\\(w=1-x^2\\)): \\(=-\\sqrt{1-x^2}\\).`]},
+    {q:I("\\arctan x"), kind:"anti", f:Math.atan, dom:[-2, 2], ansTex:"x\\arctan x-\\frac12\\ln(1+x^2)+C", ansStr:"x*atan(x)-ln(1+x^2)/2", s:[`\\(u=\\arctan x\\), \\(dv=dx\\): \\(x\\arctan x-\\int\\frac{x}{1+x^2}dx\\).`, `Then \\(w=1+x^2\\): \\(-\\tfrac12\\ln(1+x^2)\\).`]}]);
+  return Object.assign({steps:c.s, ansTex:c.ansTex || c.valTex, move:mv("Choose u and dv:", "u = the log / inverse-trig function, dv = dx", [["u = 1, dv = the function dx", "You can't integrate ln x or arctan x directly: that's the whole point."], ["u-substitution w = the function", "Its derivative isn't a factor in the integrand."], ["Trig substitution", "Nothing of the form √(a² ± x²)."]])}, c);
+}});
+add({id:"b6", sk:"b_repeat", tech:"bp", recog:"\\(e^{ax}\\sin bx\\): parts twice, the integral comes back, solve for it.", gen(){
+  const a = ri(1, 2), b = ri(1, 3), s = Math.random() < .5, D = a * a + b * b, ea = `e^{${a === 1 ? "" : a}x}`, bx = b === 1 ? "x" : `${b}x`;
+  const ts = s ? [T(new Q(a, D), `${ea}\\sin ${bx}`, `exp(${a}*x)*sin(${b}*x)`, x => Math.exp(a * x) * Math.sin(b * x)), T(new Q(-b, D), `${ea}\\cos ${bx}`, `exp(${a}*x)*cos(${b}*x)`, x => Math.exp(a * x) * Math.cos(b * x))]
+               : [T(new Q(a, D), `${ea}\\cos ${bx}`, `exp(${a}*x)*cos(${b}*x)`, x => Math.exp(a * x) * Math.cos(b * x)), T(new Q(b, D), `${ea}\\sin ${bx}`, `exp(${a}*x)*sin(${b}*x)`, x => Math.exp(a * x) * Math.sin(b * x))];
+  return {q:I(`${ea}${s ? "\\sin" : "\\cos"} ${bx}`), kind:"anti", f:x => Math.exp(a * x) * (s ? Math.sin : Math.cos)(b * x), dom:[-1, 1], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:(() => {
+      const c = k => k.n === k.d ? "" : k.tex() + "\\,", k1 = c(new Q(1, a)), kb = c(new Q(b, a)), kb2 = c(new Q(b, a * a)), KK = new Q(b * b, a * a), kk = c(KK);
+      const T1 = s ? "\\sin" : "\\cos", T2 = s ? "\\cos" : "\\sin", db = b === 1 ? "" : b;
+      const r1 = s ? `${k1}${ea}\\sin ${bx}-${kb}\\int ${ea}\\cos ${bx}\\,dx` : `${k1}${ea}\\cos ${bx}+${kb}\\int ${ea}\\sin ${bx}\\,dx`;
+      const r2 = s ? `${k1}${ea}\\cos ${bx}+${kb}I` : `${k1}${ea}\\sin ${bx}-${kb}I`;
+      const sub = s ? `${k1}${ea}\\sin ${bx}-${kb2}${ea}\\cos ${bx}-${kk}I` : `${k1}${ea}\\cos ${bx}+${kb2}${ea}\\sin ${bx}-${kk}I`;
+      return [
+        `Give the original integral a name: \\(I=\\int ${ea}${T1} ${bx}\\,dx\\). \\(I\\) is just a label for the unknown answer, like \\(x\\) in an equation. It will reappear.`,
+        `Parts, round 1: \\(u=${T1} ${bx}\\) (\\(du=${s ? "" : "-"}${db}${T2} ${bx}\\,dx\\)), \\(dv=${ea}dx\\) (\\(v=${k1}${ea}\\)). So \\(I=${r1}\\).`,
+        `Parts, round 2 on the new integral, same kind of choice: \\(u=${T2} ${bx}\\), \\(dv=${ea}dx\\). It gives \\(\\int ${ea}${T2} ${bx}\\,dx=${r2}\\). The last integral is the original one again, so it's written \\(I\\).`,
+        `Put round 2 into round 1: \\(I=${sub}\\).`,
+        `Now it's algebra: move the \\(I\\) term left: \\(\\left(1+${KK.tex()}\\right)I=\\ldots\\), so \\(${new Q(D, a * a).tex()}\\,I=\\ldots\\). Multiply by \\(${new Q(a * a, D).tex()}\\): \\(I=${texSum(ts)}+C\\).`];
+    })(),
+    move:mv("Plan?", "Parts twice, then solve for I", [["Parts once, then u-sub", "After one round it's still exp × trig."], ["Switch the choice of u in round 2", "Switching undoes round 1 and you get 0 = 0. Keep the same type of u."], ["Half-angle formula", "There's no power of trig to reduce."]])};
+}});
+
+// ---- trig integrals ----
+const pw = (fn, p, arg = "x") => p.zero() ? "" : p.d === 2 && p.n === 1 ? `\\sqrt{\\${fn} ${arg}}` : p.n === 1 && p.d === 1 ? `\\${fn} ${arg}` : `\\${fn}^{${p.d === 1 ? p.n : p.n + "/" + p.d}}${arg}`;
+function trigOdd(hard){
+  const sinOdd = Math.random() < .5, k = hard ? ri(1, 3) : ri(1, 2);
+  const odd = new Q(2 * k + 1), other = q(pick(hard ? [new Q(1, 2), new Q(4), new Q(5), new Q(2)] : [new Q(0), new Q(2), new Q(4), new Q(1, 2), new Q(3)]));
+  const m = sinOdd ? odd : other, n = sinOdd ? other : odd;
+  const ts = [];
+  for(let j = 0; j <= k; j++){
+    const e = (sinOdd ? n : m).add(2 * j + 1), c = new Q(binom(k, j) * (j % 2 ? -1 : 1)).div(e).mul(sinOdd ? -1 : 1);
+    const fn = sinOdd ? "cos" : "sin", ev = e.v;
+    ts.push(T(c, pw(fn, e), `${fn}(x)^(${e.str()})`, x => Math[fn](x) ** ev));
+  }
+  const def = m.d === 1 && n.d === 1 && Math.random() < .35;
+  const body = `${pw("sin", m)}${pw("cos", n)}`;
+  const base = {f:x => Math.sin(x) ** m.v * Math.cos(x) ** n.v, steps:[sinOdd ? `Odd power of \\(\\sin\\): save one \\(\\sin x\\,dx\\), turn \\(\\sin^{${2 * k}}x\\) into \\((1-\\cos^2x)^{${k}}\\), then \\(u=\\cos x\\), \\(du=-\\sin x\\,dx\\).`
+      : `Odd power of \\(\\cos\\): save one \\(\\cos x\\,dx\\), turn \\(\\cos^{${2 * k}}x\\) into \\((1-\\sin^2x)^{${k}}\\), then \\(u=\\sin x\\).`, `Expand and integrate the powers of \\(u\\): \\(${texSum(ts)}+C\\).`],
+    move:mv("First move?", sinOdd ? "Save one sin x, convert the rest to cos, u = cos x" : "Save one cos x, convert the rest to sin, u = sin x", [[sinOdd ? "u = sin x" : "u = cos x", "Save a factor of the ODD power, and let u be the other function."], ["Half-angle formula", "Half-angle is for when both powers are even."], ["By parts", "Trig powers fall to identities; parts makes it longer."]])};
+  if(def){
+    const F = fSum(ts), val = F(Math.PI / 2) - F(0), V = ts.reduce((s, t) => s.add(t.c.mul(sinOdd ? -1 : 1)), new Q(0));
+    return Object.assign(base, {q:I(body, 0, "\\pi/2"), ab:[0, Math.PI / 2], kind:"def", value:val, valTex:V.tex(), ansTex:V.tex(), steps:base.steps.concat([`At \\(\\pi/2\\) and \\(0\\): ${sinOdd ? "\\(\\cos\\frac\\pi2=0\\), \\(\\cos0=1\\)" : "\\(\\sin\\frac\\pi2=1\\), \\(\\sin0=0\\)"} → \\(${V.tex()}\\).`])});
+  }
+  return Object.assign(base, {q:I(body), kind:"anti", dom:[0.15, 1.35], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts)});
+}
+add({id:"t1", sk:"t_odd", tech:"tr", recog:"Powers of sin and cos with an odd power: save one factor, convert the rest.", gen:trigOdd});
+add({id:"t2", sk:"t_even", tech:"tr", recog:"Only even powers of sin and cos: half-angle formulas.", gen(){
+  const c = pick([
+    ["\\cos^2x", x => Math.cos(x) ** 2, [T(new Q(1, 2), "x", "x", x => x), T(new Q(1, 4), "\\sin 2x", "sin(2x)", x => Math.sin(2 * x))], new Q(1, 2)],
+    ["\\sin^2x", x => Math.sin(x) ** 2, [T(new Q(1, 2), "x", "x", x => x), T(new Q(-1, 4), "\\sin 2x", "sin(2x)", x => Math.sin(2 * x))], new Q(1, 2)],
+    ["\\sin^2x\\cos^2x", x => (Math.sin(x) * Math.cos(x)) ** 2, [T(new Q(1, 8), "x", "x", x => x), T(new Q(-1, 32), "\\sin 4x", "sin(4x)", x => Math.sin(4 * x))], new Q(1, 8)],
+    ["\\cos^4x", x => Math.cos(x) ** 4, [T(new Q(3, 8), "x", "x", x => x), T(new Q(1, 4), "\\sin 2x", "sin(2x)", x => Math.sin(2 * x)), T(new Q(1, 32), "\\sin 4x", "sin(4x)", x => Math.sin(4 * x))], new Q(3, 8)],
+    ["\\sin^4x", x => Math.sin(x) ** 4, [T(new Q(3, 8), "x", "x", x => x), T(new Q(-1, 4), "\\sin 2x", "sin(2x)", x => Math.sin(2 * x)), T(new Q(1, 32), "\\sin 4x", "sin(4x)", x => Math.sin(4 * x))], new Q(3, 8)]]);
+  const base = {f:c[1], steps:[`Half-angle: \\(\\cos^2x=\\frac{1+\\cos2x}{2}\\), \\(\\sin^2x=\\frac{1-\\cos2x}{2}\\)${c[0].includes("^4") || c[0].includes("\\sin^2x\\cos") ? ", and use it again on the squared cosine that appears" : ""}.`, `Integrate term by term: \\(${texSum(c[2])}+C\\).`],
+    move:mv("First move?", "Half-angle formula", [["Save one factor, u-sub", "That needs an odd power; all powers here are even."], ["u = sin x", "du = cos x dx isn't available as a spare factor."], ["By parts", "Possible but long; half-angle is the standard route."]])};
+  if(Math.random() < .35){ const b = pick([1, 2]), val = c[3].mul(new Q(1, b)); return Object.assign(base, {q:I(c[0], 0, b === 1 ? "\\pi" : "\\pi/2"), ab:[0, Math.PI / b], kind:"def", value:val.v * Math.PI, valTex:piQ(val), ansTex:piQ(val), steps:base.steps.concat([`The \\(\\sin 2x\\), \\(\\sin4x\\) terms vanish at both ends, leaving \\(${c[3].tex()}\\cdot${b === 1 ? "\\pi" : "\\frac\\pi2"}=${piQ(val)}\\).`])}); }
+  return Object.assign(base, {q:I(c[0]), kind:"anti", dom:[0.1, 2], ansTex:texSum(c[2]) + "+C", ansStr:strSum(c[2]), ansF:fSum(c[2])});
+}});
+function secTan(hard){
+  const evenSec = Math.random() < .5, ts = [];
+  let m, n, k;
+  if(evenSec){
+    m = pick(hard ? [4, 6] : [2, 4]); n = pick(hard ? [3, 4, 6] : [1, 2, 3, 4, 6]); k = (m - 2) / 2;
+    for(let j = 0; j <= k; j++){ const e = n + 2 * j + 1; ts.push(T(new Q(binom(k, j), e), `\\tan^{${e}}x`, `tan(x)^${e}`, x => Math.tan(x) ** e)); }
+  } else {
+    n = pick(hard ? [3, 5] : [1, 3]); m = pick(hard ? [3, 5, 7] : [1, 3, 5]); k = (n - 1) / 2;
+    for(let j = 0; j <= k; j++){ const e = m - 1 + 2 * j + 1; ts.push(T(new Q(binom(k, j) * ((k - j) % 2 ? -1 : 1), e), e === 1 ? "\\sec x" : `\\sec^{${e}}x`, `sec(x)^${e}`, x => (1 / Math.cos(x)) ** e)); }
+  }
+  const body = `${m === 1 ? "\\sec x" : `\\sec^{${m}}x`}${n === 1 ? "\\tan x" : `\\tan^{${n}}x`}`, f = x => (1 / Math.cos(x)) ** m * Math.tan(x) ** n;
+  const steps = [evenSec ? `Even power of sec: save \\(\\sec^2x\\,dx\\), turn the other \\(\\sec^{${m - 2}}x\\) into \\((1+\\tan^2x)^{${k}}\\), \\(u=\\tan x\\).` : (n === 1 ? `Odd power of tan (here just one): save \\(\\sec x\\tan x\\,dx\\), which is exactly \\(du\\) for \\(u=\\sec x\\). What's left is \\(${m === 2 ? "\\sec x" : `\\sec^{${m - 1}}x`}=u^{${m - 1}}\\), so the integral is \\(\\int u^{${m - 1}}du\\).` : `Odd power of tan: save \\(\\sec x\\tan x\\,dx\\), turn \\(\\tan^{${n - 1}}x\\) into \\((\\sec^2x-1)^{${k}}\\), \\(u=\\sec x\\).`), `Integrate the powers of \\(u\\): \\(${texSum(ts)}+C\\).`];
+  const move = mv("First move?", evenSec ? "Save sec²x, convert the rest to tan, u = tan x" : "Save sec x tan x, convert the rest to sec, u = sec x", [[evenSec ? "Save sec x tan x, u = sec x" : "Save sec²x, u = tan x", evenSec ? (n % 2 ? "Also works here since tan is odd, but even sec is the safer route; with even tan it fails." : "That needs an odd power of tan; here tan's power is even.") : "That needs an even power of sec left over; here sec's power is odd."], ["Rewrite all in sin and cos", "Possible but much longer."], ["Half-angle formula", "Half-angle is for sin/cos even powers."]]);
+  if(evenSec && Math.random() < .35){ const V = ts.reduce((s, t) => s.add(t.c), new Q(0)); return {q:I(body, 0, "\\pi/4"), ab:[0, Math.PI / 4], kind:"def", f, value:fSum(ts)(Math.PI / 4) - fSum(ts)(0), valTex:V.tex(), ansTex:V.tex(), steps:steps.concat([`\\(\\tan\\frac\\pi4=1\\), \\(\\tan0=0\\) → \\(${V.tex()}\\).`]), move}; }
+  return {q:I(body), kind:"anti", f, dom:[0.1, 1.1], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts), steps, move};
+}
+add({id:"t3", sk:"t_sectan", tech:"tr", recog:"Powers of sec and tan: even sec → u = tan, odd tan → u = sec.", gen:secTan});
+add({id:"t4", sk:"t_sectan", tech:"tr", recog:"Powers of tan alone: use \\(\\tan^2=\\sec^2-1\\).", gen(){
+  const c = pick([["\\tan^2x", x => Math.tan(x) ** 2, "\\tan x-x", "tan(x)-x", ["\\(\\tan^2x=\\sec^2x-1\\).", "\\(\\int(\\sec^2x-1)dx=\\tan x-x+C\\)."]],
+                  ["\\cot^2x", x => 1 / Math.tan(x) ** 2, "-\\cot x-x", "-cot(x)-x", ["\\(\\cot^2x=\\csc^2x-1\\).", "\\(\\int(\\csc^2x-1)dx=-\\cot x-x+C\\) (since \\((\\cot x)'=-\\csc^2x\\))."]],
+                  ["\\tan^3x", x => Math.tan(x) ** 3, "\\frac12\\tan^2x+\\ln|\\cos x|", "tan(x)^2/2+ln(cos(x))", ["\\(\\tan^3x=\\tan x(\\sec^2x-1)=\\tan x\\sec^2x-\\tan x\\).", "First part: \\(u=\\tan x\\) → \\(\\frac12\\tan^2x\\). Second: \\(\\int\\tan x=-\\ln|\\cos x|\\).", "Total: \\(\\frac12\\tan^2x+\\ln|\\cos x|+C\\)."]]]);
+  return {q:I(c[0]), kind:"anti", f:c[1], dom:[0.1, 1.2], ansTex:c[2] + "+C", ansStr:c[3], steps:c[4],
+    move:mv("First move?", "Use tan²x = sec²x − 1", [["u = tan x", "du = sec²x dx isn't there yet. Create it with tan² = sec² − 1."], ["Half-angle formula", "That's for sin²/cos²."], ["By parts", "The identity does it in one line."]])};
+}});
+
+// ---- trig substitution ----
+add({id:"s1", sk:"s_pick", tech:"ts", recog:"\\(\\sqrt{a^2-x^2}\\) with no matching \\(x\\) factor: \\(x=a\\sin\\theta\\).", gen(){
+  const a = ri(2, 4), a2 = a * a;
+  const ts = [T(new Q(a2, 2), `\\arcsin\\frac{x}{${a}}`, `asin(x/${a})`, x => Math.asin(x / a)), T(new Q(-1, 2), `x\\sqrt{${a2}-x^2}`, `x*sqrt(${a2}-x^2)`, x => x * Math.sqrt(a2 - x * x))];
+  return {q:I(`\\frac{x^2}{\\sqrt{${a2}-x^2}}`), kind:"anti", f:x => x * x / Math.sqrt(a2 - x * x), dom:[-0.8 * a, 0.8 * a], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(x=${a}\\sin\\theta\\), \\(dx=${a}\\cos\\theta\\,d\\theta\\), \\(\\sqrt{${a2}-x^2}=${a}\\cos\\theta\\).`, `\\(\\int ${a2}\\sin^2\\theta\\,d\\theta=\\frac{${a2}}{2}(\\theta-\\sin\\theta\\cos\\theta)\\).`, `Triangle: \\(\\sin\\theta=\\frac x{${a}}\\), \\(\\cos\\theta=\\frac{\\sqrt{${a2}-x^2}}{${a}}\\) → \\(${texSum(ts)}+C\\).`],
+    move:mv("Which substitution?", `\\(x=${a}\\sin\\theta\\)`, [[`\\(x=${a}\\tan\\theta\\)`, "tan is for a² + x²."], [`\\(x=${a}\\sec\\theta\\)`, "sec is for x² − a²."], [`\\(u=${a2}-x^2\\)`, "du = −2x dx, but the top is x², not x. u-sub fails."]])};
+}});
+add({id:"s2", sk:"s_pick", tech:"ts", recog:"\\(\\sqrt{x^2+a^2}\\): \\(x=a\\tan\\theta\\).", gen(){
+  const a = ri(2, 4), a2 = a * a;
+  return {q:I(`\\frac{1}{x^2\\sqrt{x^2+${a2}}}`), kind:"anti", f:x => 1 / (x * x * Math.sqrt(x * x + a2)), dom:[0.5, 3], ansTex:`-\\frac{\\sqrt{x^2+${a2}}}{${a2}x}+C`, ansStr:`-sqrt(x^2+${a2})/(${a2}x)`,
+    steps:[`\\(x=${a}\\tan\\theta\\), \\(dx=${a}\\sec^2\\theta\\,d\\theta\\), \\(\\sqrt{x^2+${a2}}=${a}\\sec\\theta\\).`, `Integral becomes \\(\\frac1{${a2}}\\int\\frac{\\cos\\theta}{\\sin^2\\theta}d\\theta=-\\frac{1}{${a2}\\sin\\theta}\\).`, `Triangle: opposite \\(x\\), adjacent \\(${a}\\), hypotenuse \\(\\sqrt{x^2+${a2}}\\) → \\(-\\frac{\\sqrt{x^2+${a2}}}{${a2}x}+C\\).`],
+    move:mv("Which substitution?", `\\(x=${a}\\tan\\theta\\)`, [[`\\(x=${a}\\sin\\theta\\)`, "sin is for a² − x²."], [`\\(x=${a}\\sec\\theta\\)`, "sec is for x² − a²."], [`\\(u=x^2+${a2}\\)`, "du = 2x dx, which isn't in the integrand."]])};
+}});
+add({id:"s3", sk:"s_pick", tech:"ts", recog:"\\(\\sqrt{x^2-a^2}\\): \\(x=a\\sec\\theta\\).", gen(){
+  const a = ri(1, 3), a2 = a * a;
+  return {q:I(`\\frac{1}{\\sqrt{x^2-${a2}}}`), kind:"anti", f:x => 1 / Math.sqrt(x * x - a2), dom:[a + 0.3, a + 3], ansTex:`\\ln\\left|x+\\sqrt{x^2-${a2}}\\right|+C`, ansStr:`ln(x+sqrt(x^2-${a2}))`,
+    steps:[`\\(x=${a}\\sec\\theta\\), \\(dx=${a}\\sec\\theta\\tan\\theta\\,d\\theta\\), \\(\\sqrt{x^2-${a2}}=${a}\\tan\\theta\\).`, `\\(\\int\\sec\\theta\\,d\\theta=\\ln|\\sec\\theta+\\tan\\theta|\\).`, `Back: \\(\\ln\\left|\\frac{x}{${a}}+\\frac{\\sqrt{x^2-${a2}}}{${a}}\\right|\\), and the \\(-\\ln${a}\\) joins \\(C\\).`],
+    move:mv("Which substitution?", `\\(x=${a}\\sec\\theta\\)`, [[`\\(x=${a}\\sin\\theta\\)`, "sin is for a² − x²."], [`\\(x=${a}\\tan\\theta\\)`, "tan is for x² + a²."], [`\\(u=x^2-${a2}\\)`, "No x factor for du."]])};
+}});
+add({id:"s4", sk:"s_back", tech:"ts", recog:"\\(\\sqrt{a^2-x^2}\\) over \\(x^2\\): \\(x=a\\sin\\theta\\), then the triangle.", gen(){
+  const a = ri(1, 3), a2 = a * a;
+  const ts = [T(-1, `\\frac{\\sqrt{${a2}-x^2}}{x}`, `sqrt(${a2}-x^2)/x`, x => Math.sqrt(a2 - x * x) / x), T(-1, `\\arcsin\\frac{x}{${a}}`, `asin(x/${a})`, x => Math.asin(x / a))];
+  return {q:I(`\\frac{\\sqrt{${a2}-x^2}}{x^2}`), kind:"anti", f:x => Math.sqrt(a2 - x * x) / (x * x), dom:[0.3 * a, 0.9 * a], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(x=${a}\\sin\\theta\\): integral becomes \\(\\int\\cot^2\\theta\\,d\\theta=\\int(\\csc^2\\theta-1)d\\theta=-\\cot\\theta-\\theta\\).`, `Triangle from \\(\\sin\\theta=\\frac{x}{${a}}\\): adjacent \\(\\sqrt{${a2}-x^2}\\), so \\(\\cot\\theta=\\frac{\\sqrt{${a2}-x^2}}{x}\\).`, `\\(${texSum(ts)}+C\\).`],
+    move:mv("After \\(x=a\\sin\\theta\\) you get \\(-\\cot\\theta-\\theta\\). What is \\(\\cot\\theta\\) in x?", `\\(\\frac{\\sqrt{${a2}-x^2}}{x}\\)`, [[`\\(\\frac{x}{\\sqrt{${a2}-x^2}}\\)`, "That's tan θ (opposite/adjacent). cot is adjacent/opposite."], [`\\(\\frac{${a}}{x}\\)`, "That's csc θ (hypotenuse/opposite)."], [`\\(\\frac{\\sqrt{${a2}-x^2}}{${a}}\\)`, "That's cos θ."]])};
+}});
+add({id:"s5", sk:"s_pick", tech:"ts", recog:"\\(\\int_0^a\\sqrt{a^2-x^2}\\): \\(x=a\\sin\\theta\\) (a quarter circle).", gen(){
+  const a = ri(2, 5), a2 = a * a, V = new Q(a2, 4);
+  return {q:I(`\\sqrt{${a2}-x^2}`, 0, a), ab:[0, a], kind:"def", f:x => Math.sqrt(a2 - x * x), value:V.v * Math.PI, valTex:piQ(V), ansTex:piQ(V),
+    steps:[`\\(x=${a}\\sin\\theta\\); \\(x:0\\to${a}\\) means \\(\\theta:0\\to\\frac\\pi2\\).`, `\\(\\int_0^{\\pi/2}${a2}\\cos^2\\theta\\,d\\theta=${a2}\\cdot\\frac\\pi4\\).`, `Check: it's a quarter of a circle of radius ${a}.`],
+    move:mv("Which substitution?", `\\(x=${a}\\sin\\theta\\), limits \\(0\\to\\frac\\pi2\\)`, [[`\\(x=${a}\\sin\\theta\\), limits \\(0\\to${a}\\)`, "Change the limits to θ (or go back to x before plugging in)."], [`\\(x=${a}\\tan\\theta\\)`, "tan is for a² + x²."], [`\\(u=${a2}-x^2\\)`, "No x factor for du."]])};
+}});
+add({id:"s6", sk:"s_back", tech:"ts", recog:"\\((a^2+x^2)^{3/2}\\): \\(x=a\\tan\\theta\\).", gen(){
+  const a = ri(1, 3), a2 = a * a;
+  return {q:I(`\\frac{1}{(x^2+${a2})^{3/2}}`), kind:"anti", f:x => (x * x + a2) ** -1.5, dom:[-2, 3], ansTex:`\\frac{x}{${a2 === 1 ? "" : a2}\\sqrt{x^2+${a2}}}+C`, ansStr:`x/(${a2}*sqrt(x^2+${a2}))`,
+    steps:[`\\(x=${a}\\tan\\theta\\): integral becomes \\(\\frac1{${a2}}\\int\\cos\\theta\\,d\\theta=\\frac{\\sin\\theta}{${a2}}\\).`, `Triangle: \\(\\sin\\theta=\\frac{x}{\\sqrt{x^2+${a2}}}\\).`],
+    move:mv("Which substitution?", `\\(x=${a}\\tan\\theta\\)`, [[`\\(x=${a}\\sin\\theta\\)`, "sin is for a² − x²."], [`\\(u=x^2+${a2}\\)`, "No x factor for du."], [`Partial fractions`, "Fractional power: not a rational function."]])};
+}});
+add({id:"s7", sk:"s_pick", tech:"u", recog:"\\(x^3\\) over \\(\\sqrt{x^2+a^2}\\): u-sub \\(u=x^2+a^2\\) works (x² = u − a²), faster than trig sub.", gen(){
+  const a2 = pick([1, 4, 9]);
+  const ts = [T(new Q(1, 3), `(x^2+${a2})^{3/2}`, `(x^2+${a2})^(3/2)`, x => (x * x + a2) ** 1.5), T(-a2, `\\sqrt{x^2+${a2}}`, `sqrt(x^2+${a2})`, x => Math.sqrt(x * x + a2))];
+  return {q:I(`\\frac{x^3}{\\sqrt{x^2+${a2}}}`), kind:"anti", f:x => x ** 3 / Math.sqrt(x * x + a2), dom:[0.2, 3], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(u=x^2+${a2}\\), \\(du=2x\\,dx\\), \\(x^2=u-${a2}\\).`, `\\(\\tfrac12\\int\\frac{u-${a2}}{\\sqrt u}du=\\tfrac12\\left(\\tfrac23u^{3/2}-${2 * a2}u^{1/2}\\right)\\).`, `\\(=${texSum(ts)}+C\\).`],
+    move:mv("Fastest first move?", `\\(u=x^2+${a2}\\) (with \\(x^2=u-${a2}\\))`, [[`\\(x=${Math.sqrt(a2)}\\tan\\theta\\)`, "Also works, but u-sub is shorter because x³ = x² · x contains du."], [`By parts`, "Possible but longer."], [`Partial fractions`, "Not rational."]])};
+}});
+
+// ---- partial fractions ----
+const nz = (a, b) => { let v; do v = ri(a, b); while(v === 0); return v; };
+const pp = v => v < 0 ? `(${v})` : String(v);
+add({id:"p1", sk:"p_solve", tech:"pf", recog:"Rational, deg top < deg bottom, bottom factors into distinct linears: partial fractions.", gen(){
+  let a, b; do { a = ri(-3, 3); b = ri(-3, 3); } while(a === b);
+  let A, B; do { A = nz(-3, 3); B = nz(-3, 3); } while(A + B === 0 && A * b + B * a === 0);
+  const num = padd(pscale(L(b), A), pscale(L(a), B)), den = pmul(L(a), L(b));
+  const ts = [T(A, lnAbs(a), `ln(${lin(a)})`, x => Math.log(Math.abs(x - a))), T(B, lnAbs(b), `ln(${lin(b)})`, x => Math.log(Math.abs(x - b)))];
+  return {q:I(`\\frac{${polyTex(num)}}{${polyTex(den)}}`), kind:"anti", f:x => peval(num, x) / peval(den, x), dom:[Math.max(a, b) + 0.5, Math.max(a, b) + 4], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`Factor: \\(${polyTex(den)}=(${lin(a)})(${lin(b)})\\).`, `Split: \\(\\frac{${polyTex(num)}}{(${lin(a)})(${lin(b)})}=\\frac{A}{${lin(a)}}+\\frac{B}{${lin(b)}}\\). Multiply both sides by \\((${lin(a)})(${lin(b)})\\): \\(${polyTex(num)}=A(${lin(b)})+B(${lin(a)})\\). This holds for every \\(x\\).`, `Pick \\(x=${a}\\) (it makes \\(${lin(a)}=0\\), so the \\(B\\) term dies): \\(${peval(num, a)}=A\\cdot${pp(a - b)}\\) → \\(A=${A}\\).`, `Pick \\(x=${b}\\) (it makes \\(${lin(b)}=0\\), so the \\(A\\) term dies): \\(${peval(num, b)}=B\\cdot${pp(b - a)}\\) → \\(B=${B}\\). (Shortcut name: "cover-up".)`, `\\(\\int\\frac{A}{x-r}dx=A\\ln|x-r|\\) → \\(${texSum(ts)}+C\\).`],
+    move:mv("First move?", `Factor the bottom: \\((${lin(a)})(${lin(b)})\\), then \\(\\frac{A}{${lin(a)}}+\\frac{B}{${lin(b)}}\\)`, [[`\\(u=${polyTex(den)}\\)`, "Only works if the top is a multiple of the bottom's derivative. Check: it isn't here."], [`Long division`, "deg top < deg bottom: no division needed."], [`Complete the square, trig sub`, "The bottom factors into real linears: partial fractions."]])};
+}});
+add({id:"p2", sk:"p_solve", tech:"pf", recog:"Repeated linear factor: \\(\\frac{A}{x-a}+\\frac{B}{(x-a)^2}+\\ldots\\)", gen(){
+  let a, b; do { a = ri(-2, 2); b = ri(-2, 2); } while(a === b);
+  const A = nz(-2, 2), B = nz(-3, 3), C = -A;  // keeps the top degree ≤ 1
+  const num = padd(padd(pscale(pmul(L(a), L(b)), A), pscale(L(b), B)), pscale(pmul(L(a), L(a)), C)).map(v => Math.round(v));
+  while(num.length > 1 && num[num.length - 1] === 0) num.pop();
+  const den = pmul(pmul(L(a), L(a)), L(b));
+  const ts = [T(A, lnAbs(a), `ln(${lin(a)})`, x => Math.log(Math.abs(x - a))), T(-B, `\\frac{1}{${lin(a)}}`, `1/(${lin(a)})`, x => 1 / (x - a)), T(C, lnAbs(b), `ln(${lin(b)})`, x => Math.log(Math.abs(x - b)))];
+  return {q:I(`\\frac{${polyTex(num)}}{${polyTex(den)}}`), kind:"anti", f:x => peval(num, x) / peval(den, x), dom:[Math.max(a, b) + 0.5, Math.max(a, b) + 4], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`Factor: \\(${polyTex(den)}=(${lin(a)})^2(${lin(b)})\\) (try roots ±1, ±2; group terms).`, `Form: \\(\\frac{A}{${lin(a)}}+\\frac{B}{(${lin(a)})^2}+\\frac{C}{${lin(b)}}\\) → \\(A=${A},\\ B=${B},\\ C=${C}\\).`, `\\(\\int\\frac{B}{(x-a)^2}=-\\frac{B}{x-a}\\) → \\(${texSum(ts)}+C\\).`],
+    move:mv("Which form?", `\\(\\frac{A}{${lin(a)}}+\\frac{B}{(${lin(a)})^2}+\\frac{C}{${lin(b)}}\\)`, [[`\\(\\frac{A}{(${lin(a)})^2}+\\frac{B}{${lin(b)}}\\)`, "A repeated factor needs every power: (x−a) AND (x−a)²."], [`\\(\\frac{A}{${lin(a)}}+\\frac{B}{${lin(b)}}\\)`, "The square was dropped."], [`\\(\\frac{Ax+B}{(${lin(a)})^2}+\\frac{C}{${lin(b)}}\\)`, "Ax + B on top is for irreducible quadratics, not for powers of a linear factor."]])};
+}});
+add({id:"p3", sk:"p_solve", tech:"pf", recog:"Irreducible quadratic factor: \\(\\frac{Bx+C}{x^2+k^2}\\) → ln and arctan.", gen(){
+  const k = ri(1, 3), k2 = k * k, A = nz(-2, 3), B = ri(-2, 2), C = nz(-3, 3);
+  const num = [A * k2, C, A + B], den = [0, k2, 0, 1];
+  while(num.length > 1 && num[num.length - 1] === 0) num.pop();
+  const ts = [T(A, "\\ln|x|", "ln(x)", x => Math.log(Math.abs(x))), T(new Q(B, 2), `\\ln(x^2+${k2})`, `ln(x^2+${k2})`, x => Math.log(x * x + k2)), T(new Q(C, k), k === 1 ? "\\arctan x" : `\\arctan\\frac{x}{${k}}`, `atan(x/${k})`, x => Math.atan(x / k))];
+  return {q:I(`\\frac{${polyTex(num)}}{x^3+${k2}x}`), kind:"anti", f:x => peval(num, x) / peval(den, x), dom:[0.4, 3], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`\\(x^3+${k2}x=x(x^2+${k2})\\), and \\(x^2+${k2}\\) is irreducible.`, `\\(\\frac{A}{x}+\\frac{Bx+C}{x^2+${k2}}\\): \\(A=${A},\\ B=${B},\\ C=${C}\\).`, `\\(\\int\\frac{Bx}{x^2+${k2}}=\\frac B2\\ln(x^2+${k2})\\), \\(\\int\\frac{C}{x^2+${k2}}=\\frac C{${k}}\\arctan\\frac x{${k}}\\) → \\(${texSum(ts)}+C\\).`],
+    move:mv("Which form?", `\\(\\frac{A}{x}+\\frac{Bx+C}{x^2+${k2}}\\)`, [[`\\(\\frac{A}{x}+\\frac{B}{x^2+${k2}}\\)`, "An irreducible quadratic needs Bx + C on top."], [`\\(\\frac{A}{x}+\\frac{B}{x+${k}}+\\frac{C}{x-${k}}\\)`, `x² + ${k2} doesn't factor over the reals (that would be x² − ${k2}).`], [`\\(\\frac{A}{x}+\\frac{B}{x^2}+\\frac{C}{x^3}\\)`, "x isn't repeated; the factors are x and x² + k²."]])};
+}});
+add({id:"p4", sk:"p_div", tech:"pfd", recog:"deg top ≥ deg bottom: long division first, then partial fractions on the remainder.", gen(){
+  const a = ri(1, 3), c = ri(-2, 2), A = nz(-2, 2), B = nz(-2, 2), a2 = a * a;
+  const num = padd(pmul([c, 1], [-a2, 0, 1]), padd(pscale([a, 1], A), pscale([-a, 1], B)));
+  const ts = [T(new Q(1, 2), "x^2", "x^2", x => x * x), T(c, "x", "x", x => x), T(A, lnAbs(a), `ln(x-${a})`, x => Math.log(Math.abs(x - a))), T(B, lnAbs(-a), `ln(x+${a})`, x => Math.log(Math.abs(x + a)))];
+  return {q:I(`\\frac{${polyTex(num)}}{x^2-${a2}}`), kind:"anti", f:x => peval(num, x) / (x * x - a2), dom:[a + 0.5, a + 4], ansTex:texSum(ts) + "+C", ansStr:strSum(ts), ansF:fSum(ts),
+    steps:[`Degree 3 over degree 2: divide. Quotient \\(${polyTex([c, 1])}\\), remainder \\(${polyTex(padd(pscale([a, 1], A), pscale([-a, 1], B)))}\\).`, `Remainder over \\((x-${a})(x+${a})\\): \\(\\frac{${A}}{x-${a}}+\\frac{${B}}{x+${a}}\\).`, `\\(${texSum(ts)}+C\\).`],
+    move:mv("First move?", "Long division (deg top ≥ deg bottom)", [["Partial fractions directly", "Only proper fractions (deg top < deg bottom) decompose. Divide first."], [`\\(u=x^2-${a2}\\)`, "The top isn't a multiple of 2x."], ["Trig substitution", "No square root; it's rational."]])};
+}});
+function genPfForm(){
+  const pool = shuffle([{t:"x", lin:true}, {t:"x+1", lin:true}, {t:"x-2", lin:true}, {t:"x+3", lin:true}, {t:"x^2+1", q:true}, {t:"x^2+2x+5", q:true}, {t:"x^2+4", q:true}]);
+  const facs = pool.slice(0, ri(3, 4)).map(f => Object.assign({p:f.q ? ri(1, 2) : ri(1, 3)}, f));
+  if(!facs.some(f => f.p > 1)) facs[0].p = 2;
+  let li = 0; const nextL = () => "ABCDEFGHIJKLMNOP"[li++];
+  const dpow = (f, k) => k === 1 ? f.t : f.t === "x" ? `x^{${k}}` : `(${f.t})^{${k}}`;
+  const termsFor = (f, mode) => {
+    const out = [], P = (f.lin && mode === "highestOnly") ? [f.p] : Array.from({length:f.p}, (_, k) => k + 1);
+    for(const k of P){ const d = dpow(f, k); out.push(f.q && mode !== "constTop" ? `\\frac{${nextL()}x+${nextL()}}{${d}}` : `\\frac{${nextL()}}{${d}}`); }
+    return out;
+  };
+  const build = (mode, fs = facs) => { li = 0; return fs.flatMap(f => termsFor(f, mode)).join("+"); };
+  const den = facs.map(f => f.p === 1 ? (f.t === "x" ? "x" : `(${f.t})`) : `${f.t === "x" ? "x" : `(${f.t})`}^{${f.p}}`).join("");
+  const right = build("ok"), cand = [
+    [build("highestOnly"), "A repeated linear factor needs a term for EVERY power, (x−a), (x−a)², …, not just the highest."],
+    [build("constTop"), "An irreducible quadratic needs a linear numerator Bx + C, not a constant."],
+    [(li = 0, facs.map(f => `\\frac{${nextL()}}{${dpow(f, f.p)}}`).join("+")), "One term per factor isn't enough: repeated factors get every power, and quadratics get Bx + C."],
+    [build("ok", facs.slice(0, -1)), "A factor of the denominator is missing from the decomposition."]];
+  const seen = new Set([right]), opts = [[right, null]];
+  for(const c of cand) if(!seen.has(c[0]) && opts.length < 4){ seen.add(c[0]); opts.push(c); }
+  const sh = shuffle(opts);
+  return {kind:"mc", sk:"p_form", prompt:`Write the partial fraction decomposition form (don't solve for the constants): \\[\\frac{P(x)}{${den}}\\] (assume deg P is smaller).`,
+    list:sh.map(o => `\\(${o[0]}\\)`), why:sh.map(o => o[1]), explain:`Correct form: \\(${right}\\)`};
+}
+
+// ---- improper ----
+add({id:"i1", sk:"i_limit", tech:"u", recog:"Power of x on [1,∞) or (0,1]: the p-test.", gen(){
+  const inf = Math.random() < .55, p = pick([new Q(1, 2), new Q(1), new Q(3, 2), new Q(2), new Q(3), new Q(1, 3), new Q(4)]);
+  const conv = inf ? p.v > 1 : p.v < 1, val = conv ? (inf ? new Q(1).div(p.sub(1)) : new Q(1).div(new Q(1).sub(p))) : null;
+  const fx = p.d === 1 ? (p.n === 1 ? "\\frac{1}{x}" : `\\frac{1}{x^{${p.n}}}`) : p.n === 1 && p.d === 2 ? "\\frac{1}{\\sqrt{x}}" : p.n === 1 && p.d === 3 ? "\\frac{1}{\\sqrt[3]{x}}" : `\\frac{1}{x^{${p.n}/${p.d}}}`;
+  return {q:inf ? I(fx, 1, "\\infty") : I(fx, 0, 1), kind:"imp", f:x => x ** -p.v, value:val ? val.v : null, valTex:val ? val.tex() : "\\text{diverges}", ansTex:val ? val.tex() : "\\text{diverges}",
+    steps:[inf ? `\\(\\lim_{t\\to\\infty}\\int_1^t x^{-${p.str()}}dx\\).` : `The integrand blows up at 0: \\(\\lim_{t\\to0^+}\\int_t^1 x^{-${p.str()}}dx\\).`, p.v === 1 ? `\\(\\int\\frac{dx}{x}=\\ln|x|\\), and ${inf ? "\\(\\ln t\\to\\infty\\)" : "\\(\\ln t\\to-\\infty\\)"}: diverges.` : `Antiderivative \\(\\frac{x^{${new Q(1).sub(p).tex()}}}{${new Q(1).sub(p).tex()}}\\). ${conv ? `The limit is finite: \\(${val.tex()}\\).` : "The limit is infinite: diverges."}`, `p-test: ${inf ? "on [1,∞) converges iff p > 1" : "on (0,1] converges iff p < 1"}; here \\(p=${p.tex()}\\).`],
+    move:mv("Converge or diverge?", conv ? `Converges to \\(${val.tex()}\\)` : "Diverges", [[conv ? "Diverges" : `Converges to \\(${new Q(1).div(p.sub(1).v === 0 ? new Q(1) : p.sub(1)).tex()}\\)`, inf ? "On [1,∞), ∫1/xᵖ converges only when p > 1." : "On (0,1], ∫1/xᵖ converges only when p < 1, the opposite of [1,∞)."], ["Can't tell without a calculator", "The p-test decides it from p alone."], ["Converges to 0", "A positive integrand can't have area 0."]])};
+}});
+add({id:"i2", sk:"i_limit", tech:"bp", recog:"Infinite limit with \\(xe^{x}\\): by parts, then the limit (\\(te^{t}\\to0\\) as \\(t\\to-\\infty\\)).", gen(){
+  const c = pick([
+    {q:I("xe^{x}", "-\\infty", 0), f:x => x * Math.exp(x), v:new Q(-1), s:["\\(\\lim_{t\\to-\\infty}\\int_t^0xe^x dx\\), parts: \\([xe^x-e^x]_t^0=-1-(te^t-e^t)\\).", "\\(te^t\\to0\\) (exponential beats linear; L'Hôpital on \\(\\frac{t}{e^{-t}}\\)), \\(e^t\\to0\\) → \\(-1\\)."]},
+    {q:I("xe^{x}", "-\\infty", 1), f:x => x * Math.exp(x), v:new Q(0), s:["\\([xe^x-e^x]_t^1=(e-e)-(te^t-e^t)\\).", "Both \\(te^t\\) and \\(e^t\\to0\\) → \\(0\\)."]},
+    {q:I("xe^{-x}", 0, "\\infty"), f:x => x * Math.exp(-x), v:new Q(1), s:["\\([-xe^{-x}-e^{-x}]_0^t=(-te^{-t}-e^{-t})-(-1)\\).", "\\(te^{-t}\\to0\\) → \\(1\\)."]},
+    {q:I(`e^{-${2}x}`, 0, "\\infty"), f:x => Math.exp(-2 * x), v:new Q(1, 2), s:["\\(\\lim_{t\\to\\infty}\\left[-\\tfrac12e^{-2x}\\right]_0^t=0+\\tfrac12\\)."]}]);
+  return {q:c.q, kind:"imp", f:c.f, value:c.v.v, valTex:c.v.tex(), ansTex:c.v.tex(), steps:c.s,
+    move:mv("First move?", "Write it as a limit, then integrate by parts", [["Plug ∞ into the antiderivative", "On an exam that loses the justification points: write lim explicitly."], ["u-substitution", "x · eˣ is a product of different types: parts."], ["Comparison test", "We can compute it exactly, and the question asks for the value."]])};
+}});
+add({id:"i3", sk:"i_split", tech:"u", recog:"Both ends infinite: split at a point (e.g. 0), each half separately.", gen(){
+  const a = ri(1, 3), a2 = a * a;
+  return {q:I(`\\frac{1}{${a2 === 1 ? "" : a2}${a2 === 1 ? "1+x^2" : "+x^2"}}`, "-\\infty", "\\infty"), kind:"imp", f:x => 1 / (a2 + x * x), value:Math.PI / a, valTex:`\\frac{\\pi}{${a}}`.replace("\\frac{\\pi}{1}", "\\pi"), ansTex:`\\frac{\\pi}{${a}}`.replace("\\frac{\\pi}{1}", "\\pi"),
+    steps:[`Split: \\(\\int_{-\\infty}^0+\\int_0^\\infty\\), each a limit.`, `\\(\\int\\frac{dx}{${a2}+x^2}=\\frac1{${a}}\\arctan\\frac x{${a}}\\). Each half gives \\(\\frac1{${a}}\\cdot\\frac\\pi2\\).`, `Total \\(\\frac{\\pi}{${a}}\\).`],
+    move:mv("First move?", "Split at 0 into two improper integrals", [["\\(\\lim_{t\\to\\infty}\\int_{-t}^{t}\\)", "Using one symmetric limit isn't the definition; it can give a wrong 'value' for divergent integrals (try x). Split."], ["Partial fractions", "1/(a²+x²) is already an arctan form."], ["It diverges since the interval is infinite", "Infinite intervals can still have finite area."]])};
+}});
+add({id:"i4", sk:"i_split", tech:"u", recog:"Check for a blow-up INSIDE or at an endpoint before integrating.", gen(){
+  const c = pick([
+    {q:I("\\frac{1}{(x-1)^2}", 0, 3), f:x => 1 / (x - 1) ** 2, v:null, s:["Blows up at \\(x=1\\), inside \\([0,3]\\): split at 1.", "\\(\\int_0^1\\frac{dx}{(x-1)^2}=\\lim_{t\\to1^-}\\left[-\\frac1{x-1}\\right]_0^t=\\infty\\) → the whole integral diverges.", "Trap: plugging in blindly gives \\(-\\frac32\\), which is wrong (a positive integrand can't give a negative area)."]},
+    {q:I("\\frac{1}{\\sqrt[3]{x-1}}", 0, 2), f:x => Math.cbrt(x - 1) ** -1, v:new Q(0), s:["Blows up at \\(x=1\\), inside: split.", "\\(\\int\\frac{dx}{(x-1)^{1/3}}=\\frac32(x-1)^{2/3}\\). Left piece: \\(0-\\frac32=-\\frac32\\); right piece: \\(\\frac32-0\\).", "Both converge → total \\(0\\)."]},
+    {q:I("\\ln x", 0, 1), f:Math.log, v:new Q(-1), s:["\\(\\ln x\\to-\\infty\\) at 0: \\(\\lim_{t\\to0^+}\\int_t^1\\ln x\\,dx\\).", "Parts: \\([x\\ln x-x]_t^1=-1-(t\\ln t-t)\\).", "\\(t\\ln t\\to0\\) (L'Hôpital on \\(\\frac{\\ln t}{1/t}\\)) → \\(-1\\)."]},
+    {q:I("\\sec x", 0, "\\pi/2"), f:x => 1 / Math.cos(x), v:null, s:["\\(\\sec x\\to\\infty\\) at \\(\\frac\\pi2\\): \\(\\lim_{t\\to\\pi/2^-}\\left[\\ln|\\sec x+\\tan x|\\right]_0^t\\).", "\\(\\sec t+\\tan t\\to\\infty\\) → diverges."]},
+    {q:I("\\frac{18}{x^4}", -2, 3), f:x => 18 / x ** 4, v:null, s:["\\(\\frac{18}{x^4}\\) blows up at \\(x=0\\), INSIDE \\([-2,3]\\): split at 0.", "\\(\\int_0^3\\frac{18}{x^4}dx=\\lim_{t\\to0^+}\\left[-\\frac{6}{x^3}\\right]_t^3=\\infty\\) → diverges.", "Trap: plugging in blindly gives a finite negative number, which is impossible for a positive integrand."]},
+    {q:I("\\frac{1}{(x-4)^{3/2}}", 5, "\\infty"), f:x => (x - 4) ** -1.5, v:new Q(2), s:["\\(\\lim_{t\\to\\infty}\\int_5^t(x-4)^{-3/2}dx=\\lim\\left[-\\frac{2}{\\sqrt{x-4}}\\right]_5^t\\).", "\\(=0-(-2)=2\\)."]},
+    {q:I("\\frac{e^x}{(3+e^x)^2}", 0, "\\infty"), f:x => Math.exp(x) / (3 + Math.exp(x)) ** 2, v:new Q(1, 4), s:["\\(u=3+e^x\\): antiderivative \\(-\\frac{1}{3+e^x}\\).", "\\(\\lim_{t\\to\\infty}\\left[-\\frac1{3+e^x}\\right]_0^t=0+\\frac14\\)."]},
+    {q:I("xe^{-x^2}", "-\\infty", "\\infty"), f:x => x * Math.exp(-x * x), v:new Q(0), s:["Both ends infinite: split at 0.", "\\(u=-x^2\\): antiderivative \\(-\\frac12e^{-x^2}\\). \\(\\int_0^\\infty=\\frac12\\), \\(\\int_{-\\infty}^0=-\\frac12\\).", "Both converge → total \\(0\\)."]},
+    {q:I("\\frac{1}{x^2-1}", 2, "\\infty"), f:x => 1 / (x * x - 1), v:null, vt:"\\frac12\\ln3", vv:Math.log(3) / 2, s:["Partial fractions: \\(\\frac12\\left(\\frac1{x-1}-\\frac1{x+1}\\right)\\).", "\\(\\lim_{t\\to\\infty}\\frac12\\ln\\left|\\frac{x-1}{x+1}\\right|\\Big|_2^t=\\frac12(0-\\ln\\frac13)\\).", "\\(=\\frac12\\ln3\\)."]}]);
+  const value = c.vv != null ? c.vv : c.v ? c.v.v : null, tex = c.vt || (c.v ? c.v.tex() : "\\text{diverges}");
+  return {q:c.q, kind:"imp", f:c.f, value, valTex:tex, ansTex:tex, steps:c.s,
+    move:mv("Where is it improper?", c.q.includes("(x-1)") || c.q.includes("x-1}") ? "At x = 1, inside the interval: split there" : c.q.includes("\\infty}") ? "At the infinite upper limit" : "At an endpoint where the integrand blows up", [["It's a normal definite integral", "Check the integrand on the whole interval: it's unbounded."], ["Only at the upper limit", "Look for division by zero or ln 0 / sec(π/2) inside or at the ends."], ["Everywhere", "It's improper only at specific points."]])};
+}});
+add({id:"i5", sk:"i_limit", tech:"u", recog:"Improper, but the antiderivative is a u-sub (\\(u=x^3+1\\), \\(u=\\ln x\\)).", gen(){
+  const c = pick([
+    {q:I("\\frac{x^2}{(x^3+1)^{3/2}}", 0, "\\infty"), f:x => x * x / (x ** 3 + 1) ** 1.5, v:new Q(2, 3), s:["\\(u=x^3+1\\): \\(\\int\\frac{x^2}{(x^3+1)^{3/2}}dx=-\\frac{2}{3\\sqrt{x^3+1}}\\).", "\\(\\lim_{t\\to\\infty}\\left[-\\frac{2}{3\\sqrt{x^3+1}}\\right]_0^t=0+\\frac23\\)."]},
+    {q:I("\\frac{1}{x(\\ln x)^2}", "e", "\\infty"), f:x => 1 / (x * Math.log(x) ** 2), v:new Q(1), s:["\\(u=\\ln x\\): \\(\\int\\frac{du}{u^2}=-\\frac1u=-\\frac1{\\ln x}\\).", "\\(\\lim_{t\\to\\infty}\\left[-\\frac1{\\ln x}\\right]_e^t=0+1\\)."]},
+    {q:I("\\frac{\\ln x}{x}", 1, "\\infty"), f:x => Math.log(x) / x, v:null, s:["\\(u=\\ln x\\): \\(\\frac12(\\ln x)^2\\).", "\\(\\frac12(\\ln t)^2\\to\\infty\\) → diverges."]},
+    {q:I("\\frac{x}{x^2+1}", 0, "\\infty"), f:x => x / (x * x + 1), v:null, s:["\\(u=x^2+1\\): \\(\\frac12\\ln(x^2+1)\\).", "\\(\\to\\infty\\) → diverges (it behaves like \\(\\frac1x\\))."]}]);
+  return {q:c.q, kind:"imp", f:c.f, value:c.v ? c.v.v : null, valTex:c.v ? c.v.tex() : "\\text{diverges}", ansTex:c.v ? c.v.tex() : "\\text{diverges}", steps:c.s,
+    move:mv("First move?", "Write the limit, find the antiderivative by u-sub", [["Comparison test", "When the antiderivative is easy, the question wants the actual value."], ["By parts", "The inner derivative is a factor: u-sub."], ["Plug in ∞ directly", "Write the limit explicitly; it's graded."]])};
+}});
+function genComp(){
+  const c = pick([
+    () => { const p = ri(2, 4), a = ri(1, 3), fn = pick(["\\sin", "\\cos"]); return {f:`\\frac{${fn}^2 x}{x^{${p}}}`, lo:a, conv:true, right:`Converges: \\(0\\le f\\le\\frac{1}{x^{${p}}}\\) and \\(p=${p}>1\\)`, wrongs:[[`Diverges: \\(f\\ge\\frac{1}{x^{${p}}}\\)`, `False inequality: ${fn}²x ≤ 1, so f ≤ 1/x^${p}.`], [`Converges: \\(f\\ge\\frac{1}{x^{${p}}}\\)`, "A LOWER bound by a convergent integral proves nothing (and it's false here)."], [`Can't decide: \\(${fn}^2x\\) oscillates`, "Bound it: 0 ≤ sin²x ≤ 1."]]}; },
+    () => { const c0 = ri(1, 6), a = ri(2, 4); return {f:`\\frac{x+${c0}}{\\sqrt[3]{x^4-1}}`, lo:a, conv:false, right:"Diverges: \\(f\\ge\\frac{x}{\\sqrt[3]{x^4}}=\\frac{1}{x^{1/3}}\\), \\(p=\\frac13\\le1\\)", wrongs:[["Converges: \\(f\\le\\frac{1}{x^{4/3}}\\)", "The x on top cancels one power: f behaves like x/x^{4/3} = 1/x^{1/3}, not 1/x^{4/3}."], ["Diverges: \\(f\\le\\frac{2}{x^{1/3}}\\)", "An UPPER bound by a divergent integral proves nothing."], ["Converges: the bottom grows like \\(x^{4/3}\\)", "The top grows too: compare the whole fraction, not just the bottom."]]}; },
+    () => { const p = ri(2, 3), c0 = ri(1, 5); return {f:`\\frac{1}{x^{${p}}+${c0}}`, lo:1, conv:true, right:`Converges: \\(0\\le f\\le\\frac1{x^{${p}}}\\), \\(p=${p}>1\\)`, wrongs:[[`Diverges: \\(f\\le\\frac1{x^{${p}}}\\)`, "≤ a convergent integral means it CONVERGES."], [`Converges: \\(f\\ge\\frac1{x^{${p}}}\\)`, "Wrong direction: adding to the bottom makes f smaller."], ["Diverges: \\(\\frac1x\\) diverges", "The power is p, not 1."]]}; },
+    () => ({f:"\\frac{2+\\cos x}{\\sqrt{x}}", lo:1, conv:false, right:"Diverges: \\(f\\ge\\frac{1}{\\sqrt x}\\) (since \\(2+\\cos x\\ge1\\)), \\(p=\\frac12\\le1\\)", wrongs:[["Converges: \\(f\\le\\frac3{\\sqrt x}\\)", "≤ a DIVERGENT integral proves nothing."], ["Converges: cos oscillates and cancels", "2 + cos x ≥ 1 > 0, so nothing cancels."], ["Diverges: \\(f\\le\\frac3{\\sqrt x}\\)", "Right conclusion, invalid reason: you need a lower bound to show divergence."]]}),
+    () => ({f:"e^{-x^2}", lo:1, conv:true, right:"Converges: \\(e^{-x^2}\\le e^{-x}\\) for \\(x\\ge1\\), and \\(\\int_1^\\infty e^{-x}dx\\) converges", wrongs:[["Diverges: no antiderivative exists", "No elementary antiderivative ≠ divergent. Compare instead."], ["Converges: \\(e^{-x^2}\\ge e^{-x}\\)", "Wrong direction: x² ≥ x on [1,∞), so e^{−x²} ≤ e^{−x}."], ["Diverges: \\(e^{-x^2}\\le1\\)", "Bounding by 1 (divergent) proves nothing."]]}),
+    () => ({f:"\\frac{1}{\\sqrt{x}-1}", lo:4, conv:false, right:"Diverges: \\(f\\ge\\frac1{\\sqrt x}\\), \\(p=\\frac12\\le1\\)", wrongs:[["Converges: \\(f\\le\\frac{2}{\\sqrt x}\\)", "Upper bound by a divergent integral proves nothing."], ["Converges: the bottom → ∞", "f → 0 isn't enough; 1/√x also → 0 and diverges."], ["Diverges: \\(f\\le\\frac2{\\sqrt x}\\)", "Right answer, wrong direction: divergence needs f ≥ something divergent."]]}),
+    () => { const c0 = ri(1, 4); return {f:`\\frac{x}{x^3+${c0}}`, lo:1, conv:true, right:"Converges: \\(f\\le\\frac{x}{x^3}=\\frac{1}{x^2}\\), \\(p=2>1\\)", wrongs:[["Diverges: \\(f\\approx\\frac1x\\)", "x/x³ = 1/x², not 1/x."], ["Converges: \\(f\\ge\\frac1{x^2}\\)", "Adding to the bottom makes f SMALLER: ≤."], ["Diverges: \\(f\\ge\\frac{1}{x^3}\\)", "1/x³ converges; a lower bound by it proves nothing."]]}; }])();
+  const opts = shuffle([[c.right, null], ...c.wrongs]);
+  return {kind:"mc", sk:"i_comp", prompt:`Using comparison and the p-test, \\(\\displaystyle\\int_{${c.lo}}^{\\infty}${c.f}\\,dx\\) …`, list:opts.map(o => o[0]), why:opts.map(o => o[1]),
+    explain:`${c.conv ? "Converges" : "Diverges"}: ${c.right}. Remember the only valid directions: ≤ convergent ⇒ converges, ≥ divergent ⇒ diverges.`};
+}
+</script>
+
+<script>
+/* ================= items ================= */
+const SKILL_TPLS = sk => TPL.filter(t => t.sk === sk);
+const solveFrom = (t, hard) => { const p = t.gen(hard); return Object.assign({}, p, {kind:"solve", kindA:p.kind, sk:t.sk, tech:t.tech, recog:t.recog}); };
+function mcFromMove(p, sk){
+  const opts = shuffle([[p.move.right, null], ...p.move.wrongs]);
+  return {kind:"mc", sk, prompt:`${p.promptHTML || `\\(${p.q}\\)`}<br>${p.move.q}`, list:opts.map(o => /\\\(/.test(o[0]) ? o[0] : esc(o[0])), why:opts.map(o => o[1]), explain:`<ol class="steps">${p.steps.map(s => `<li>${s}</li>`).join("")}</ol>`};
+}
+function recogItem(){
+  const t = pick(TPL.filter(t => !t.id.startsWith("i"))), p = t.gen(), right = TECH[t.tech];
+  const others = shuffle(Object.keys(TECH).filter(k => k !== t.tech && !(t.tech === "u" && k === "ubp") && !(t.tech === "ubp" && k === "u"))).slice(0, 3).map(k => [TECH[k], `Not the best route here. ${t.recog.replace(/<[^>]+>/g, "")}`]);
+  const opts = shuffle([[right, null], ...others]);
+  return {kind:"mc", sk:"r_recog", prompt:`Which technique fits best? \\[${p.q}\\]`, list:opts.map(o => esc(o[0])), why:opts.map(o => o[1]), explain:`<b>${esc(right)}</b>: ${t.recog}`};
+}
+function volItem(sk, typed, hard){
+  const v = genVolume(sk === "v_wash" ? "wash" : "shell", hard);
+  if(!typed) return mcFromMove({promptHTML:`The region between ${v.region} is rotated about ${v.axis}.`, move:v.move, steps:v.steps}, sk);
+  return {kind:"solve", sk, q:null, prompt:`The region bounded by ${v.region} is rotated about ${v.axis}. Find the volume (an exact value like <code>17pi/30</code>).`, kindA:"def", value:v.value, ansTex:v.valTex, steps:v.steps, recog:"Volume of revolution.", num:v.num};
+}
+function makeItem(sk, st){
+  if(sk === "r_recog") return st.typed ? solveFrom(pick(TPL), st.hard) : recogItem();
+  if(sk === "p_form") return genPfForm();
+  if(sk === "i_comp") return genComp();
+  if(sk === "v_wash" || sk === "v_shell") return volItem(sk, st.typed, st.hard);
+  const t = pick(SKILL_TPLS(sk));
+  if(st.typed) return solveFrom(t, st.hard);
+  return mcFromMove(t.gen(st.hard), sk);
+}
+// Test-2-shaped exam: one problem per review section
+function replicaItems(){
+  const T1 = id => solveFrom(TPL.find(t => t.id === id));
+  return [volItem("v_wash", true), volItem("v_shell", false), T1(pick(["b3", "b4", "b5", "b6"])), T1(pick(["t1", "t3", "t2"])), T1(pick(["s1", "s2", "s4", "s5"])),
+          T1(pick(["p1", "p2", "p3", "p4"])), genPfForm(), solveFrom(pick(TPL.filter(t => /^(u|s7|p4|b1)/.test(t.id)))), T1(pick(["i2", "i3", "i4", "i5", "i1"])), genComp()];
+}
+function grade(it, input){
+  const s = String(input).trim();
+  if(!s) return {ok:false, msg:"Empty answer."};
+  const kind = it.kindA || it.kind;
+  if(kind === "imp" && it.value === null) return DIV.test(s) ? {ok:true} : {ok:false, msg:"This one diverges."};
+  if(DIV.test(s)) return {ok:false, msg:"It converges."};
+  let F; try { F = parseExpr(s); } catch(e){ return {ok:false, msg:"Couldn't read that: " + e.message + ". Use * if unsure, e.g. x*sin(x), and parentheses for functions: sin(x), ln(x), sqrt(x)."}; }
+  const alt = [1, 2, 3, 4, 5, 6, 7].map(k => { try { return parseExpr(s, !!(k & 1), !!(k & 2), !!(k & 4)); } catch(e){ return null; } });
+  const both = [F, ...alt].filter(Boolean);   // "cos x^6" may mean cos(x^6) or (cos x)^6: accept either reading
+  if(kind === "anti"){
+    if(/^\s*-?[\d.\/\s*pie()+-]+\s*$/.test(s)) return {ok:false, msg:"That's a number; this needs an antiderivative in x."};
+    return both.some(G => checkAnti(G, it.f, it.dom)) ? {ok:true} : {ok:false, msg:"Its derivative doesn't match the integrand."};
+  }
+  if(both.some(G => closeV(G(0.5), it.value))) return {ok:true};
+  const v = F(0.5);
+  return {ok:false, msg:isFinite(v) ? `Your value ≈ ${+v.toPrecision(6)}; the right one ≈ ${+it.value.toPrecision(6)}.` : "That isn't a number."};
+}
+
+/* ================= learn mode ================= */
+const TOPICS = [
+  {id:"u", name:"u-substitution", sec:"5.5", lec:"Lecture 7", tpl:["u1", "u2", "u3", "u7", "u4", "u7"]},
+  {id:"b", name:"Integration by parts", sec:"7.1", lec:"Lecture 11", tpl:["b1", "b2", "b4", "b5", "b3", "b6"]},
+  {id:"p", name:"Partial fractions", sec:"7.4", lec:"Lecture 15", tpl:["p1", "p3", "p2", "p4"]},
+  {id:"i", name:"Improper integrals", sec:"7.8", lec:"Lectures 16–17", tpl:["i1", "i2", "i5", "i3", "i4"]},
+  {id:"t", name:"Trig integrals", sec:"7.2", lec:"Lectures 12–13", tpl:["t1", "t2", "t3", "t4"]},
+  {id:"v", name:"Volumes", sec:"6.2", lec:"Lectures 9–10", tpl:["vw", "vs", "vw", "vs"]},
+  {id:"s", name:"Trig substitution", sec:"7.3", lec:"Lecture 14", tpl:["s1", "s2", "s3", "s5", "s4", "s7"]},
+  {id:"r", name:"Strategy", sec:"7.5", lec:"Lecture 16", tpl:["mix", "mix", "mix", "mix", "mix"]}
+];
+const LESSON = {
+  u:`<p><b>Idea:</b> the chain rule backwards. If the integrand looks like \\(f(g(x))\\cdot g'(x)\\), set \\(u=g(x)\\), so \\(du=g'(x)\\,dx\\), and the integral becomes \\(\\int f(u)\\,du\\).</p>
+     <p><b>Recipe:</b> (1) pick \\(u\\) = the "inside" whose derivative also appears (up to a constant). (2) Write \\(du=\\ldots dx\\) and solve for the piece you have, e.g. \\(x\\,dx=\\tfrac12du\\). (3) Replace EVERY \\(x\\); if an \\(x\\) is left over, the choice was wrong. (4) Integrate in \\(u\\), then put \\(x\\) back. For definite integrals, change the limits to \\(u\\)-values instead.</p>
+     <p><b>Write on the test:</b> "Let \\(u=\\ldots\\), \\(du=\\ldots\\)". That line is the justification.</p>`,
+  b:`<p><b>Formula:</b> \\(\\int u\\,dv=uv-\\int v\\,du\\). It's the product rule backwards. You trade the integral you have for \\(\\int v\\,du\\), which should be easier.</p>
+     <p><b>Choosing \\(u\\) (LIATE):</b> the first in the list Log, Inverse trig, Algebraic (polynomials), Trig, Exponential is \\(u\\); the rest (with \\(dx\\)) is \\(dv\\). Polynomial × \\(e^x\\) or trig → \\(u\\) = polynomial (it shrinks when differentiated). \\(\\ln x\\), \\(\\arctan x\\) alone → \\(u\\) = them, \\(dv=dx\\).</p>
+     <p><b>Recipe:</b> write the 2×2 box: \\(u=\\ \\ \\ dv=\\) / \\(du=\\ \\ \\ v=\\). Then \\(uv-\\int v\\,du\\). \\(x^2\\) needs two rounds; \\(e^{x}\\sin x\\) comes back to itself → solve for it.</p>`,
+  p:`<p><b>When:</b> a ratio of polynomials. <b>Step 0:</b> if deg top ≥ deg bottom, do long division first.</p>
+     <p><b>Recipe:</b> (1) factor the bottom completely. (2) Write the form: each linear factor \\((x-a)\\) → \\(\\frac{A}{x-a}\\); a repeated \\((x-a)^2\\) → \\(\\frac{A}{x-a}+\\frac{B}{(x-a)^2}\\); an irreducible \\(x^2+k^2\\) → \\(\\frac{Bx+C}{x^2+k^2}\\). (3) Multiply both sides by the bottom; plug in the roots to get A, B quickly (cover-up), match coefficients for the rest. (4) Integrate: \\(\\frac{A}{x-a}\\to A\\ln|x-a|\\), \\(\\frac{B}{(x-a)^2}\\to-\\frac{B}{x-a}\\), \\(\\frac{Bx}{x^2+k^2}\\to\\frac B2\\ln(x^2+k^2)\\), \\(\\frac{C}{x^2+k^2}\\to\\frac Ck\\arctan\\frac xk\\).</p>`,
+  i:`<p><b>Improper</b> = an infinite limit, or an integrand that blows up somewhere on the interval. You never plug in ∞: replace it with \\(t\\), integrate normally, take \\(\\lim_{t\\to\\infty}\\).</p>
+     <p><b>Recipe:</b> (1) find what's improper (∞ at an end? division by 0, \\(\\ln 0\\), \\(\\sec\\frac\\pi2\\) at an end or INSIDE?). (2) Write \\(\\lim\\) explicitly. (3) Antiderivative with the technique it needs. (4) Evaluate the limit: finite → converges to that value; ∞ or doesn't exist → diverges. A blow-up inside → split there; one divergent piece makes the whole thing diverge.</p>
+     <p><b>Facts:</b> \\(\\int_1^\\infty\\frac{dx}{x^p}\\) converges iff \\(p>1\\) (value \\(\\frac1{p-1}\\)); \\(\\int_0^1\\frac{dx}{x^p}\\) converges iff \\(p<1\\). Comparison: smaller than convergent → converges; bigger than divergent → diverges.</p>`,
+  t:`<p><b>Identities you need:</b> \\(\\sin^2+\\cos^2=1\\), \\(1+\\tan^2=\\sec^2\\), \\(\\cos^2x=\\frac{1+\\cos2x}{2}\\), \\(\\sin^2x=\\frac{1-\\cos2x}{2}\\). Derivatives: \\((\\tan x)'=\\sec^2x\\), \\((\\sec x)'=\\sec x\\tan x\\).</p>
+     <p><b>sin/cos powers:</b> an odd power → save one factor (it becomes \\(du\\)), convert the rest with \\(\\sin^2=1-\\cos^2\\), substitute. Both even → half-angle.</p>
+     <p><b>sec/tan powers:</b> sec power even → save \\(\\sec^2x\\), \\(u=\\tan x\\). tan power odd → save \\(\\sec x\\tan x\\), \\(u=\\sec x\\). Lone \\(\\tan^2\\) → \\(\\sec^2-1\\).</p>`,
+  v:`<p><b>Idea:</b> slice the solid perpendicular to the axis; each slice is a disk or a washer (a disk with a hole). Area \\(\\pi R^2-\\pi r^2\\), add them up. Your course does 6.2 only (no shells), so everything is washers.</p>
+     <p><b>Horizontal axis</b> (x-axis, \\(y=-1\\), \\(y=2\\)): slices in \\(x\\), \\(V=\\pi\\int_a^b(R^2-r^2)\\,dx\\). <b>Vertical axis</b> (y-axis, \\(x=2\\), \\(x=-1\\)): slices in \\(y\\), solve each curve for \\(x\\) (\\(y=\\sqrt x\\Rightarrow x=y^2\\)), \\(V=\\pi\\int_c^d(R^2-r^2)\\,dy\\).</p>
+     <p><b>Recipe:</b> (1) sketch the region and the axis. (2) Limits: where the curves meet (in \\(x\\) or in \\(y\\)). (3) Every radius is a DISTANCE to the axis: axis \\(y=-1\\) → curve \\(+1\\); axis \\(y=2\\) → \\(2-\\) curve; axis \\(x=2\\) → \\(2-x\\). (4) \\(R\\) = farther curve, \\(r\\) = nearer curve. Only one curve (bounded by the axis itself)? Then \\(r=0\\): a disk. (5) Expand and integrate. "Set up, but do not evaluate" means stop at the integral.</p>`,
+  s:`<p><b>When:</b> \\(\\sqrt{a^2-x^2}\\), \\(\\sqrt{a^2+x^2}\\), \\(\\sqrt{x^2-a^2}\\) (or powers of them), and plain u-sub doesn't work.</p>
+     <p><b>Pick:</b> \\(a^2-x^2\\): \\(x=a\\sin\\theta\\) (root becomes \\(a\\cos\\theta\\)). \\(a^2+x^2\\): \\(x=a\\tan\\theta\\) (root becomes \\(a\\sec\\theta\\)). \\(x^2-a^2\\): \\(x=a\\sec\\theta\\) (root becomes \\(a\\tan\\theta\\)).</p>
+     <p><b>Recipe:</b> (1) substitute \\(x\\) and \\(dx\\). (2) Simplify to a trig integral and solve it (7.2 skills). (3) Draw the right triangle from the substitution (e.g. \\(\\sin\\theta=\\frac{x}{a}\\): opposite \\(x\\), hypotenuse \\(a\\)) and read every trig function back in \\(x\\). For definite integrals, change the limits to \\(\\theta\\).</p>`,
+  r:`<p><b>Decision order (7.5):</b> (1) Simplify: algebra, cancel, an identity (\\(\\tan x\\cos x=\\sin x\\)). (2) Obvious u-sub: is a derivative of a piece sitting there? (3) Rational function → partial fractions (divide first if needed); but check u-sub first (top = constant × derivative of bottom). (4) Product of different kinds (poly × exp/trig, ln, arctan) → by parts. (5) Trig powers → identities. (6) Roots of quadratics → trig sub (or u-sub if an \\(x\\) factor matches).</p>`
+};
+function learnItem(code){
+  if(code === "vw" || code === "vs") return volItem(code === "vw" ? "v_wash" : "v_shell", true, false);
+  if(code === "mix"){ const t = pick(TPL.filter(t => !t.id.startsWith("i"))); return solveFrom(t); }
+  return solveFrom(TPL.find(t => t.id === code));
+}
+let LRN = null;
+function openLearn(){
+  cur = 0; renderLadder(); stopTick(); LRN = null; R = null;
+  const lp = S.learn || {};
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung 1 of ${STAGES.length} · Learn</span><span>${TOPICS.filter(t => lp[t.id] && lp[t.id].done).length} / ${TOPICS.length} topics learned</span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">Learn, from zero</h2>
+    <p style="margin:0;max-width:65ch">One topic at a time, in this order (each one is used by the next). For each: read the short lesson, (optionally) skim the professor's lecture notes for that section, then work through example → your turn pairs. The example is fully solved; your turn is the same type with new numbers, done on paper. Hints and "show the first step" are free here. This rung is for learning, not testing.</p>
+    <div class="opts wide">${TOPICS.map((t, k) => { const p = lp[t.id] || {}; return `<button class="opt" data-t="${k}" type="button"><span class="k">${p.done ? "✓" : k + 1}</span><span><b>${t.name}</b> (${t.sec}) · ${t.lec}${p.done ? ` · done, ${p.clean} / ${p.total} clean` : p.pos ? ` · ${p.pos} / ${t.tpl.length} pairs` : ""}</span></button>`; }).join("")}</div>`;
+  $("stage").querySelectorAll(".opt").forEach(b => b.onclick = () => startTopic(+b.dataset.t));
+  typeset($("stage"));
+}
+function startTopic(k){
+  const t = TOPICS[k], lp = (S.learn = S.learn || {}), p = lp[t.id] && !lp[t.id].done ? lp[t.id] : (lp[t.id] = {pos:0, clean:0, total:0});
+  LRN = {k, t, p};
+  showLesson();
+}
+function showLesson(){
+  const {t, p} = LRN;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Learn · ${t.name} (${t.sec})</span><span>professor's notes: ${t.lec}</span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.5rem">${t.name}</h2>
+    <div class="rule"><span class="lbl">Lesson</span><div>${LESSON[t.id]}</div></div>
+    <div class="row"><button class="btn" id="go" type="button">${p.pos ? `Continue (pair ${p.pos + 1} of ${t.tpl.length})` : "First worked example"}</button><button class="btn ghost" id="back" type="button">All topics</button></div>`;
+  $("go").onclick = showExample; $("back").onclick = openLearn; $("go").focus();
+  typeset($("stage"));
+}
+const stepsList = it => `<ol class="steps">${it.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+const probHead = it => it.q ? `<div class="big">\\(${it.q}\\)</div>` : `<div class="prompt">${it.prompt}</div>`;
+function showExample(){
+  const {t, p} = LRN, code = t.tpl[p.pos], ex = learnItem(code);
+  LRN.code = code;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Learn · ${t.name} · pair ${p.pos + 1} of ${t.tpl.length}</span><span>worked example</span></div>
+    <span class="lbl">Worked example: read every step, and redo it on paper without looking</span>
+    ${probHead(ex)}
+    ${stepsList(ex)}
+    <div class="fb"><h3>Answer: \\(${ex.ansTex}\\)</h3><div class="small">Why this technique: ${ex.recog || ""}</div></div>
+    <div class="row"><button class="btn" id="go" type="button">Your turn: same type, new numbers ↵</button><button class="btn ghost" id="les" type="button">Lesson</button></div>`;
+  $("go").onclick = showTurn; $("les").onclick = showLesson; $("go").focus();
+  typeset($("stage"));
+}
+function showTurn(){
+  const {t, p} = LRN, it = learnItem(LRN.code);
+  LRN.it = it; LRN.peek = false; LRN.answered = false;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Learn · ${t.name} · pair ${p.pos + 1} of ${t.tpl.length}</span><span>your turn</span></div>
+    <span class="lbl">Your turn: work it on paper, type the final answer</span>
+    ${probHead(it)}
+    <div class="row" style="flex-wrap:nowrap"><input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="${it.kindA === "anti" ? "antiderivative, e.g. x*sin(x) + cos(x)" : "exact value, or diverges"}" aria-label="Your answer"><button class="btn" id="check" type="button">Check</button></div>
+    <div class="row"><button class="btn ghost" id="rule" type="button">Show the rule (free)</button><button class="btn ghost" id="peek" type="button">Show the first step</button></div>
+    <div id="hintout"></div><div id="fb"></div>`;
+  $("typed").focus();
+  $("typed").onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); LRN.answered ? nextPair() : learnCheck(); } };
+  $("check").onclick = learnCheck;
+  $("rule").onclick = () => { $("hintout").insertAdjacentHTML("beforeend", cardHTML(it.sk)); $("rule").disabled = true; typeset($("hintout")); };
+  $("peek").onclick = () => { LRN.peek = true; $("hintout").insertAdjacentHTML("beforeend", `<div class="rule"><span class="lbl">First step</span><div>${it.steps[0]}</div></div>`); $("peek").disabled = true; typeset($("hintout")); };
+  typeset($("stage"));
+}
+function learnCheck(){
+  if(LRN.answered) return;
+  const {it, p} = LRN, g = grade(it, $("typed").value);
+  if(!g.ok && /Couldn't read|Empty/.test(g.msg || "")){ $("fb").innerHTML = `<div class="small">${esc(g.msg)}</div>`; return; }
+  LRN.answered = true; $("typed").disabled = true; $("check").disabled = true;
+  const clean = g.ok && !LRN.peek;
+  p.total++; if(clean) p.clean++; record(it.sk, clean); save(); renderMastery();
+  $("fb").innerHTML = `<div class="fb ${g.ok ? "" : "bad"}"><h3>${g.ok ? (LRN.peek ? "Right, with the first step shown" : "Right") : "Not yet"}: \\(${it.ansTex}\\)</h3>${g.msg ? `<div>${esc(g.msg)}</div>` : ""}${stepsList(it)}</div>
+    <div class="row" style="margin-top:12px">${g.ok ? `<button class="btn" id="next" type="button">Next pair ↵</button>` : `<button class="btn" id="next" type="button">Another one of this type ↵</button>`}</div>`;
+  $("next").onclick = g.ok ? nextPair : () => showTurn();
+  $("next").focus();
+  typeset($("fb"));
+}
+function nextPair(){
+  const {t, p} = LRN;
+  p.pos++;
+  if(p.pos >= t.tpl.length){
+    p.done = true; save();
+    const all = TOPICS.every(x => S.learn[x.id] && S.learn[x.id].done);
+    if(all){ S.passed[0] = true; S.best[0] = 1; save(); }
+    $("stage").innerHTML = `<div class="meta"><span>Learn · ${t.name}</span><span>done</span></div>
+      <div class="row" style="align-items:baseline;gap:16px"><span class="score">${p.clean} / ${p.total}</span><span class="pill ok">${t.name} learned</span></div>
+      <p style="margin:0">Next: ${LRN.k + 1 < TOPICS.length ? `<b>${TOPICS[LRN.k + 1].name}</b>. Tomorrow morning, start by redoing one problem of this topic from memory.` : "all topics are done. Go to rung 2 (Recognize)."}</p>
+      <div class="row">${LRN.k + 1 < TOPICS.length ? `<button class="btn" id="nx" type="button">Next topic</button>` : ""}<button class="btn ghost" id="back" type="button">All topics</button></div>`;
+    if($("nx")) $("nx").onclick = () => startTopic(LRN.k + 1);
+    $("back").onclick = openLearn; ($("nx") || $("back")).focus();
+    renderLadder();
+    return;
+  }
+  save(); showExample();
+}
+
+/* ================= app ================= */
+const STAGES = [
+  {name:"Learn", learn:true, pass:1, blurb:""},
+  {name:"Recognize", len:14, card:true, retry:true, pass:.85, blurb:"Multiple choice: which technique, which u / dv, which substitution, which form, which volume integral. The rule is shown. Misses come back later in the round."},
+  {name:"First move", len:16, hint:true, retry:true, pass:.9, blurb:"Same decisions without the rule on screen. Every wrong option is a classic mistake, and the feedback says which. The hint shows the rule and counts as a miss."},
+  {name:"Solve", len:8, typed:true, hint:true, pass:.85, blurb:"Full problems. Work on paper exactly as you'd write it on the test, then type only the final answer. Any equivalent form is accepted (it's checked numerically). Steps are shown after you answer."},
+  {name:"Test replica", replica:true, typed:true, timer:90 * 60, pass:.9, blurb:"10 problems shaped like the Test 2 review: volumes, parts, trig integrals, trig sub, partial fractions plus the decomposition form, strategy, improper, comparison. 90-minute clock, no feedback until the end."},
+  {name:"Beyond", len:8, typed:true, hard:true, pass:.85, blurb:"Harder variants: cyclic parts, high sec/tan powers, x⁻⁴ ln x, axes at y = 3 and x = −2, discontinuities inside the interval."}
+];
+const SKEY = "calc-ladder-v2";
+const fresh = () => ({m:{}, seen:{}, passed:{}, best:{}, unlocked:2, learn:{}});
+function load(){ try { const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; } catch(e){} return fresh(); }
+function save(){ try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+const $ = id => document.getElementById(id);
+const mOf = k => S.m[k] || 0;
+function record(k, ok){ if(!SK[k]) return; S.seen[k] = 1; S.m[k] = ok ? Math.min(5, mOf(k) + 1) : Math.max(1, mOf(k) - 2); }
+function pickSkills(n){
+  const w = DRILL.map(k => S.seen[k] ? 6 - mOf(k) : 7), tot = w.reduce((a, b) => a + b, 0), out = [];
+  while(out.length < n){
+    let x = Math.random() * tot, i = 0; while((x -= w[i]) > 0 && i < DRILL.length - 1) i++;
+    if(out.length && SK[out[out.length - 1]].g === SK[DRILL[i]].g && Math.random() < .6) continue;
+    out.push(DRILL[i]);
+  }
+  return out;
+}
+const typeset = el => { try { if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(() => {}); } catch(e){} };
+const cardHTML = k => `<div class="rule"><span class="lbl">Rule · ${SK[k].label}</span><div>${CARDS[k]}</div></div>`;
+let cur = null;
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st, i) => {
+    const locked = i + 1 > S.unlocked, passed = S.passed[i];
+    const lp = S.learn || {}, nl = TOPICS.filter(t => lp[t.id] && lp[t.id].done).length;
+    const best = st.learn ? `${nl} / ${TOPICS.length} topics` : S.best[i] != null ? "best " + Math.round(S.best[i] * 100) + "%" : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur === i ? "on" : ""} ${locked ? "locked" : ""} ${passed ? "passed" : ""}" data-i="${i}" type="button"><span class="n">Rung ${i + 1}</span><span class="nm">${st.name}</span><span class="st">${passed ? "passed · " : ""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  let html = "", g = null;
+  for(const k of DRILL){ if(SK[k].g !== g){ if(g) html += "</div>"; g = SK[k].g; html += `<div class="mgroup">${G[g]}</div><div class="mgrid">`; } html += `<div class="chip" style="background:${S.seen[k] ? `var(--m${mOf(k)})` : "var(--m0)"}">${SK[k].label}</div>`; }
+  $("mgrid").innerHTML = html + "</div>";
+}
+function renderSheet(){
+  $("sheetBody").innerHTML = `<div class="rule"><span class="lbl">Typing answers</span><div>
+    <code>x*sin(x)</code> or <code>x sin(x)</code> · <code>x^2</code> · <code>e^(3x)</code> or <code>exp(3x)</code> · <code>ln(x-2)</code> (absolute value not needed) · <code>sqrt(9-x^2)</code> · <code>arcsin(x/3)</code>, <code>arctan(x)</code>, <code>arcsec(x)</code> · <code>sin(x)^3</code> or <code>sin^3(x)</code> · <code>pi</code> · fractions <code>2/3</code>. +C is optional. For an improper integral that diverges, type <code>diverges</code>.</div></div>
+    <div class="sheetgrid">${DRILL.map(cardHTML).join("")}</div>`;
+  typeset($("sheetBody"));
+}
+function openStage(i){
+  if(STAGES[i].learn) return openLearn();
+  cur = i; renderLadder(); stopTick();
+  const st = STAGES[i], locked = i + 1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} of ${STAGES.length}</span><span>Pass mark: <b>${Math.round(st.pass * 100)}%</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${i === 1 ? `<div class="rule"><span class="lbl">Test 2 · Tuesday Nov 10, 10:30</span><div>Covers 6.2 to 7.8, plus u-substitution. Pen and paper, closed book, no calculator, 90 minutes, about 9 questions. Justification is graded: write the substitution, the u / dv choice, the limits. The review set covers volumes, by parts, trig integrals, trig sub, partial fractions (including writing the form), strategy, improper integrals and comparison.</div></div>` : ""}
+    ${locked ? `<p class="small" style="margin:0">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked ? "Start anyway" : "Start round"}</button><span class="small">${st.typed ? "Have paper ready. Enter checks / moves on." : "Keys: 1–4 to answer, Enter for next."}</span></div>`;
+  $("go").onclick = () => start(i); $("go").focus();
+  typeset($("stage"));
+}
+let R = null;
+function stopTick(){ if(R && R.tick){ clearInterval(R.tick); R.tick = null; } }
+function start(i){
+  const st = STAGES[i], queue = st.replica ? replicaItems() : pickSkills(st.len).map(k => makeItem(k, st));
+  R = {i, st, queue, pos:0, total:queue.length, clean:0, misses:[], answered:false, hinted:false, log:[], t0:Date.now()};
+  if(st.timer) R.tick = setInterval(() => { const el = $("timer"); if(!el) return; const left = st.timer - Math.floor((Date.now() - R.t0) / 1000); el.textContent = `${Math.floor(Math.abs(left) / 60)}:${String(Math.abs(left) % 60).padStart(2, "0")}${left < 0 ? " over" : " left"}`; if(left < 0) el.classList.add("over"); }, 1000);
+  showItem();
+}
+function showItem(){
+  const it = R.queue[R.pos], st = R.st;
+  R.answered = false; R.hinted = false;
+  const done = R.queue.slice(0, R.pos).filter(q => !q.retry).length;
+  const head = it.kind === "solve" ? (it.q ? `<div class="prompt">Evaluate${(it.kindA || it.kind) === "imp" ? " (or type <code>diverges</code>)" : ""}:</div><div class="big">\\(${it.q}\\)</div>` : `<div class="prompt">${it.prompt}</div>`) : `<div class="prompt">${it.prompt}</div>`;
+  let ans;
+  if(it.kind === "mc") ans = `<div class="opts wide" id="opts">${it.list.map((o, j) => `<button class="opt" data-j="${j}" type="button"><span class="k">${j + 1}</span><span>${o}</span></button>`).join("")}</div>`;
+  else ans = `<div class="row" style="flex-wrap:nowrap"><input type="text" id="typed" autocomplete="off" spellcheck="false" placeholder="${(it.kindA || it.kind) === "anti" ? "antiderivative, e.g. x*sin(x) + cos(x)" : "exact value, e.g. 2/3, pi/4 - ln(2)/2, or diverges"}" aria-label="Your answer"><button class="btn" id="check" type="button">${st.replica ? "Save" : "Check"}</button></div>`;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i + 1} · ${st.name} · ${G[SK[it.sk].g]}${st.timer ? ` · <span class="timer" id="timer"></span>` : ""}</span><span><b>${done}</b> / ${R.total}${st.replica ? "" : ` · clean <b>${R.clean}</b>`}</span></div>
+    <div class="bar"><i style="width:${done / R.total * 100}%"></i></div>
+    ${it.retry ? `<span class="lbl">Again, a new problem on the same skill</span>` : ""}
+    ${head}${st.card ? cardHTML(it.sk) : ""}${ans}
+    <div class="row">${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint (counts as a miss)</button>` : ""}<div id="hintout" style="flex-basis:100%"></div></div>
+    <div id="fb"></div>`;
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.j));
+  if($("typed")){ $("typed").focus(); $("typed").onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); R.answered ? next() : answer($("typed").value); } }; $("check").onclick = () => answer($("typed").value); }
+  if($("hint")) $("hint").onclick = () => { R.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = cardHTML(it.sk); typeset($("hintout")); };
+  typeset($("stage"));
+}
+function answer(choice){
+  if(R.answered) return;
+  const it = R.queue[R.pos], st = R.st;
+  let ok, why = "", msg = "";
+  if(it.kind === "mc"){ ok = it.why[choice] === null; if(!ok) why = it.why[choice] || ""; }
+  else { const g = grade(it, choice); ok = g.ok; msg = g.msg || ""; $("typed").disabled = true; $("check").disabled = true; }
+  R.answered = true;
+  const clean = ok && !R.hinted;
+  if(!it.retry){ if(clean) R.clean++; else R.misses.push(it); record(it.sk, clean); save(); renderMastery(); }
+  R.log.push({it, ok:clean, input:it.kind === "mc" ? it.list[choice] : esc(choice), why, msg});
+  if(st.replica) return next();
+  if($("opts")) $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if(it.why[k] === null) b.classList.add("right"); else if(k === choice) b.classList.add("wrong"); });
+  if($("hint")) $("hint").disabled = true;
+  if(!ok && st.retry){ const again = Object.assign(makeItem(it.sk, st), {retry:true}); R.queue.splice(Math.min(R.pos + 3, R.queue.length), 0, again); }
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}"><h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}${it.kind === "solve" ? `: \\(${it.ansTex}\\)` : ""}</h3>
+    ${why ? `<div><b>Your choice:</b> ${why}</div>` : ""}${msg ? `<div>${esc(msg)}</div>` : ""}
+    ${it.kind === "solve" ? `<ol class="steps">${it.steps.map(s => `<li>${s}</li>`).join("")}</ol>` : `<div>${it.explain}</div>`}
+    ${!ok ? cardHTML(it.sk) : ""}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = next; $("next").focus();
+  typeset($("fb"));
+}
+function next(){ R.pos++; if(R.pos >= R.queue.length) finish(); else showItem(); }
+function finish(){
+  stopTick();
+  const i = R.i, st = STAGES[i], score = R.clean / R.total, passed = score >= st.pass - 1e-9, last = STAGES.length - 1;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(STAGES.length, i + 2)); }
+  save(); renderLadder();
+  const mins = Math.round((Date.now() - R.t0) / 60000);
+  const review = st.replica ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Every problem</h3><ol class="steps">${R.log.map(l => `<li><b class="${l.ok ? "ok-t" : "no-t"}">${l.ok ? "✓" : "✗"}</b> ${l.it.q ? `\\(${l.it.q}\\)` : l.it.prompt} ${l.it.kind === "solve" ? `→ \\(${l.it.ansTex}\\)` : ""}${!l.ok ? `<details><summary class="small">your answer: ${l.input || "(blank)"} · solution</summary>${l.it.kind === "solve" ? `<ol class="steps">${l.it.steps.map(s => `<li>${s}</li>`).join("")}</ol>` : l.it.explain}${l.why ? `<div>${l.why}</div>` : ""}</details>` : ""}</li>`).join("")}</ol></div>` : "";
+  const by = {}; R.misses.forEach(m => (by[m.sk] = (by[m.sk] || 0) + 1));
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name} · round over · ${mins} min</span><span>Pass mark ${Math.round(st.pass * 100)}%</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${R.clean} / ${R.total}</span><span class="pill ${passed ? "ok" : "no"}">${passed ? (i < last ? "Passed · rung " + (i + 2) + " unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${Object.keys(by).length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">Skills to redo</h3><ul class="missl">${Object.entries(by).map(([k, n]) => `<li><b>${SK[k].label}</b> × ${n}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    ${review}
+    <div class="row">${passed && i < last ? `<button class="btn" id="nx" type="button">Go to rung ${i + 2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>` : `<button class="btn" id="again" type="button">${passed ? "Play again" : "Try again"}</button>`}</div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i + 1);
+  ($("nx") || $("again")).focus();
+  window.scrollTo({top:0});
+  typeset($("stage"));
+}
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "TEXTAREA") return;
+  if(R && $("opts") && !R.answered && /^[1-5]$/.test(e.key)){ const b = document.querySelector(`.opt[data-j="${+e.key - 1}"]`); if(b){ e.preventDefault(); b.click(); } }
+  else if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+renderMastery(); renderSheet();
+if(TOPICS.every(t => S.learn && S.learn[t.id] && S.learn[t.id].done)) openStage(Math.min(S.unlocked, STAGES.length) - 1); else openLearn();
+</script>
+</body>
+</html>
+
+</body></html>

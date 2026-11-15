@@ -1,0 +1,452 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keyword Ladder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+
+/* Same layout as the Term and Token ladders: rungs on top, working card left, skill mastery right. */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --key:#ffe08a; --key-ink:#3a2a00;
+  --good:#1f8a4c; --bad:#c8372d; --warn:#b7791f; --code-bg:#f5f7f9;
+  --m0:#e3e8ec; --m1:#f4c7c1; --m2:#f6dfa9; --m3:#d7ebb7; --m4:#a9dcb9; --m5:#5fbf86;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#17222b; --ink:#e4ecf1; --muted:#93a5b2; --line:#2a3945;
+  --accent:#3fb7ae; --accent-ink:#06201e; --key:#6b5310; --key-ink:#fff1c4;
+  --good:#4cc47e; --bad:#ef6b5f; --warn:#e0a84a; --code-bg:#111b22;
+  --m0:#24323d; --m1:#5a2d2a; --m2:#5a4a22; --m3:#3f5530; --m4:#2d6644; --m5:#2f9a5e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+/* JetBrains Mono draws != and -> as ligatures; code must show its real characters */
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+header h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+code,.mono{font-family:var(--f-mono)}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.rung{all:unset;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rung:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rung .n{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rung .nm{font-family:var(--f-display);font-weight:600;font-size:1rem;line-height:1.2}
+.rung .st{font-size:.78rem;color:var(--muted)}
+.rung.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rung.passed .st{color:var(--good);font-weight:700}
+.rung.locked{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink)}
+.bar{height:6px;background:var(--m0);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.lbl{display:block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:1.15rem;line-height:1.5}
+.prompt code,.inl{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:pre}
+pre.code{font-family:var(--f-mono);font-size:.98rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre}
+.formula{font-size:1.05rem;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rule{background:var(--code-bg);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:.95rem;display:grid;gap:4px}
+.rule .lbl{color:var(--warn)}
+.rule code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.88em;white-space:pre}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.opts.wide{grid-template-columns:1fr}
+.opt{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);font-weight:700;min-width:0}
+.opts.wide .opt span:last-child{font-family:var(--f-mono);font-weight:400;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.opt .k{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;text-align:center;line-height:22px;height:22px;font-weight:400}
+.opt.right{border-color:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{border-left:4px solid var(--good);background:var(--code-bg);border-radius:0 10px 10px 0;padding:12px 14px;display:grid;gap:8px}
+.fb.bad{border-left-color:var(--bad)}
+.fb h3{margin:0;font-family:var(--f-display);font-size:1.05rem}
+.fb ol,.fb ul{margin:0;padding-left:1.3em;display:grid;gap:3px;font-size:.93rem}
+.fb code{font-family:var(--f-mono);font-size:.9em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:9px;padding:9px 16px}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.small{font-size:.85rem;color:var(--muted)}
+input[type=text]{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+input[type=text]:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent)}
+input.ok{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good)} input.no{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+textarea.ed{font-family:var(--f-mono);font-size:.95rem;line-height:1.45;width:100%;min-height:170px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink);resize:vertical;tab-size:4}
+/* exam layout */
+.q{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.q > h3{margin:0;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:1rem;padding:8px 14px;display:flex;justify-content:space-between;gap:10px}
+.q > .qb{padding:14px;display:grid;gap:12px}
+.parts{display:grid;gap:8px}
+.part{display:grid;grid-template-columns:minmax(0,260px) minmax(0,220px) minmax(0,1fr);gap:10px;align-items:center}
+.part .ex{font-family:var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:pre;overflow-x:auto}
+.part .res{font-size:.88rem}
+.res.ok{color:var(--good)} .res.no{color:var(--bad)}
+.hintb{all:unset;cursor:pointer;font-size:.75rem;color:var(--warn);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mrows{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mrow select,.trow select{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.mrow .t{display:grid;gap:4px;min-width:0}
+.mrow .t code{justify-self:start;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:pre}
+.match{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px}
+.trow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.bank{list-style:none;margin:0;padding:0;display:grid;gap:3px;align-content:start}
+.bank li{display:grid;grid-template-columns:28px 1fr;font-size:.95rem}
+.bank li b{font-family:var(--f-mono);font-size:.85rem;text-align:right;padding-right:8px}
+table.tests{border-collapse:collapse;font-size:.88rem;width:100%}
+table.tests td,table.tests th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+table.tests td.mono{font-family:var(--f-mono);font-size:.85rem;word-break:break-all}
+.tw{overflow-x:auto}
+.ok-t{color:var(--good);font-weight:700} .no-t{color:var(--bad);font-weight:700}
+/* mastery */
+aside .card{gap:10px}
+aside h2{font-family:var(--f-display);font-size:1.05rem;margin:0}
+.mgroup{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.mgrid{display:grid;grid-template-columns:1fr;gap:4px}
+.chip{font-size:.82rem;padding:4px 8px;border-radius:6px;background:var(--m0);color:var(--ink)}
+.legend{display:flex;gap:4px;align-items:center;font-size:.75rem;color:var(--muted)}
+.legend span{width:14px;height:10px;border-radius:2px;display:inline-block}
+details.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px}
+details.sheet summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.score{font-family:var(--f-display);font-weight:800;font-size:3rem;line-height:1}
+.pill{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--good);color:var(--panel)} .pill.no{background:var(--bad);color:var(--panel)}
+.missl{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.missl li{font-size:.92rem}
+.qscore{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.qscore div{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:1fr 1fr}.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .res{grid-column:1/-1}.match{grid-template-columns:1fr}}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.part,.mrow{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+.ladder{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:520px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tok{font-family:var(--f-mono);font-size:2.4rem;font-weight:700;text-align:center;padding:18px;background:var(--code-bg);border:1px solid var(--line);border-radius:12px}
+.kwt{border-collapse:collapse;font-size:.9rem;width:100%}
+.kwt td{border-bottom:1px solid var(--line);padding:5px 8px;vertical-align:top}
+.kwt td:first-child{white-space:nowrap;color:var(--muted);font-size:.82rem}
+.kwt code{font-family:var(--f-mono);margin-right:6px}
+.kwt code.hit{background:var(--key);color:var(--key-ink);border-radius:4px;padding:0 3px}
+.chips2{display:flex;flex-wrap:wrap;gap:5px}
+.chips2 code{font-family:var(--f-mono);font-size:.85rem;border-radius:5px;padding:2px 6px;border:1px solid var(--line)}
+.chips2 .g{border-color:var(--good);color:var(--good)} .chips2 .b{border-color:var(--bad);color:var(--bad)} .chips2 .x{border-color:var(--warn);color:var(--warn);text-decoration:line-through}
+textarea.rec{font-family:var(--f-mono);font-size:1rem;width:100%;min-height:120px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);color:var(--ink)}
+.streak{display:flex;gap:3px;flex-wrap:wrap}.streak i{width:12px;height:10px;border-radius:2px;background:var(--m0)}.streak i.on{background:var(--good)}
+.timer{font-family:var(--f-mono)} .timer.over{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Keyword Ladder</h1>
+    <p>Keyword or identifier? C has a closed list of 32 keywords (plus 5 from C99). The ladder goes from sorting tokens with the list in view, to writing the whole list from memory against the clock.</p>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Stages"></nav>
+  <div class="grid">
+    <main class="card" id="stage" aria-live="polite"></main>
+    <aside>
+      <div class="card">
+        <h2>Skill mastery</h2>
+        <div class="legend">weak <span style="background:var(--m1)"></span><span style="background:var(--m2)"></span><span style="background:var(--m3)"></span><span style="background:var(--m4)"></span><span style="background:var(--m5)"></span> solid · <span style="background:var(--m0)"></span> unseen</div>
+        <div id="mgrid"></div>
+        <p class="small" style="margin:0">Weak groups and the keywords you miss get picked more often. Only first-try answers with no hint count.</p>
+        <button class="btn ghost" id="reset" type="button">Reset progress</button>
+        <p class="small" id="resetConfirm" hidden>Erase all progress? <button class="btn ghost" id="resetYes" type="button">Yes, erase</button></p>
+      </div>
+    </aside>
+  </div>
+  <details class="sheet" id="sheet">
+    <summary>The keyword list</summary>
+    <div id="sheetBody" style="margin-top:12px"></div>
+  </details>
+</div>
+
+<script>
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ================= content ================= */
+const GROUPS = {
+  g_types:{label:"Basic types", hook:"the 9 type words", kw:["char","short","int","long","float","double","signed","unsigned","void"]},
+  g_build:{label:"Type builders", hook:"make your own types", kw:["struct","union","enum","typedef"]},
+  g_store:{label:"Storage and qualifiers", hook:"where it lives, how it may change", kw:["auto","register","static","extern","const","volatile"]},
+  g_flow:{label:"Control flow", hook:"if/else, switch family, loops, jumps", kw:["if","else","switch","case","default","for","while","do","break","continue","goto","return"]},
+  g_op:{label:"Operator that's a word", hook:"one keyword", kw:["sizeof"]},
+  g_c99:{label:"C99 extras", hook:"added in 1999", kw:["inline","restrict","_Bool","_Complex","_Imaginary"]}
+};
+const C89 = Object.keys(GROUPS).filter(g => g !== "g_c99").flatMap(g => GROUPS[g].kw);
+const ALLKW = C89.concat(GROUPS.g_c99.kw);
+const KWSET = new Set(ALLKW);
+const groupOf = k => Object.keys(GROUPS).find(g => GROUPS[g].kw.includes(k));
+const SK = Object.assign({}, ...Object.keys(GROUPS).map(g => ({[g]:{label:GROUPS[g].label}})), {
+  i_case:{label:"Case lookalikes (Union, IF)"},
+  i_near:{label:"Near misses (unions, _int, int2)"},
+  i_other:{label:"Words from other languages / libraries"}
+});
+const DRILL = Object.keys(SK);
+// words that are NOT C keywords but feel like they might be (avoids bool/true/false, which became keywords in C23)
+const OTHER = [["main","the name of a function you write, not a keyword"],["printf","a library function, not a keyword"],["scanf","a library function"],["NULL","a macro from the headers, not a keyword"],["include","part of the #include directive, not a keyword"],["define","part of #define, not a keyword"],["string","a type in C++ / Java, not in C"],["class","a C++ keyword, not C"],["new","a C++ keyword, not C"],["this","a C++ keyword, not C"],["delete","a C++ keyword, not C"],["public","a C++ / Java keyword, not C"],["private","a C++ / Java keyword, not C"],["template","a C++ keyword, not C"],["namespace","a C++ keyword, not C"],["try","a C++ keyword, not C"],["catch","a C++ keyword, not C"],["throw","a C++ keyword, not C"],["function","a JavaScript keyword, not C"],["var","a JavaScript keyword, not C"],["let","a JavaScript keyword, not C"],["def","a Python keyword, not C"],["elif","a Python keyword, not C (C writes else if)"],["then","not a keyword in C (if has no then)"],["null","lowercase null means nothing in C"],["begin","a Pascal word, not C"],["end","a Pascal word, not C"],["integer","C writes int"],["boolean","not a C keyword"],["elseif","C writes else if, two keywords"],["loop","not a C keyword"],["until","not a C keyword"],["print","a Python function, not C"],["malloc","a library function"],["exit","a library function"],["size_t","a typedef from the headers, not a keyword"],["FILE","a typedef from <stdio.h>, not a keyword"],["EOF","a macro, not a keyword"],["unsigned_int","one identifier with an underscore"],["long_double","one identifier with an underscore"]];
+function lookalike(k){
+  const opts = [
+    ["i_case", k[0].toUpperCase() + k.slice(1), "C is case-sensitive: only the exact lowercase spelling is a keyword"],
+    ["i_case", k.toUpperCase(), "C is case-sensitive: all-caps is a different name, so it's an identifier"],
+    ["i_near", k + "s", "an extra letter makes it a different name"],
+    ["i_near", "_" + k, "a leading underscore makes it a different name"],
+    ["i_near", k + "_", "a trailing underscore makes it a different name"],
+    ["i_near", k + ri(1, 9), "a digit on the end makes it a different name"],
+    ["i_near", k.slice(0, -1), "it's missing a letter"]
+  ].filter(o => !KWSET.has(o[1]) && o[1].length > 1 && /^[A-Za-z_]\w*$/.test(o[1]));
+  return pick(opts);
+}
+
+/* ================= state ================= */
+const STAGES = [
+  {name:"Sort", kind:"sort", len:10, table:true, retry:true, pass:.9, blurb:"10 tokens: keyword or identifier? The list is on screen. Misses come back later in the round."},
+  {name:"Group recall", kind:"group", pass:1, blurb:"Type every keyword in each group from memory. Pass = all groups complete, nothing extra."},
+  {name:"Full recall", kind:"full", pass:1, blurb:"Write all 32 C keywords from a blank box. Pass = 32 / 32, nothing extra. C99 extras are allowed and not counted."},
+  {name:"Streak", kind:"sort", streak:25, limit:3, pass:1, blurb:"Press K or I. Pass = 25 right in a row, each in under 3 seconds. A miss resets the streak."}
+];
+const SKEY = "keyword-ladder-v1";
+const fresh = () => ({m:{}, seen:{}, kw:{}, passed:{}, best:{}, unlocked:1});
+function load(){ try { const s = JSON.parse(localStorage.getItem(SKEY)); if(s && s.m) return s; } catch(e){} return fresh(); }
+function save(){ try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+const $ = id => document.getElementById(id);
+const mOf = k => S.m[k] || 0;
+function record(k, ok){ S.seen[k] = 1; S.m[k] = ok ? Math.min(5, mOf(k) + 1) : Math.max(1, mOf(k) - 2); }
+const kwMiss = (k, ok) => { S.kw[k] = Math.max(0, (S.kw[k] || 0) + (ok ? -1 : 2)); };
+function pickSkill(){
+  const w = DRILL.map(k => (S.seen[k] ? 6 - mOf(k) : 7) * (k === "g_op" || k === "g_c99" ? .5 : 1)), tot = w.reduce((a, b) => a + b, 0);
+  let x = Math.random() * tot, i = 0; while((x -= w[i]) > 0 && i < DRILL.length - 1) i++;
+  return DRILL[i];
+}
+function makeToken(sk){
+  sk = sk || pickSkill();
+  if(GROUPS[sk]){
+    const ks = GROUPS[sk].kw, w = ks.map(k => 1 + (S.kw[k] || 0) * 2), tot = w.reduce((a, b) => a + b, 0);
+    let x = Math.random() * tot, i = 0; while((x -= w[i]) > 0 && i < ks.length - 1) i++;
+    return {tok:ks[i], kw:true, sk, base:ks[i], why:`<b>${ks[i]}</b> is a keyword: ${GROUPS[sk].label.toLowerCase()} (${GROUPS[sk].kw.join(", ")}).`};
+  }
+  if(sk === "i_other"){ const [t, w] = pick(OTHER); return {tok:t, kw:false, sk, why:`<b>${esc(t)}</b> is an identifier: ${w}.`}; }
+  for(let k = 0; k < 50; k++){
+    const base = pick(ALLKW.filter(x => x.length > 2)), l = lookalike(base);
+    if(l && l[0] === sk) return {tok:l[1], kw:false, sk, base, why:`<b>${esc(l[1])}</b> is an identifier: ${l[2]} (the keyword is <code>${base}</code>).`};
+  }
+  return makeToken("i_other");
+}
+
+/* ================= rendering helpers ================= */
+const listHTML = hit => `<table class="kwt">${Object.keys(GROUPS).map(g => `<tr><td>${GROUPS[g].label} (${GROUPS[g].kw.length})</td><td>${GROUPS[g].kw.map(k => `<code class="${k === hit ? "hit" : ""}">${k}</code>`).join("")}</td></tr>`).join("")}</table>`;
+let cur = null;
+function renderLadder(){
+  $("ladder").innerHTML = STAGES.map((st, i) => {
+    const locked = i + 1 > S.unlocked, passed = S.passed[i], b = S.best[i];
+    const best = b != null ? (st.streak ? `best streak ${Math.round(b * st.streak)}` : `best ${Math.round(b * 100)}%`) : (locked ? "locked" : "not tried");
+    return `<button class="rung ${cur === i ? "on" : ""} ${locked ? "locked" : ""} ${passed ? "passed" : ""}" data-i="${i}" type="button"><span class="n">Rung ${i + 1}</span><span class="nm">${st.name}</span><span class="st">${passed ? "passed · " : ""}${best}</span></button>`;
+  }).join("");
+  $("ladder").querySelectorAll(".rung").forEach(b => b.onclick = () => openStage(+b.dataset.i));
+}
+function renderMastery(){
+  const part = (title, ks) => `<div class="mgroup">${title}</div><div class="mgrid">${ks.map(k => `<div class="chip" style="background:${S.seen[k] ? `var(--m${mOf(k)})` : "var(--m0)"}">${SK[k].label}</div>`).join("")}</div>`;
+  const hard = Object.entries(S.kw).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k]) => `<code>${k}</code>`).join(" ");
+  $("mgrid").innerHTML = part("Keyword groups", DRILL.filter(k => GROUPS[k])) + part("Identifier traps", DRILL.filter(k => !GROUPS[k])) + (hard ? `<div class="mgroup">Keywords you miss</div><div class="small">${hard}</div>` : "");
+}
+
+function openStage(i){
+  cur = i; renderLadder(); stopTick();
+  const st = STAGES[i], locked = i + 1 > S.unlocked;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} of ${STAGES.length}</span><span>Pass: <b>${st.streak ? st.streak + " in a row" : Math.round(st.pass * 100) + "%"}</b></span></div>
+    <h2 style="margin:0;font-family:var(--f-display);font-size:1.6rem">${st.name}</h2>
+    <p style="margin:0;max-width:65ch">${st.blurb}</p>
+    ${i === 0 ? `<div class="rule"><span class="lbl">Why this exists</span><div>PE1 Q1: 19 / 20. The one miss was <code>union</code>, marked as an identifier. It's a type builder, like <code>struct</code>, <code>enum</code> and <code>typedef</code>. The rule: a token is a keyword only if it's spelled exactly like one on the list, in lowercase.</div></div>${listHTML(null)}` : ""}
+    ${locked ? `<p class="small" style="margin:0">This rung is locked. Pass rung ${S.unlocked} first, or start it anyway.</p>` : ""}
+    <div class="row"><button class="btn" id="go" type="button">${locked ? "Start anyway" : "Start round"}</button>
+    <span class="small">${st.kind === "sort" ? "Keys: K = keyword, I = identifier, Enter for next." : "Type the keywords, then Check."}</span></div>`;
+  $("go").onclick = () => start(i); $("go").focus();
+}
+const start = i => STAGES[i].kind === "sort" ? startSort(i) : startRecall(i);
+
+/* ================= sorting rounds ================= */
+let R = null;
+function stopTick(){ if(R && R.tick){ clearInterval(R.tick); R.tick = null; } }
+function startSort(i){
+  const st = STAGES[i];
+  R = {i, st, kind:"sort", queue:Array.from({length:st.streak ? 1 : st.len}, () => makeToken()), pos:0, total:st.streak ? 0 : st.len, clean:0, misses:[], streak:0, best:0, answered:false, hinted:false};
+  showTok();
+}
+function showTok(){
+  stopTick();
+  const it = R.queue[R.pos], st = R.st; R.answered = false; R.hinted = false;
+  const done = R.queue.slice(0, R.pos).filter(q => !q.retry).length;
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${R.i + 1} · ${st.name}${st.limit ? ` · <span class="timer" id="timer">0.0 s</span> / ${st.limit} s` : ""}</span><span>${st.streak ? `streak <b>${R.streak}</b> / ${st.streak} · best ${R.best}` : `<b>${done}</b> / ${R.total} · clean <b>${R.clean}</b>`}</span></div>
+    ${st.streak ? `<div class="streak">${Array.from({length:st.streak}, (_, k) => `<i class="${k < R.streak ? "on" : ""}"></i>`).join("")}</div>` : `<div class="bar"><i style="width:${done / R.total * 100}%"></i></div>`}
+    ${it.retry ? `<span class="lbl">Again, a new token from the same family</span>` : ""}
+    <div class="tok">${esc(it.tok)}</div>
+    <div class="opts" id="opts"><button class="opt" data-j="0" type="button"><span class="k">K</span><span>Keyword</span></button><button class="opt" data-j="1" type="button"><span class="k">I</span><span>Identifier</span></button></div>
+    ${st.table ? listHTML(null) : ""}
+    <div class="row">${st.hint ? `<button class="btn ghost" id="hint" type="button">Hint: show the list (counts as a miss)</button>` : ""}${st.streak ? `<button class="btn ghost" id="stop" type="button">Stop and save best streak</button>` : ""}</div><div id="hintout"></div>
+    <div id="fb"></div>`;
+  $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => sortAnswer(+b.dataset.j === 0));
+  if($("hint")) $("hint").onclick = () => { R.hinted = true; $("hint").disabled = true; $("hintout").innerHTML = listHTML(null); };
+  if($("stop")) $("stop").onclick = () => { stopTick(); finish(R.i, R.best / st.streak, R.misses); };
+  R.t0 = Date.now();
+  if(st.limit) R.tick = setInterval(() => { const el = $("timer"); if(!el) return stopTick(); const s = (Date.now() - R.t0) / 1000; el.textContent = s.toFixed(1) + " s"; if(s > st.limit) el.classList.add("over"); }, 100);
+}
+function sortAnswer(saidKw){
+  if(R.answered) return;
+  stopTick();
+  const it = R.queue[R.pos], st = R.st, ok = saidKw === it.kw, secs = (Date.now() - R.t0) / 1000, clean = ok && !R.hinted;
+  R.answered = true;
+  $("opts").querySelectorAll(".opt").forEach((b, k) => { b.disabled = true; if((k === 0) === it.kw) b.classList.add("right"); else b.classList.add("wrong"); });
+  if($("hint")) $("hint").disabled = true;
+  if(!it.retry){
+    if(!st.streak && clean) R.clean++;
+    if(!clean) R.misses.push(it);
+    record(it.sk, clean); if(it.kw) kwMiss(it.tok, clean);
+    save(); renderMastery();
+  }
+  let msg = "";
+  if(st.streak){
+    if(!clean){ msg = R.streak ? `Streak reset from ${R.streak} to 0.` : "Streak stays at 0."; R.streak = 0; }
+    else if(secs > st.limit) msg = `Right, but ${secs.toFixed(1)} s is over ${st.limit} s, so it doesn't count.`;
+    else { R.streak++; R.best = Math.max(R.best, R.streak); msg = `Streak ${R.streak} / ${st.streak}.`; }
+    if(R.streak < st.streak) R.queue.push(makeToken());
+  }
+  if(!ok && st.retry) R.queue.splice(Math.min(R.pos + 3, R.queue.length), 0, Object.assign(makeToken(it.sk), {retry:true}));
+  const fast = st.streak && clean && secs <= st.limit;
+  if(fast){ setTimeout(() => { if(R && R.answered && R.queue[R.pos] === it) nextTok(); }, 250); }
+  $("fb").innerHTML = `<div class="fb ${ok ? "" : "bad"}"><h3>${ok ? (R.hinted ? "Right, but hinted, so not counted" : "Right") : "Not quite"}: ${it.kw ? "keyword" : "identifier"}</h3>
+    ${msg ? `<div><b>${msg}</b></div>` : ""}<div>${it.why}</div>${!ok || st.table ? listHTML(it.kw ? it.tok : it.base) : ""}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">Next ↵</button></div>`;
+  $("next").onclick = nextTok; if(!fast) $("next").focus();
+}
+function nextTok(){
+  R.pos++;
+  if(R.st.streak && R.streak >= R.st.streak) return finish(R.i, 1, R.misses);
+  if(R.pos >= R.queue.length) return finish(R.i, R.clean / R.total, R.misses);
+  showTok();
+}
+
+/* ================= recall rounds ================= */
+const words = s => [...new Set(String(s).split(/[\s,;]+/).map(w => w.trim()).filter(Boolean))];
+function gradeSet(typed, target, allowed){
+  const T = new Set(target), got = typed.filter(w => T.has(w)), extra = typed.filter(w => !T.has(w) && !(allowed && allowed.has(w)));
+  return {got, missing:target.filter(k => !typed.includes(k)), extra};
+}
+const chips = r => `<div class="chips2">${r.got.map(k => `<code class="g">${k}</code>`).join("")}${r.missing.map(k => `<code class="b">${k}</code>`).join("")}${r.extra.map(k => `<code class="x">${esc(k)}</code>`).join("")}</div>
+  <div class="small">green = recalled · red = missed · struck out = not a keyword in this set</div>`;
+function startRecall(i){
+  const st = STAGES[i];
+  R = {i, st, kind:"recall", t0:Date.now()};
+  if(st.kind === "group"){
+    const gs = shuffle(Object.keys(GROUPS));
+    $("stage").innerHTML = `<div class="meta"><span>Rung ${i + 1} · ${st.name}</span><span>${gs.length} groups</span></div>
+      ${gs.map(g => `<div><span class="lbl">${GROUPS[g].label}: ${GROUPS[g].kw.length} keywords · ${GROUPS[g].hook}</span><input type="text" id="g_${g}" autocomplete="off" spellcheck="false" aria-label="${GROUPS[g].label}"><div id="r_${g}"></div></div>`).join("")}
+      <div class="row"><button class="btn" id="check" type="button">Check all</button></div><div id="fb"></div>`;
+    R.gs = gs; $(`g_${gs[0]}`).focus();
+    const ins = gs.map(g => $(`g_${g}`));
+    ins.forEach((el, k) => el.onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); if(k < ins.length - 1) ins[k + 1].focus(); else checkGroups(); } });
+    $("check").onclick = checkGroups;
+  } else {
+    const n = st.c99 ? 37 : 32;
+    $("stage").innerHTML = `<div class="meta"><span>Rung ${i + 1} · ${st.name}${st.timed ? ` · <span class="timer" id="timer">0 s</span> / ${st.timed} s` : ""}</span><span>target ${n}</span></div>
+      <div class="prompt">Write all ${n} ${st.c99 ? "C keywords, including the 5 C99 extras" : "C keywords (C89)"}. Any order, separated by spaces or commas.</div>
+      <textarea class="rec" id="rec" spellcheck="false" autocomplete="off" aria-label="Keywords"></textarea>
+      <div class="row"><button class="btn" id="check" type="button">Check</button><span class="small" id="count">0 words</span></div><div id="fb"></div>`;
+    $("rec").focus();
+    $("rec").oninput = () => { $("count").textContent = words($("rec").value).length + " words"; };
+    $("check").onclick = checkFull;
+    if(st.timed) R.tick = setInterval(() => { const el = $("timer"); if(!el) return stopTick(); const s = Math.floor((Date.now() - R.t0) / 1000); el.textContent = s + " s"; if(s > st.timed) el.classList.add("over"); }, 500);
+  }
+}
+function checkGroups(){
+  if(R.done) return; R.done = true;
+  let all = true; const misses = [];
+  R.gs.forEach(g => {
+    const el = $(`g_${g}`), r = gradeSet(words(el.value), GROUPS[g].kw), ok = !r.missing.length && !r.extra.length;
+    el.disabled = true; el.classList.add(ok ? "ok" : "no"); if(!ok) all = false;
+    record(g, ok); GROUPS[g].kw.forEach(k => kwMiss(k, !r.missing.includes(k)));
+    if(!ok) misses.push({sk:g, html:`<b>${GROUPS[g].label}</b>: missed ${r.missing.map(k => `<code>${k}</code>`).join(" ") || "nothing"}${r.extra.length ? `; not in this group: ${r.extra.map(k => `<code>${esc(k)}</code>`).join(" ")}` : ""}`});
+    $(`r_${g}`).innerHTML = chips(r);
+  });
+  save(); renderMastery();
+  $("check").disabled = true;
+  const score = R.gs.filter(g => $(`g_${g}`).classList.contains("ok")).length / R.gs.length;
+  $("fb").innerHTML = `<div class="row"><b>${Math.round(score * R.gs.length)} / ${R.gs.length} groups complete</b><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(R.i, all ? 1 : score, misses); $("next").focus();
+}
+function checkFull(){
+  if(R.done) return; R.done = true; stopTick();
+  const st = R.st, secs = (Date.now() - R.t0) / 1000, target = st.c99 ? ALLKW : C89;
+  const r = gradeSet(words($("rec").value), target, st.c99 ? null : new Set(GROUPS.g_c99.kw));
+  target.forEach(k => kwMiss(k, !r.missing.includes(k)));
+  Object.keys(GROUPS).forEach(g => { if(st.c99 || g !== "g_c99") record(g, GROUPS[g].kw.every(k => !r.missing.includes(k))); });
+  save(); renderMastery();
+  $("rec").readOnly = true; $("check").disabled = true;
+  const late = st.timed && secs > st.timed, perfect = !r.missing.length && !r.extra.length && !late;
+  const score = perfect ? 1 : Math.min(.99, Math.max(0, (r.got.length - r.extra.length) / target.length));
+  const byG = {}; r.missing.forEach(k => (byG[groupOf(k)] = byG[groupOf(k)] || []).push(k));
+  $("fb").innerHTML = `<div class="fb ${perfect ? "" : "bad"}"><h3>${r.got.length} / ${target.length}${r.extra.length ? ` · ${r.extra.length} extra` : ""}${st.timed ? ` · ${Math.round(secs)} s${late ? " (over time)" : ""}` : ""}</h3>${chips(r)}
+    ${r.missing.length ? `<div>Missed, by group: ${Object.entries(byG).map(([g, ks]) => `<b>${GROUPS[g].label}</b> ${ks.map(k => `<code>${k}</code>`).join(" ")}`).join(" · ")}</div>` : ""}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="next" type="button">See result ↵</button></div>`;
+  $("next").onclick = () => finish(R.i, score, Object.entries(byG).map(([g, ks]) => ({sk:g, html:`<b>${GROUPS[g].label}</b>: ${ks.map(k => `<code>${k}</code>`).join(" ")}`})).concat(r.extra.map(w => ({sk:"i_other", html:`<code>${esc(w)}</code> is not a C keyword`}))));
+  $("next").focus();
+}
+
+/* ================= results ================= */
+function finish(i, score, misses){
+  stopTick();
+  const st = STAGES[i], passed = score >= st.pass - 1e-9, last = STAGES.length - 1;
+  S.best[i] = Math.max(S.best[i] || 0, score);
+  if(passed){ S.passed[i] = true; S.unlocked = Math.max(S.unlocked, Math.min(STAGES.length, i + 2)); }
+  save(); renderLadder();
+  const big = st.streak ? `${Math.round(score * st.streak)} in a row` : Math.round(score * 100) + "%";
+  const lines = misses.map(m => m.html || (m.kw ? `<code>${esc(m.tok)}</code> is a keyword (${GROUPS[m.sk].label})` : `<code>${esc(m.tok)}</code> is an identifier`));
+  $("stage").innerHTML = `
+    <div class="meta"><span>Rung ${i + 1} · ${st.name} · round over</span><span>Pass: ${st.streak ? st.streak + " in a row" : Math.round(st.pass * 100) + "%"}</span></div>
+    <div class="row" style="align-items:baseline;gap:16px"><span class="score">${big}</span><span class="pill ${passed ? "ok" : "no"}">${passed ? (i < last ? "Passed · rung " + (i + 2) + " unlocked" : "Passed the top rung") : "Not yet"}</span></div>
+    ${lines.length ? `<div><h3 style="margin:0 0 8px;font-family:var(--f-display)">To review</h3><ul class="missl">${[...new Set(lines)].slice(0, 12).map(l => `<li>${l}</li>`).join("")}</ul></div>` : `<p style="margin:0">No misses.</p>`}
+    <div class="row">${passed && i < last ? `<button class="btn" id="nx" type="button">Go to rung ${i + 2}</button><button class="btn ghost" id="again" type="button">Repeat this rung</button>` : `<button class="btn" id="again" type="button">${passed ? "Play again" : "Try again"}</button>`}</div>`;
+  $("again").onclick = () => start(i);
+  if($("nx")) $("nx").onclick = () => openStage(i + 1);
+  ($("nx") || $("again")).focus();
+  window.scrollTo({top:0});
+}
+
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "TEXTAREA") return;
+  if(R && R.kind === "sort" && $("opts") && !R.answered){
+    const k = e.key.toLowerCase();
+    if(k === "k" || k === "1"){ e.preventDefault(); sortAnswer(true); return; }
+    if(k === "i" || k === "2"){ e.preventDefault(); sortAnswer(false); return; }
+  }
+  if(e.key === "Enter" && $("next") && document.activeElement !== $("next")){ e.preventDefault(); $("next").click(); }
+});
+$("reset").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); $("resetConfirm").hidden = true; renderMastery(); openStage(0); };
+$("sheetBody").innerHTML = listHTML(null) + `<p class="small">Hooks: <b>types</b> 9 · <b>builders</b> struct union enum typedef · <b>storage</b> auto register static extern + const volatile · <b>flow</b> if else / switch case default / for while do / break continue goto return · <b>operator</b> sizeof.</p>`;
+renderMastery();
+openStage(Math.min(S.unlocked, STAGES.length) - 1);
+</script>
+</body>
+</html>
+
+</body></html>

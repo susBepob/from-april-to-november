@@ -1,0 +1,774 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>The C Writing Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f2f0f3;
+    --surface:   #fdfcfd;
+    --surface-2: #eae6ec;
+    --ink:       #1a1620;
+    --ink-2:     #5f5769;
+    --ink-3:     #8b8395;
+    --line:      #ddd6e1;
+    --line-2:    #c9c0ce;
+    --accent:    #8b2f7d;
+    --accent-sf: #f6e9f4;
+    --on-accent: #ffffff;
+    --ok:        #14714a;
+    --ok-sf:     #e4f2ea;
+    --term-bg:   #221c28;
+    --term-ink:  #efe9f2;
+    --term-dim:  #9d90a8;
+    --term-str:  #f0a6df;
+    --term-key:  #9fd0f0;
+    --radius: 4px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #15111b;
+      --surface:   #1e1926;
+      --surface-2: #282132;
+      --ink:       #ece7f0;
+      --ink-2:     #a99fb4;
+      --ink-3:     #7c7288;
+      --line:      #322a3d;
+      --line-2:    #453b52;
+      --accent:    #e58ad4;
+      --accent-sf: #2e2036;
+      --on-accent: #1a1620;
+      --ok:        #58c78d;
+      --ok-sf:     #172b22;
+      --term-bg:   #100c15;
+      --term-ink:  #ece7f0;
+      --term-dim:  #8b8095;
+      --term-str:  #e58ad4;
+      --term-key:  #86bde4;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #15111b;
+    --surface:   #1e1926;
+    --surface-2: #282132;
+    --ink:       #ece7f0;
+    --ink-2:     #a99fb4;
+    --ink-3:     #7c7288;
+    --line:      #322a3d;
+    --line-2:    #453b52;
+    --accent:    #e58ad4;
+    --accent-sf: #2e2036;
+    --on-accent: #1a1620;
+    --ok:        #58c78d;
+    --ok-sf:     #172b22;
+    --term-bg:   #100c15;
+    --term-ink:  #ece7f0;
+    --term-dim:  #8b8095;
+    --term-str:  #e58ad4;
+    --term-key:  #86bde4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 730px; margin: 0 auto; padding: 0 20px 96px; }
+
+  /* masthead */
+  .mast { padding: 52px 0 30px; border-bottom: 1px solid var(--line); margin-bottom: 34px; }
+  .kicker {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600; font-size: clamp(30px, 6vw, 42px);
+    line-height: 1.08; letter-spacing: -.015em; margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .lede { color: var(--ink-2); font-size: 16px; margin: 0 0 4px; max-width: 58ch; }
+
+  /* setup panel */
+  .setup {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 46px;
+  }
+  .setup h2 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 14px; font-weight: 600; margin: 0 0 10px;
+    letter-spacing: .02em;
+  }
+  .setup ol { margin: 0 0 4px; padding-left: 20px; color: var(--ink-2); font-size: 14px; }
+  .setup li { margin-bottom: 7px; }
+  .setup li:last-child { margin-bottom: 0; }
+
+  /* tiers */
+  .tier { margin: 0 0 20px; }
+  .tier-head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding-bottom: 9px; margin: 52px 0 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .tier-n {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    font-weight: 600; color: var(--accent); letter-spacing: .08em;
+    white-space: nowrap;
+  }
+  .tier-head h2 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: 21px; font-weight: 600; margin: 0; letter-spacing: -.01em;
+  }
+  .tier-note { color: var(--ink-2); font-size: 14px; margin: 0 0 30px; max-width: 62ch; }
+
+  /* problem */
+  .p { border-top: 1px solid var(--line); padding: 26px 0 28px; }
+  .p:first-of-type { border-top: none; }
+  .p-head { display: flex; gap: 12px; align-items: baseline; margin-bottom: 10px; }
+  .p-id {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    color: var(--ink-3); flex: 0 0 auto; padding-top: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .p-head h3 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 16px; font-weight: 600; margin: 0; flex: 1 1 auto;
+  }
+  .p-body { padding-left: 40px; }
+  @media (max-width: 560px) { .p-body { padding-left: 0; } }
+  .p-body > p { margin: 0 0 12px; }
+  .p-body > p:last-child { margin-bottom: 0; }
+
+  .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
+    color: var(--ink-3); margin: 16px 0 6px;
+  }
+
+  pre {
+    margin: 0;
+    background: var(--term-bg); color: var(--term-ink);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px; line-height: 1.65;
+    padding: 13px 16px; border-radius: var(--radius);
+    overflow-x: auto; tab-size: 4;
+  }
+  pre .cm { color: var(--term-dim); }
+  pre .st { color: var(--term-str); }
+  pre .kw { color: var(--term-key); }
+  pre.out { border-left: 3px solid var(--ok); }
+
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 3px;
+  }
+
+  /* disclosure */
+  details {
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  details + details { margin-top: 8px; }
+  summary {
+    cursor: pointer; list-style: none;
+    padding: 9px 14px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: "+"; color: var(--accent); font-weight: 600;
+    width: 10px; display: inline-block;
+  }
+  details[open] summary::before { content: "\2212"; }
+  summary:hover { color: var(--ink); }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .d-body { padding: 2px 14px 14px; }
+  .d-body p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
+  .d-body p:last-child { margin-bottom: 0; }
+  details.sol summary { color: var(--accent); }
+
+  .warn {
+    background: var(--accent-sf);
+    border-left: 2px solid var(--accent);
+    padding: 11px 14px; border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 14px; margin: 0 0 12px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 52px; padding-top: 18px;
+    color: var(--ink-3); font-size: 13px;
+  }
+  footer a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">Module 1 · 18 programs · types, operators, printf, scanf</p>
+  <h1>The C Writing Ladder</h1>
+  <p class="lede">Eighteen programs that start at "type the skeleton from memory" and end at the shape of a real assignment. Each one has an exact expected output, so you never have to wonder whether you got it right.</p>
+</header>
+
+<div class="setup">
+  <h2>How to work through this</h2>
+  <ol>
+    <li>Open PowerShell in the problems folder: <code>cd "D:\shopify AI toolkit\c-course\problems"</code></li>
+    <li>Write your program in a file named after the problem — <code>p01.c</code>, <code>p02.c</code>, and so on. Type it out; do not copy from anywhere. Only ever create <code>.c</code> files here; the <code>.in</code> and <code>.out</code> files are the checker's, and overwriting one breaks it.</li>
+    <li>Run <code>.\check.ps1 p01</code>. It compiles, runs, and compares your output against the expected output line by line — printing <code>PASS</code> or showing you exactly which line differs and how. (On Git Bash or WSL, use <code>bash check.sh p01</code> instead.)</li>
+    <li>Only open a <b>Hint</b> after you have tried and failed. Only open a <b>Solution</b> after you have passed, to compare — or after a hint didn't rescue you.</li>
+  </ol>
+</div>
+
+<p class="warn"><b>PowerShell note:</b> Windows PowerShell 5.1 does not understand <code>&amp;&amp;</code> for chaining commands. Use <code>;</code> instead, or just run the two commands on separate lines.</p>
+
+<p class="warn"><b>The rule that makes this work:</b> your output must match <em>exactly</em> — every space, every colon, every decimal place. That feels pedantic and it is the point. Getting <code>printf</code> to produce a precise shape is half of what an assignment is actually graded on.</p>
+
+<!-- ==================== TIER 1 ==================== -->
+<div class="tier-head">
+  <span class="tier-n">TIER 1</span>
+  <h2>Skeleton and printf</h2>
+</div>
+<p class="tier-note">The goal here is not thinking, it is muscle memory. You should be able to produce a compiling C file from an empty editor without pausing. Type the <code>#include</code>, the <code>main</code>, the <code>return 0;</code> every single time — never copy the previous file.</p>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p01</span><h3>Three lines</h3></div>
+  <div class="p-body">
+    <p>Print exactly three lines of text. Nothing clever — this problem exists so that you type the program skeleton from a blank file.</p>
+    <p class="label">Expected output</p>
+<pre class="out">Hello, world!
+This is my first C program.
+It prints three lines.</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Four things every C file needs: <code>#include &lt;stdio.h&gt;</code>, then <code>int main(void) {</code>, then your work, then <code>return 0;</code> and a closing brace.</p>
+      <p>Each <code>printf</code> needs <code>\n</code> at the end or the lines will run together.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    printf(<span class="st">"Hello, world!\n"</span>);
+    printf(<span class="st">"This is my first C program.\n"</span>);
+    printf(<span class="st">"It prints three lines.\n"</span>);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p02</span><h3>One of each type</h3></div>
+  <div class="p-body">
+    <p>Declare four variables — an <code>int</code> holding 20, a <code>float</code> holding 1.78, a <code>double</code> holding pi to 14 places, and a <code>char</code> holding the letter A — then print each with the correct format specifier.</p>
+    <p class="label">Expected output</p>
+<pre class="out">age    = 20
+height = 1.780000
+pi     = 3.14159
+grade  = A</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>The specifiers you need are <code>%d</code>, <code>%f</code>, <code>%.5f</code> and <code>%c</code>. Note that plain <code>%f</code> prints six decimal places by default — that is why height shows as <code>1.780000</code> without you asking.</p>
+      <p>A <code>char</code> literal uses single quotes: <code>'A'</code>. Double quotes would make it a string, which is a different thing entirely.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span>    age    = 20;
+    <span class="kw">float</span>  height = 1.78f;
+    <span class="kw">double</span> pi     = 3.14159265358979;
+    <span class="kw">char</span>   grade  = <span class="st">'A'</span>;
+    printf(<span class="st">"age    = %d\n"</span>, age);
+    printf(<span class="st">"height = %f\n"</span>, height);
+    printf(<span class="st">"pi     = %.5f\n"</span>, pi);
+    printf(<span class="st">"grade  = %c\n"</span>, grade);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p03</span><h3>A lined-up receipt</h3></div>
+  <div class="p-body">
+    <p>Print a two-column receipt where the item names are left-aligned in a 10-character field and the prices are right-aligned in an 8-character field with two decimals. Finish with a line showing a tax rate that includes a literal percent sign.</p>
+    <p class="label">Expected output</p>
+<pre class="out">ITEM          PRICE
+Coffee         3.50
+Sandwich       7.25
+Tax rate: 8%</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>A number between <code>%</code> and the letter sets the field width: <code>%8.2f</code> means "at least 8 characters wide, 2 decimal places". A minus sign makes it left-aligned instead: <code>%-10s</code>.</p>
+      <p>To print a literal <code>%</code> you must write <code>%%</code>. A single <code>%</code> makes printf look for an argument that isn't there.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    printf(<span class="st">"%-10s %8s\n"</span>, <span class="st">"ITEM"</span>, <span class="st">"PRICE"</span>);
+    printf(<span class="st">"%-10s %8.2f\n"</span>, <span class="st">"Coffee"</span>, 3.5);
+    printf(<span class="st">"%-10s %8.2f\n"</span>, <span class="st">"Sandwich"</span>, 7.25);
+    printf(<span class="st">"Tax rate: %d%%\n"</span>, 8);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<!-- ==================== TIER 2 ==================== -->
+<div class="tier-head">
+  <span class="tier-n">TIER 2</span>
+  <h2>Arithmetic that has to be exactly right</h2>
+</div>
+<p class="tier-note">Every problem here contains at least one place where integer division would silently give you the wrong answer. Values are hard-coded so that the only thing being tested is whether your arithmetic and your types are correct.</p>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p04</span><h3>Rectangle</h3></div>
+  <div class="p-body">
+    <p>With <code>w = 7</code> and <code>h = 3</code> hard-coded, print the width, height, area and perimeter. All four values line up because the labels are padded to the same length.</p>
+    <p class="label">Expected output</p>
+<pre class="out">width     = 7
+height    = 3
+area      = 21
+perimeter = 20</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Perimeter is <code>2 * (w + h)</code>. Leave out the parentheses and precedence gives you <code>(2*w) + h</code> = 17, which compiles perfectly and is wrong.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> w = 7, h = 3;
+    printf(<span class="st">"width     = %d\n"</span>, w);
+    printf(<span class="st">"height    = %d\n"</span>, h);
+    printf(<span class="st">"area      = %d\n"</span>, w * h);
+    printf(<span class="st">"perimeter = %d\n"</span>, 2 * (w + h));
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p05</span><h3>Celsius to Fahrenheit</h3></div>
+  <div class="p-body">
+    <p>Convert 37 °C using the formula F = C × 9/5 + 32. Print to one decimal place.</p>
+    <p class="label">Expected output</p>
+<pre class="out">37 C = 98.6 F</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>This is the classic trap. If you write <code>c * 9 / 5</code>, everything is an <code>int</code>: 37×9 = 333, then 333/5 = 66 (not 66.6), and you end up with 98.0.</p>
+      <p>Write <code>9.0</code> instead of <code>9</code>. One floating-point operand is enough to make the whole expression floating-point.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> c = 37;
+    <span class="kw">double</span> f = c * 9.0 / 5.0 + 32.0;
+    printf(<span class="st">"%d C = %.1f F\n"</span>, c, f);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p06</span><h3>Average of three</h3></div>
+  <div class="p-body">
+    <p>Three <code>int</code> variables hold 7, 8 and 10. Print their sum as a whole number and their average to two decimal places.</p>
+    <p class="label">Expected output</p>
+<pre class="out">sum     = 25
+average = 8.33</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>The sum genuinely is an integer, so <code>%d</code> is right there. The average is where you need care: <code>(a+b+c) / 3</code> gives 8, because both sides are integers.</p>
+      <p>Divide by <code>3.0</code>, not <code>3</code>.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> a = 7, b = 8, c = 10;
+    <span class="kw">double</span> avg = (a + b + c) / 3.0;
+    printf(<span class="st">"sum     = %d\n"</span>, a + b + c);
+    printf(<span class="st">"average = %.2f\n"</span>, avg);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p07</span><h3>Discount</h3></div>
+  <div class="p-body">
+    <p>An item costs 249.99 and there is a 15% discount. Print the original price, the discount percentage, the amount saved, and the final price — money always to two decimals.</p>
+    <p class="label">Expected output</p>
+<pre class="out">original: 249.99
+discount: 15%
+saved:    37.50
+you pay:  212.49</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Keep the percentage as an <code>int</code> so you can print it with <code>%d%%</code>, but divide by <code>100.0</code> when you use it in the calculation.</p>
+      <p>Saved rounds to 37.50 for display while the stored value is 37.4985 — which is why "you pay" is 212.49 and not 212.50 minus something. Compute the final price from the full-precision value, not from the rounded one.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">double</span> price = 249.99;
+    <span class="kw">int</span> percent = 15;
+    <span class="kw">double</span> saved = price * percent / 100.0;
+    <span class="kw">double</span> final = price - saved;
+    printf(<span class="st">"original: %.2f\n"</span>, price);
+    printf(<span class="st">"discount: %d%%\n"</span>, percent);
+    printf(<span class="st">"saved:    %.2f\n"</span>, saved);
+    printf(<span class="st">"you pay:  %.2f\n"</span>, final);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<!-- ==================== TIER 3 ==================== -->
+<div class="tier-head">
+  <span class="tier-n">TIER 3</span>
+  <h2>Division and remainder as tools</h2>
+</div>
+<p class="tier-note">These read a value with <code>scanf</code> and take it apart using nothing but <code>/</code> and <code>%</code>. This pair is the most useful thing in the whole module — splitting a number into parts is the backbone of dozens of assignment problems. The <code>check.sh</code> script feeds the input in for you from the <code>.in</code> file.</p>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p08</span><h3>Seconds to clock time</h3></div>
+  <div class="p-body">
+    <p>Read a number of seconds and print it as hours, minutes and seconds. Minutes and seconds are zero-padded to two digits; hours are not padded.</p>
+    <p class="label">Input (p08.in)</p><pre>3725</pre>
+    <p class="label">Expected output</p><pre class="out">1:02:05</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p><code>scanf("%d", &amp;t);</code> — the <code>&amp;</code> is required and forgetting it is the most common beginner crash in C.</p>
+      <p>Hours are <code>t / 3600</code>. Minutes are the leftover seconds divided by 60: <code>(t % 3600) / 60</code>. Seconds are <code>t % 60</code>.</p>
+      <p>Zero-padding is <code>%02d</code> — width 2, padded with zeros instead of spaces.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> t;
+    scanf(<span class="st">"%d"</span>, &amp;t);
+    printf(<span class="st">"%d:%02d:%02d\n"</span>, t / 3600, (t % 3600) / 60, t % 60);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p09</span><h3>Making change</h3></div>
+  <div class="p-body">
+    <p>Read an amount in cents and break it into the fewest US coins: quarters (25), dimes (10), nickels (5) and pennies. Labels are padded so the numbers line up.</p>
+    <p class="label">Input (p09.in)</p><pre>287</pre>
+    <p class="label">Expected output</p>
+<pre class="out">quarters: 11
+dimes:    1
+nickels:  0
+pennies:  2</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>The pattern repeats: divide to get how many of this coin, then use <code>%=</code> to shrink the amount down to what is left over. Then move to the next coin.</p>
+      <p>This is exactly where <code>cents %= 25;</code> earns its keep — it means "replace cents with the remainder", which is the whole idea.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> cents;
+    scanf(<span class="st">"%d"</span>, &amp;cents);
+    <span class="kw">int</span> q = cents / 25;  cents %= 25;
+    <span class="kw">int</span> d = cents / 10;  cents %= 10;
+    <span class="kw">int</span> n = cents / 5;   cents %= 5;
+    printf(<span class="st">"quarters: %d\n"</span>, q);
+    printf(<span class="st">"dimes:    %d\n"</span>, d);
+    printf(<span class="st">"nickels:  %d\n"</span>, n);
+    printf(<span class="st">"pennies:  %d\n"</span>, cents);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p10</span><h3>Reverse a three-digit number</h3></div>
+  <div class="p-body">
+    <p>Read a three-digit number, print its three digits separated by spaces, then print the number with its digits reversed.</p>
+    <p class="label">Input (p10.in)</p><pre>472</pre>
+    <p class="label">Expected output</p>
+<pre class="out">digits:   4 7 2
+reversed: 274</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Last digit: <code>n % 10</code>. First digit: <code>n / 100</code>. The middle one needs both — divide away the last digit, then take the remainder: <code>(n / 10) % 10</code>.</p>
+      <p>To rebuild the number, multiply each digit by its new place value and add.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> n;
+    scanf(<span class="st">"%d"</span>, &amp;n);
+    <span class="kw">int</span> h = n / 100;
+    <span class="kw">int</span> t = (n / 10) % 10;
+    <span class="kw">int</span> o = n % 10;
+    printf(<span class="st">"digits:   %d %d %d\n"</span>, h, t, o);
+    printf(<span class="st">"reversed: %d\n"</span>, o * 100 + t * 10 + h);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p11</span><h3>Sum of digits</h3></div>
+  <div class="p-body">
+    <p>Read a four-digit number and print the sum of its digits. 4821 gives 4+8+2+1 = 15.</p>
+    <p class="label">Input (p11.in)</p><pre>4821</pre>
+    <p class="label">Expected output</p><pre class="out">sum of digits: 15</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Same tool as p10, one place further. The four digits are <code>n % 10</code>, <code>(n/10) % 10</code>, <code>(n/100) % 10</code> and <code>n / 1000</code>.</p>
+      <p>Without loops you have to write all four out. That is fine — noticing how repetitive it is <em>is</em> the motivation for loops, which is probably your next module.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> n;
+    scanf(<span class="st">"%d"</span>, &amp;n);
+    <span class="kw">int</span> sum = n % 10 + (n / 10) % 10 + (n / 100) % 10 + (n / 1000) % 10;
+    printf(<span class="st">"sum of digits: %d\n"</span>, sum);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<!-- ==================== TIER 4 ==================== -->
+<div class="tier-head">
+  <span class="tier-n">TIER 4</span>
+  <h2>Traps and techniques</h2>
+</div>
+<p class="tier-note">Four things that look like puzzles and are actually standard techniques. Every one of these turns up in exam questions because each demonstrates something about how C really behaves rather than how it looks.</p>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p12</span><h3>Swap two variables, twice</h3></div>
+  <div class="p-body">
+    <p>Start with <code>a = 3</code> and <code>b = 9</code>. Print them, swap them using a third temporary variable and print again, then swap them <em>back</em> using only arithmetic — no third variable — and print a final time.</p>
+    <p class="label">Expected output</p>
+<pre class="out">before: a=3 b=9
+temp:   a=9 b=3
+no tmp: a=3 b=9</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>The temp swap is three lines: save <code>a</code>, overwrite <code>a</code> with <code>b</code>, overwrite <code>b</code> with the saved value. Doing it in two lines loses a value forever.</p>
+      <p>The arithmetic swap is <code>a = a + b; b = a - b; a = a - b;</code>. Trace it on paper before you believe it. It is a party trick rather than good practice — real code uses the temp — but it shows that assignment is a sequence of steps, not a simultaneous exchange.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> a = 3, b = 9;
+    printf(<span class="st">"before: a=%d b=%d\n"</span>, a, b);
+    <span class="kw">int</span> tmp = a;  a = b;  b = tmp;
+    printf(<span class="st">"temp:   a=%d b=%d\n"</span>, a, b);
+    a = a + b;  b = a - b;  a = a - b;
+    printf(<span class="st">"no tmp: a=%d b=%d\n"</span>, a, b);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p13</span><h3>Rounding without a library</h3></div>
+  <div class="p-body">
+    <p>For each of 3.7, 3.2 and 8.5, print what it truncates to and what it rounds to — without using <code>math.h</code>.</p>
+    <p class="label">Expected output</p>
+<pre class="out">3.7 truncates to 3, rounds to 4
+3.2 truncates to 3, rounds to 3
+8.5 truncates to 8, rounds to 9</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Truncating is just <code>(int)x</code>. Rounding is the old trick: <code>(int)(x + 0.5)</code>. Adding a half pushes anything with a fractional part of .5 or more up into the next whole number before the truncation chops it.</p>
+      <p>Worth knowing: this only works for positive numbers. <code>(int)(-2.3 + 0.5)</code> is <code>(int)(-1.8)</code> = −1, which is not the rounded value. Negatives need a different approach.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">double</span> x = 3.7, y = 3.2, z = 8.5;
+    printf(<span class="st">"%.1f truncates to %d, rounds to %d\n"</span>, x, (<span class="kw">int</span>)x, (<span class="kw">int</span>)(x + 0.5));
+    printf(<span class="st">"%.1f truncates to %d, rounds to %d\n"</span>, y, (<span class="kw">int</span>)y, (<span class="kw">int</span>)(y + 0.5));
+    printf(<span class="st">"%.1f truncates to %d, rounds to %d\n"</span>, z, (<span class="kw">int</span>)z, (<span class="kw">int</span>)(z + 0.5));
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p14</span><h3>Round to two decimals for real</h3></div>
+  <div class="p-body">
+    <p>Take 3.14159265 and actually round the stored value to two decimal places — not just display it that way. Print the original, the rounded value at two places, and the rounded value at eight places to prove the digits are really gone.</p>
+    <p class="label">Expected output</p>
+<pre class="out">original: 3.14159265
+2 places: 3.14
+stored:   3.14000000</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p><code>%.2f</code> only changes what is <em>displayed</em>. The variable still holds all the digits. To change the value itself: multiply by 100, round to a whole number, then divide by 100.0.</p>
+      <p>Watch the last division — dividing by <code>100</code> instead of <code>100.0</code> puts you straight back into integer division and gives you 3.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">double</span> v = 3.14159265;
+    <span class="kw">double</span> r = (<span class="kw">int</span>)(v * 100 + 0.5) / 100.0;
+    printf(<span class="st">"original: %.8f\n"</span>, v);
+    printf(<span class="st">"2 places: %.2f\n"</span>, r);
+    printf(<span class="st">"stored:   %.8f\n"</span>, r);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p15</span><h3>Watch a value wrap around</h3></div>
+  <div class="p-body">
+    <p>Show integer overflow happening. Put 250 in an <code>unsigned char</code> and add 10. Put the maximum value in an <code>unsigned int</code> and add 1. Print before and after each time.</p>
+    <p class="label">Expected output</p>
+<pre class="out">unsigned char at 250: 250
+after adding 10:      4
+unsigned int at max:  4294967295
+after adding 1:       0</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>An <code>unsigned char</code> holds 0–255. 250 + 10 = 260, which does not fit, so it wraps to 260 − 256 = 4. A car odometer rolling over.</p>
+      <p>Print unsigned values with <code>%u</code>, not <code>%d</code>. The maximum <code>unsigned int</code> is 4294967295 — write the literal with a <code>u</code> suffix.</p>
+      <p>This is well-defined behaviour for <em>unsigned</em> types. Signed overflow is undefined behaviour, which is why this problem uses unsigned.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">unsigned char</span> small = 250;
+    printf(<span class="st">"unsigned char at 250: %u\n"</span>, small);
+    small += 10;
+    printf(<span class="st">"after adding 10:      %u\n"</span>, small);
+    <span class="kw">unsigned int</span> big = 4294967295u;
+    printf(<span class="st">"unsigned int at max:  %u\n"</span>, big);
+    big += 1;
+    printf(<span class="st">"after adding 1:       %u\n"</span>, big);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<!-- ==================== TIER 5 ==================== -->
+<div class="tier-head">
+  <span class="tier-n">TIER 5</span>
+  <h2>Assignment-shaped</h2>
+</div>
+<p class="tier-note">These are the size and shape of a real first assignment: read several values, compute several results, print a formatted report. Nothing new is required — they simply combine everything above without holding your hand. If you can do these three cold, the assignment will not surprise you.</p>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p16</span><h3>Unit converter</h3></div>
+  <div class="p-body">
+    <p>Read three numbers on one line — kilometres, kilograms and degrees Celsius — and convert all three. Use 0.621371 miles per km, 2.20462 pounds per kg, and the usual Fahrenheit formula. Everything to two decimals.</p>
+    <p class="label">Input (p16.in)</p><pre>10 70 21.5</pre>
+    <p class="label">Expected output</p>
+<pre class="out">10.00 km = 6.21 miles
+70.00 kg = 154.32 lb
+21.50 C  = 70.70 F</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>One <code>scanf</code> can read several values: <code>scanf("%lf %lf %lf", &amp;km, &amp;kg, &amp;c);</code></p>
+      <p>Note the specifier. Reading into a <code>double</code> needs <code>%lf</code>, while <em>printing</em> a double uses plain <code>%f</code>. Mixing those up is a classic mistake and the compiler will warn you about it.</p>
+      <p>Look closely at the expected output — there are two spaces after the <code>C</code> so the equals signs line up.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">double</span> km, kg, c;
+    scanf(<span class="st">"%lf %lf %lf"</span>, &amp;km, &amp;kg, &amp;c);
+    printf(<span class="st">"%.2f km = %.2f miles\n"</span>, km, km * 0.621371);
+    printf(<span class="st">"%.2f kg = %.2f lb\n"</span>,    kg, kg * 2.20462);
+    printf(<span class="st">"%.2f C  = %.2f F\n"</span>,     c,  c * 9.0 / 5.0 + 32.0);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p17</span><h3>Three years of compound interest</h3></div>
+  <div class="p-body">
+    <p>Read a principal amount and an annual interest rate as a percentage. Print the balance after each of three years, then the total interest earned. Each year's balance is the previous year's multiplied by the growth factor.</p>
+    <p class="label">Input (p17.in)</p><pre>1000 5</pre>
+    <p class="label">Expected output</p>
+<pre class="out">principal: 1000.00 at 5.0%
+year 1:    1050.00
+year 2:    1102.50
+year 3:    1157.62
+interest:  157.62</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>Compute the growth factor once: <code>m = 1.0 + rate / 100.0</code>. Then each year is the last one times <code>m</code>. Without loops, write the three steps out.</p>
+      <p>Year 3 prints as <b>1157.62</b>, not 1157.63. The exact value is 1157.625, and floating-point binary cannot hold that precisely — it stores a hair under, so it rounds down. This is not your bug; it is what real money code has to deal with, and it is why banks do not store money in doubles.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">double</span> p, rate;
+    scanf(<span class="st">"%lf %lf"</span>, &amp;p, &amp;rate);
+    <span class="kw">double</span> m = 1.0 + rate / 100.0;
+    <span class="kw">double</span> y1 = p * m;
+    <span class="kw">double</span> y2 = y1 * m;
+    <span class="kw">double</span> y3 = y2 * m;
+    printf(<span class="st">"principal: %.2f at %.1f%%\n"</span>, p, rate);
+    printf(<span class="st">"year 1:    %.2f\n"</span>, y1);
+    printf(<span class="st">"year 2:    %.2f\n"</span>, y2);
+    printf(<span class="st">"year 3:    %.2f\n"</span>, y3);
+    printf(<span class="st">"interest:  %.2f\n"</span>, y3 - p);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<div class="p">
+  <div class="p-head"><span class="p-id">p18</span><h3>How long was the meeting</h3></div>
+  <div class="p-body">
+    <p>Read four numbers — a start hour and minute, then an end hour and minute, on a 24-hour clock. Echo both times zero-padded, then print the gap in total minutes and again as hours and minutes. Assume the end is after the start on the same day.</p>
+    <p class="label">Input (p18.in)</p><pre>9 30 14 15</pre>
+    <p class="label">Expected output</p>
+<pre class="out">start:    09:30
+end:      14:15
+minutes:  285
+duration: 4h 45m</pre>
+    <details><summary>Hint</summary><div class="d-body">
+      <p>The move that makes this easy: convert both times into a single number — minutes since midnight — subtract, and only convert back at the end. Trying to subtract hours and minutes separately means borrowing, and it gets messy fast.</p>
+      <p>Everything else you have already done in p08. Note that <code>duration</code> pads the minutes but not the hours.</p>
+    </div></details>
+    <details class="sol"><summary>Solution</summary><div class="d-body">
+<pre><span class="cm">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> main(<span class="kw">void</span>) {
+    <span class="kw">int</span> h1, m1, h2, m2;
+    scanf(<span class="st">"%d %d %d %d"</span>, &amp;h1, &amp;m1, &amp;h2, &amp;m2);
+    <span class="kw">int</span> start = h1 * 60 + m1;
+    <span class="kw">int</span> end   = h2 * 60 + m2;
+    <span class="kw">int</span> diff  = end - start;
+    printf(<span class="st">"start:    %02d:%02d\n"</span>, h1, m1);
+    printf(<span class="st">"end:      %02d:%02d\n"</span>, h2, m2);
+    printf(<span class="st">"minutes:  %d\n"</span>, diff);
+    printf(<span class="st">"duration: %dh %02dm\n"</span>, diff / 60, diff % 60);
+    <span class="kw">return</span> 0;
+}</pre>
+    </div></details>
+  </div>
+</div>
+
+<footer>
+  Every expected output here was produced by compiling and running a reference solution with gcc 14.2.0, not written by hand. If <code>check.sh</code> says your output differs, the difference is real.
+</footer>
+
+</div>
+
+</body></html>

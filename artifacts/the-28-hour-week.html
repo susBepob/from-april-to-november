@@ -1,0 +1,368 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>The 28-Hour Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --ground:#E8EAEE;
+    --surface:#FBFCFD;
+    --surface-2:#F1F3F6;
+    --ink:#131720;
+    --muted:#5A6273;
+    --faint:#8A92A2;
+    --hairline:#D2D7DE;
+    --indigo:#2A4A7F;
+    --indigo-soft:#DDE4F0;
+    --shu:#B2432C;
+    --shu-soft:#F4DED8;
+    --ok:#3D6B4F;
+
+    --sans:"Zen Kaku Gothic New",-apple-system,"Segoe UI",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#101319;
+      --surface:#171B23;
+      --surface-2:#1D222C;
+      --ink:#E6E9EF;
+      --muted:#98A0B1;
+      --faint:#6C7486;
+      --hairline:#272D3A;
+      --indigo:#8FAEE2;
+      --indigo-soft:#1E2A40;
+      --shu:#E0755D;
+      --shu-soft:#3A2119;
+      --ok:#6FAE86;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#101319;
+    --surface:#171B23;
+    --surface-2:#1D222C;
+    --ink:#E6E9EF;
+    --muted:#98A0B1;
+    --faint:#6C7486;
+    --hairline:#272D3A;
+    --indigo:#8FAEE2;
+    --indigo-soft:#1E2A40;
+    --shu:#E0755D;
+    --shu-soft:#3A2119;
+    --ok:#6FAE86;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.55;
+    margin:0;
+  }
+  main{max-width:520px;margin:0 auto;padding:28px 18px 56px;display:flex;flex-direction:column;gap:20px}
+
+  /* header */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--faint);
+  }
+  h1{
+    font-size:34px;font-weight:700;letter-spacing:-.02em;margin:2px 0 0;
+    text-wrap:balance;line-height:1.1;
+  }
+  .datestamp{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:4px}
+  .phase{
+    margin-top:14px;padding:11px 13px;
+    background:var(--indigo-soft);
+    border-left:3px solid var(--indigo);
+    border-radius:0 6px 6px 0;
+    font-size:13.5px;color:var(--ink);
+  }
+  .phase b{color:var(--indigo);font-weight:700}
+
+  /* cap meter */
+  .cap{
+    background:var(--surface);border:1px solid var(--hairline);
+    border-radius:10px;padding:15px 16px;
+  }
+  .cap-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .cap-label{font-size:13px;color:var(--muted)}
+  .cap-label .jp{font-size:11px;color:var(--faint);display:block;margin-top:1px}
+  .cap-num{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  .cap-num span{font-size:13px;color:var(--faint);font-weight:400}
+  .track{
+    height:7px;background:var(--surface-2);border-radius:99px;margin:11px 0 12px;overflow:hidden;
+    border:1px solid var(--hairline);
+  }
+  .fill{height:100%;background:var(--indigo);border-radius:99px;transition:width .25s ease}
+  .fill.over{background:var(--shu)}
+  .cap-acts{display:flex;gap:7px;align-items:center}
+  .cap-acts button{
+    font-family:var(--mono);font-size:12px;
+    background:var(--surface-2);border:1px solid var(--hairline);color:var(--ink);
+    border-radius:6px;padding:5px 11px;cursor:pointer;
+  }
+  .cap-acts button:hover{border-color:var(--indigo);color:var(--indigo)}
+  .cap-acts .hint{font-size:11.5px;color:var(--faint);margin-left:auto}
+
+  /* setup card */
+  .setup{
+    background:var(--shu-soft);border:1px solid var(--shu);border-radius:10px;padding:15px 16px;
+  }
+  .setup h2{
+    font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--shu);margin:0 0 3px;font-weight:600;
+  }
+  .setup p{margin:0 0 11px;font-size:13.5px;color:var(--ink)}
+  .setup ul{margin:0;padding-left:17px;font-size:14px;display:flex;flex-direction:column;gap:5px}
+  .setup li::marker{color:var(--shu)}
+  .setup .dismiss{
+    margin-top:13px;background:none;border:1px solid var(--shu);color:var(--shu);
+    font-family:var(--mono);font-size:11.5px;border-radius:6px;padding:5px 11px;cursor:pointer;
+  }
+
+  /* blocks */
+  .section-label{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:-8px;
+  }
+  ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  li.block{
+    display:grid;grid-template-columns:26px 1fr auto;align-items:start;gap:12px;
+    background:var(--surface);border:1px solid var(--hairline);border-radius:10px;
+    padding:14px 15px;cursor:pointer;
+  }
+  li.block.now{border-color:var(--indigo);box-shadow:inset 3px 0 0 var(--indigo)}
+  li.block.done{opacity:.5}
+  li.block.done .title{text-decoration:line-through}
+  .tick{
+    width:22px;height:22px;border:1.5px solid var(--hairline);border-radius:6px;
+    background:var(--surface-2);display:grid;place-items:center;margin-top:1px;
+  }
+  .tick svg{width:13px;height:13px;opacity:0;transition:opacity .12s}
+  li.block.done .tick{background:var(--ok);border-color:var(--ok)}
+  li.block.done .tick svg{opacity:1}
+  .title{font-size:16.5px;font-weight:500;line-height:1.25}
+  .note{font-size:13px;color:var(--muted);margin-top:3px}
+  .note.jp{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+  .dur{
+    font-family:var(--mono);font-size:13px;font-weight:600;color:var(--indigo);
+    font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:2px;
+  }
+  li.block.protected .dur{color:var(--shu)}
+
+  /* rule */
+  .rule{
+    border-top:1px solid var(--hairline);padding-top:18px;margin-top:4px;
+    font-size:14px;color:var(--muted);
+  }
+  .rule strong{color:var(--ink);font-weight:700;display:block;margin-bottom:5px;font-size:12px;
+    font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase}
+  .rule em{color:var(--shu);font-style:normal;font-weight:500}
+
+  .foot{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:11px;color:var(--faint);
+  }
+  .foot button{
+    background:none;border:1px solid var(--hairline);color:var(--faint);
+    font-family:var(--mono);font-size:11px;border-radius:6px;padding:4px 9px;cursor:pointer;
+  }
+  .foot button:hover{color:var(--ink);border-color:var(--faint)}
+
+  :focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow" id="eyebrow">Today</div>
+    <h1 id="dayName">—</h1>
+    <div class="datestamp" id="datestamp"></div>
+    <div class="phase" id="phase"></div>
+  </header>
+
+  <section class="cap" aria-label="Weekly work hours against the legal cap">
+    <div class="cap-top">
+      <div class="cap-label">
+        Worked this week
+        <span class="jp">資格外活動許可 · 週28時間まで</span>
+      </div>
+      <div class="cap-num"><span id="capHrs">0</span><span> / 28h</span></div>
+    </div>
+    <div class="track"><div class="fill" id="capFill" style="width:0%"></div></div>
+    <div class="cap-acts">
+      <button type="button" id="addShift">+ 4h shift</button>
+      <button type="button" id="subShift">−</button>
+      <span class="hint" id="capHint">Resets Monday</span>
+    </div>
+  </section>
+
+  <section class="setup" id="setup">
+    <h2>Do this first</h2>
+    <p>One sitting, about 4½ hours. Everything else waits behind it — applications have a 6–10 week pay lag.</p>
+    <ul>
+      <li>8 applications — 英語 ホステル / ホテル フロント 英語 (3 hr)</li>
+      <li>Post the tutoring profiles, then forget them (90 min)</li>
+    </ul>
+    <button type="button" class="dismiss" id="dismissSetup">Done — hide this</button>
+  </section>
+
+  <div class="section-label" id="blocksLabel">Today's blocks</div>
+  <ol id="blocks"></ol>
+
+  <div class="rule">
+    <strong>When a week breaks</strong>
+    <em>C gives.</em> Never Japanese, never the shift, never sleep. C is the only thing here with a deadline you set yourself — everything else is external or compounds.
+  </div>
+
+  <div class="foot">
+    <span id="resetNote"></span>
+    <button type="button" id="themeBtn">theme</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var K = 'week28.v1';
+  var $ = function(s){ return document.querySelector(s); };
+
+  function store(key, val){
+    try {
+      if (val === undefined) return localStorage.getItem(K + '.' + key);
+      localStorage.setItem(K + '.' + key, val);
+    } catch (e) { return null; }
+  }
+
+  var now = new Date();
+  var dow = now.getDay();              // 0 Sun … 6 Sat
+  var isWeekend = (dow === 0 || dow === 6);
+  var dayKey = now.toISOString().slice(0, 10);
+
+  // Monday-start week key, for the 28h cap
+  var monday = new Date(now);
+  monday.setDate(now.getDate() - ((dow + 6) % 7));
+  var weekKey = monday.toISOString().slice(0, 10);
+
+  var WEEKDAY = [
+    { id:'jp',   title:'Japanese',  dur:'45 min', note:'First thing. Before your phone.', jp:'アンキ・読解', protected:true },
+    { id:'c',    title:'C sprint',  dur:'2 hr',   note:'Heaviest right now — before shifts start.', now:true },
+    { id:'biz',  title:'B Studio',  dur:'30 min', note:'5 asks. Then close it.' },
+    { id:'trn',  title:'Training',  dur:'1 hr',   note:'Mon · Wed · Fri', days:[1,3,5] },
+    { id:'job',  title:'Shift',     dur:'4 hr',   note:'Counts toward the cap.' }
+  ];
+  var SATURDAY = [
+    { id:'jp',   title:'Japanese',  dur:'45 min', note:'Same as any day.', jp:'アンキ・読解', protected:true },
+    { id:'c',    title:'C sprint',  dur:'4 hr',   note:'The long block. This is the week’s real progress.', now:true }
+  ];
+  var SUNDAY = [
+    { id:'jp',   title:'Japanese',  dur:'45 min', note:'Same as any day.', jp:'アンキ・読解', protected:true },
+    { id:'calc', title:'Calculus',  dur:'2 hr',   note:'Class pace. Not a sprint — it doesn’t compress.' }
+  ];
+
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var list = dow === 6 ? SATURDAY : dow === 0 ? SUNDAY : WEEKDAY;
+  list = list.filter(function(b){ return !b.days || b.days.indexOf(dow) > -1; });
+
+  $('#dayName').textContent = DAYS[dow];
+  $('#eyebrow').textContent = isWeekend ? 'Weekend' : 'Today';
+  $('#datestamp').textContent = now.toLocaleDateString(undefined,
+    { year:'numeric', month:'long', day:'numeric' });
+  $('#blocksLabel').textContent = isWeekend ? 'Today — weekend' : 'Today — weekday';
+
+  $('#phase').innerHTML = isWeekend
+    ? 'Weekend shape: <b>one long C block</b>, Calculus at class pace, and actual rest. Rest is load-bearing — skip it and week three collapses.'
+    : 'Current phase: <b>front-load C</b>. The weeks before your first shift are hours you never get back once you’re working.';
+
+  /* ---- daily checkboxes ---- */
+  var checked = {};
+  try {
+    var raw = store('day.' + dayKey);
+    if (raw) checked = JSON.parse(raw);
+  } catch (e) { checked = {}; }
+
+  var ol = $('#blocks');
+  var TICK = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">'
+           + '<path d="M3 8.5l3.2 3.2L13 5" stroke="#fff" stroke-width="2.2" '
+           + 'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  list.forEach(function(b){
+    var li = document.createElement('li');
+    li.className = 'block'
+      + (b.now ? ' now' : '')
+      + (b.protected ? ' protected' : '')
+      + (checked[b.id] ? ' done' : '');
+    li.tabIndex = 0;
+    li.setAttribute('role', 'checkbox');
+    li.setAttribute('aria-checked', checked[b.id] ? 'true' : 'false');
+
+    li.innerHTML =
+      '<div class="tick">' + TICK + '</div>' +
+      '<div><div class="title">' + b.title + '</div>' +
+      '<div class="note">' + b.note + '</div>' +
+      (b.jp ? '<div class="note jp">' + b.jp + '</div>' : '') +
+      '</div>' +
+      '<div class="dur">' + b.dur + '</div>';
+
+    function toggle(){
+      checked[b.id] = !checked[b.id];
+      li.classList.toggle('done', !!checked[b.id]);
+      li.setAttribute('aria-checked', checked[b.id] ? 'true' : 'false');
+      store('day.' + dayKey, JSON.stringify(checked));
+    }
+    li.addEventListener('click', toggle);
+    li.addEventListener('keydown', function(e){
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
+    });
+    ol.appendChild(li);
+  });
+
+  /* ---- 28h cap ---- */
+  var hrs = parseFloat(store('hrs.' + weekKey) || '0') || 0;
+
+  function paintCap(){
+    var pct = Math.min(100, (hrs / 28) * 100);
+    $('#capHrs').textContent = hrs;
+    var fill = $('#capFill');
+    fill.style.width = pct + '%';
+    fill.classList.toggle('over', hrs > 28);
+    $('#capHint').textContent = hrs > 28
+      ? 'Over the legal cap'
+      : (28 - hrs) + 'h left · resets Monday';
+    $('#capHint').style.color = hrs > 28 ? 'var(--shu)' : '';
+  }
+  function bump(n){
+    hrs = Math.max(0, Math.round((hrs + n) * 10) / 10);
+    store('hrs.' + weekKey, hrs);
+    paintCap();
+  }
+  $('#addShift').addEventListener('click', function(){ bump(4); });
+  $('#subShift').addEventListener('click', function(){ bump(-4); });
+  paintCap();
+
+  /* ---- setup card ---- */
+  if (store('setupDone') === '1') $('#setup').hidden = true;
+  $('#dismissSetup').addEventListener('click', function(){
+    store('setupDone', '1');
+    $('#setup').hidden = true;
+  });
+
+  $('#resetNote').textContent = 'Ticks clear at midnight';
+
+  /* ---- theme ---- */
+  try {
+    var t = store('theme');
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+  $('#themeBtn').addEventListener('click', function(){
+    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    var next = isLight ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    store('theme', next);
+  });
+})();
+</script>
+
+</body></html>

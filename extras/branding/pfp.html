@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:800px;height:800px;overflow:hidden;background:#0b0b0d}
+.wrap{width:800px;height:800px;position:relative;
+  background:radial-gradient(circle at 50% 55%, rgba(198,255,61,.22) 0%, rgba(198,255,61,.06) 30%, rgba(11,11,13,0) 55%), #0b0b0d}
+.grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 20%,transparent 62%)}
+svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%)}
+</style></head><body><div class="wrap"><div class="grid"></div>
+<svg width="380" height="456" viewBox="0 0 100 120">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9ff6e"/><stop offset="1" stop-color="#a8e51f"/>
+    </linearGradient>
+  </defs>
+  <path d="M29 50 V34 a21 21 0 0 1 42 0 V50" fill="none" stroke="#f2f2f2" stroke-width="10"/>
+  <rect x="12" y="46" width="76" height="66" rx="13" fill="url(#g)"/>
+  <polygon points="50,58 67,77 57,77 57,99 43,99 43,77 33,77" fill="#0b0b0d"/>
+</svg>
+</div></body></html>

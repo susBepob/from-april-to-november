@@ -1,0 +1,458 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Math 1042 Test 1 Crash Course</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on graph paper; sticky unit chips; each unit = recognize → recipe → worked → trap → try */
+:root{
+  --bg:#F5F7FA; --paper:#FFFFFF; --fg:#1B2030; --muted:#5B6478; --line:#DCE1EA; --grid:rgba(36,64,168,.06);
+  --ink:#2440A8; --ink-soft:#E7ECFB; --red:#C2352C; --red-soft:#FCEBEA; --ok:#1E7A4C; --ok-soft:#E5F4EC;
+  --f-display:"Young Serif", Georgia, serif;
+  --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141B; --paper:#181C25; --fg:#E5E8EF; --muted:#9AA3B5; --line:#2A3040; --grid:rgba(143,166,255,.06);
+  --ink:#93A9FF; --ink-soft:#1E2640; --red:#FF8379; --red-soft:#3A1F1F; --ok:#6FD3A0; --ok-soft:#173226; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11141B; --paper:#181C25; --fg:#E5E8EF; --muted:#9AA3B5; --line:#2A3040; --grid:rgba(143,166,255,.06);
+  --ink:#93A9FF; --ink-soft:#1E2640; --red:#FF8379; --red-soft:#3A1F1F; --ok:#6FD3A0; --ok-soft:#173226; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--f-body);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:780px;margin:0 auto}
+header{padding-block:40px 20px}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
+h1{font:400 clamp(30px,6vw,44px)/1.1 var(--f-display);margin:.35em 0 .3em;text-wrap:balance}
+h2{font:400 26px/1.2 var(--f-display);margin:0;text-wrap:balance}
+h3{font:600 13px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+p{margin:0 0 10px}
+.lede{color:var(--muted);max-width:62ch}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  margin-inline:-16px;padding:10px 16px;overflow-x:auto;white-space:nowrap}
+nav a{display:inline-block;font:500 13px/1 var(--f-mono);color:var(--fg);text-decoration:none;padding:7px 10px;border:1px solid var(--line);
+  border-radius:999px;background:var(--paper);margin-right:6px}
+nav a:hover,nav a:focus-visible{border-color:var(--ink);color:var(--ink);outline:none}
+nav a.done{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px 22px 18px;margin-top:22px;scroll-margin-top:64px}
+.unit-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.unit-head>div{min-width:0}
+.tag{font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+label.chk{font:500 13px/1 var(--f-mono);color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer;white-space:nowrap}
+label.chk input{width:18px;height:18px;accent-color:var(--ok)}
+ol.recipe{margin:0;padding-left:22px}
+ol.recipe li{margin-bottom:6px}
+.trap{background:var(--red-soft);border-left:3px solid var(--red);padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0}
+.trap b{color:var(--red)}
+.key{background:var(--ink-soft);padding:10px 14px;border-radius:6px;margin:12px 0;overflow-x:auto}
+.worked{border:1px dashed var(--line);border-radius:6px;padding:12px 14px;margin:10px 0;overflow-x:auto}
+.worked .src{font:600 12px/1 var(--f-mono);color:var(--muted);margin-bottom:8px}
+details{border:1px solid var(--line);border-radius:6px;margin:8px 0;background:var(--bg)}
+details>summary{cursor:pointer;padding:10px 14px;list-style:none;display:flex;gap:10px;align-items:baseline}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"+";font:600 14px/1 var(--f-mono);color:var(--ink);width:12px;flex:none}
+details[open]>summary::before{content:"−"}
+details>summary:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+details .ans{padding:4px 14px 12px 36px;border-top:1px solid var(--line);overflow-x:auto}
+.ans .final{color:var(--ok);font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{font:600 13px/1.4 var(--f-mono);color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font:600 11px/1 var(--f-mono);padding:4px 7px;border-radius:999px;letter-spacing:.04em}
+.p-hi{background:var(--red-soft);color:var(--red)}
+.p-md{background:var(--ink-soft);color:var(--ink)}
+.p-lo{background:var(--ok-soft);color:var(--ok)}
+.tf summary .v{font:600 12px/1 var(--f-mono);color:var(--muted)}
+.tf .T{color:var(--ok);font-weight:700}.tf .F{color:var(--red);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two>div{min-width:0}
+@media (max-width:620px){.two{grid-template-columns:1fr} section.unit{padding:18px 14px}}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+mjx-container{color:var(--fg)}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+footer{color:var(--muted);font-size:14px;margin-top:28px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+html{scroll-behavior:smooth}
+</style>
+<script>
+window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},svg:{fontCache:"global"}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Math 1042 · Karabas · Fall 2026 · Ch 5.2–5.5, 6.1–6.2</div>
+  <h1>Test 1 crash course</h1>
+  <p class="lede">Ten exam slots, one unit each. Every unit follows the same path: how to recognize the question, the recipe, a worked example from your review sheet, the trap that costs points, then practice with hidden answers. Tick a unit when you can do its practice without peeking.</p>
+</header>
+
+<nav id="nav">
+  <a href="#map">Map</a><a href="#vars">Symbols</a><a href="#u1">1 T/F</a><a href="#u2">2 Areas</a><a href="#u3">3 g(x)</a><a href="#u4">4 FTC1</a><a href="#u5">5 Net/Total</a><a href="#u6">6 Toolbox</a><a href="#u7">7 Sub</a><a href="#u8">8 Motion</a><a href="#u9">9 Between</a><a href="#u10">10 Volume</a><a href="#ideal">Ideal answer</a>
+</nav>
+
+<!-- MAP -->
+<section class="unit" id="map">
+  <div class="tag">Start here</div>
+  <h2>Exam map</h2>
+  <p>Your test has 9–10 questions: one True/False block and the rest written out. Every review-sheet problem maps to one slot. Priority is how much it is worth to you, given your quiz record.</p>
+  <div class="tbl"><table>
+    <tr><th>Slot</th><th>Question type</th><th>Section</th><th>Review #</th><th>Priority</th></tr>
+    <tr><td class="n">1</td><td>True / False concepts</td><td>all</td><td>—</td><td><span class="pill p-md">memorize</span></td></tr>
+    <tr><td class="n">2</td><td>Integrals as labeled areas A, B, C…</td><td>5.2</td><td>1</td><td><span class="pill p-lo">free pts</span></td></tr>
+    <tr><td class="n">3</td><td>\(g(x)=\int_0^x f(t)\,dt\) from a graph</td><td>5.3</td><td>2</td><td><span class="pill p-md">high value</span></td></tr>
+    <tr><td class="n">4</td><td>Derivative of an integral (FTC 1 + chain)</td><td>5.3</td><td>quiz</td><td><span class="pill p-lo">free pts</span></td></tr>
+    <tr><td class="n">5</td><td>Net area vs total area</td><td>5.2/5.4</td><td>3, 4</td><td><span class="pill p-md">high value</span></td></tr>
+    <tr><td class="n">6</td><td>Basic integrals (algebra first)</td><td>5.4</td><td>5a, e, f, h</td><td><span class="pill p-hi">your weak spot</span></td></tr>
+    <tr><td class="n">7</td><td>Substitution</td><td>5.5</td><td>5b, c, d, g</td><td><span class="pill p-hi">most points</span></td></tr>
+    <tr><td class="n">8</td><td>Velocity / rate → displacement, distance, total</td><td>5.4</td><td>6, 7</td><td><span class="pill p-md">high value</span></td></tr>
+    <tr><td class="n">9</td><td>Area between curves</td><td>6.1</td><td>8, 9</td><td><span class="pill p-hi">missed class</span></td></tr>
+    <tr><td class="n">10</td><td>Volume (disk / washer / cross-section)</td><td>6.2</td><td>10, 11</td><td><span class="pill p-hi">new</span></td></tr>
+  </table></div>
+  <div class="trap"><b>Correction to my chat answer:</b> review 5(h) is \(\int_{-2}^{3}|x^2-x-2|\,dx\). I misread the lower limit as 2. The right answer is \(\tfrac{49}{6}\), worked in unit 5.</div>
+</section>
+
+<!-- SYMBOLS -->
+<section class="unit" id="vars">
+  <div class="tag">Every variable, decoded</div>
+  <h2>What each symbol means</h2>
+  <div class="tbl"><table>
+    <tr><th>Symbol</th><th>Meaning</th><th>Where it bites</th></tr>
+    <tr><td>\(\int_a^b f(x)\,dx\)</td><td>Signed area between \(y=f(x)\) and the x-axis from \(x=a\) to \(x=b\). Above the axis counts +, below counts −.</td><td>Unit 2, 5</td></tr>
+    <tr><td>\(a,\ b\)</td><td>Lower and upper limits. Swapping them flips the sign: \(\int_b^a f=-\int_a^b f\). Equal limits give 0.</td><td>T/F</td></tr>
+    <tr><td>\(f(x)\)</td><td>Integrand: the function being integrated (the height of each strip).</td><td></td></tr>
+    <tr><td>\(dx\)</td><td>Strip width, and the variable you integrate in. In \(V=\int A(x)\,dx\) it is the slice thickness, not a function \(d(x)\).</td><td>Unit 10</td></tr>
+    <tr><td>\(F(x)\)</td><td>An antiderivative: \(F'=f\). FTC 2: \(\int_a^b f=F(b)-F(a)\).</td><td>All</td></tr>
+    <tr><td>\(C\)</td><td>Constant of integration. Required on every <em>indefinite</em> integral, never on a definite one.</td><td>Unit 6, 7</td></tr>
+    <tr><td>\(t\) in \(\int_0^x f(t)\,dt\)</td><td>Dummy variable. It only lives inside the integral. \(x\) is the real input (the moving right edge).</td><td>Unit 3, 4</td></tr>
+    <tr><td>\(g(x)=\int_a^x f(t)\,dt\)</td><td>Accumulation function: area collected from \(a\) up to \(x\). \(g(a)=0\) and \(g'(x)=f(x)\).</td><td>Unit 3</td></tr>
+    <tr><td>\(u,\ du\)</td><td>Substitution: \(u\) = an inner expression, \(du=u'(x)\,dx\). In a definite integral the limits become \(u(a)\) and \(u(b)\).</td><td>Unit 7</td></tr>
+    <tr><td>\(A, B, \dots, F\)</td><td>Region areas from a picture. They are all positive. You attach the sign yourself.</td><td>Unit 2</td></tr>
+    <tr><td>\(v(t),\ s(t)\)</td><td>Velocity and position. \(\int_a^b v=s(b)-s(a)\) = displacement. \(\int_a^b|v|\) = distance traveled.</td><td>Unit 8</td></tr>
+    <tr><td>\(P(t),\ E(t)\)</td><td>A rate and the amount it builds up. \(E'=P\), so \(\int_a^b P\,dt=E(b)-E(a)\). Units: rate unit × time unit (kW·h = kWh).</td><td>Unit 8</td></tr>
+    <tr><td>top, bottom / right, left</td><td>Area between curves: \(\int(\text{top}-\text{bottom})\,dx\) or \(\int(\text{right}-\text{left})\,dy\).</td><td>Unit 9</td></tr>
+    <tr><td>\(A(x),\ r,\ R\)</td><td>Area of one slice of a solid. Disk: \(\pi r^2\). Washer: \(\pi(R^2-r^2)\), with \(R\) the outer radius and \(r\) the inner one.</td><td>Unit 10</td></tr>
+  </table></div>
+</section>
+
+<!-- U1 TF -->
+<section class="unit" id="u1">
+  <div class="unit-head"><div><div class="tag">Slot 1 · concepts</div><h2>True / False bank</h2></div><label class="chk"><input type="checkbox" id="c-u1" data-u="u1">Done</label></div>
+  <p>Say T or F out loud before opening each one. A false statement nearly always breaks one of four rules: integrals don't distribute over multiplication or division, continuity is required for FTC 2, sign matters (net vs total), and the derivative of a constant is 0.</p>
+  <div class="tf">
+  <details><summary>\(\int_a^b [f(x)+g(x)]\,dx=\int_a^b f(x)\,dx+\int_a^b g(x)\,dx\)</summary><div class="ans"><span class="T">TRUE.</span> Sums split. Constants pull out too: \(\int 5f=5\int f\).</div></details>
+  <details><summary>\(\int_a^b f(x)g(x)\,dx=\left(\int_a^b f(x)\,dx\right)\left(\int_a^b g(x)\,dx\right)\)</summary><div class="ans"><span class="F">FALSE.</span> Products don't split. Try \(f=g=x\) on \([0,1]\): \(\tfrac13\ne\tfrac14\).</div></details>
+  <details><summary>\(\int x f(x)\,dx = x\int f(x)\,dx\)</summary><div class="ans"><span class="F">FALSE.</span> Only constants come out of an integral, never \(x\).</div></details>
+  <details><summary>\(\int_{-1}^{1}\frac{1}{x^4}\,dx=\left[-\frac{1}{3x^3}\right]_{-1}^{1}=-\frac23\)</summary><div class="ans"><span class="F">FALSE.</span> \(1/x^4\) is not continuous at \(x=0\), so FTC 2 cannot be applied. (A positive function can't give a negative integral anyway.) Same idea as your quiz question on \(x^{-3}\) on \([-1,4]\).</div></details>
+  <details><summary>\(\int_0^{\pi}\sec^2x\,dx=[\tan x]_0^{\pi}=0\)</summary><div class="ans"><span class="F">FALSE.</span> \(\sec^2x\) is discontinuous at \(\pi/2\), which lies inside \([0,\pi]\).</div></details>
+  <details><summary>If \(f\) is continuous on \([a,b]\), then \(\frac{d}{dx}\left(\int_a^b f(x)\,dx\right)=f(x)\).</summary><div class="ans"><span class="F">FALSE.</span> \(\int_a^b f\) is a number, so its derivative is 0. FTC 1 needs a variable limit: \(\frac{d}{dx}\int_a^x f(t)\,dt=f(x)\).</div></details>
+  <details><summary>If \(f\) is continuous, then \(g(x)=\int_a^x f(t)\,dt\) is an antiderivative of \(f\).</summary><div class="ans"><span class="T">TRUE.</span> That is FTC 1. It also means every continuous function has an antiderivative.</div></details>
+  <details><summary>If \(f'\) is continuous on \([1,3]\), then \(\int_1^3 f'(v)\,dv=f(3)-f(1)\).</summary><div class="ans"><span class="T">TRUE.</span> Net Change Theorem. The letter \(v\) is just a dummy variable.</div></details>
+  <details><summary>\(\int_0^2 (x-x^3)\,dx\) is the area between \(y=x-x^3\) and the x-axis for \(0\le x\le 2\).</summary><div class="ans"><span class="F">FALSE.</span> \(x-x^3\) is negative on \((1,2)\), so the integral is the net area. The area is \(\int_0^2|x-x^3|\,dx\).</div></details>
+  <details><summary>If \(\int_a^b f(x)\,dx=0\), then \(f(x)=0\) on \([a,b]\).</summary><div class="ans"><span class="F">FALSE.</span> Positive and negative parts can cancel: \(\int_{-1}^{1}x\,dx=0\).</div></details>
+  <details><summary>If \(f(x)\ge g(x)\) on \([a,b]\), then \(\int_a^b f\ge\int_a^b g\).</summary><div class="ans"><span class="T">TRUE.</span> Comparison property.</div></details>
+  <details><summary>\(\int_{-5}^{5}(ax^2+bx+c)\,dx=2\int_0^5(ax^2+c)\,dx\)</summary><div class="ans"><span class="T">TRUE.</span> \(bx\) is odd, so it integrates to 0 over \([-5,5]\). \(ax^2+c\) is even, so it doubles.</div></details>
+  <details><summary>If \(f\) is odd, \(\int_{-a}^{a}f=0\). If \(f\) is even, \(\int_{-a}^{a}f=2\int_0^a f\).</summary><div class="ans"><span class="T">TRUE.</span> Fast check: \(\int_{-\pi/2}^{\pi/2}x^2\sin x\,dx=0\) because the integrand is odd.</div></details>
+  <details><summary>\(\int_a^b v(t)\,dt\) is the total distance traveled.</summary><div class="ans"><span class="F">FALSE.</span> That is displacement. Distance is \(\int_a^b|v(t)|\,dt\).</div></details>
+  <details><summary>\(\int\frac1x\,dx=\ln x+C\)</summary><div class="ans"><span class="F">FALSE</span> (as a general answer). It is \(\ln|x|+C\). Keep the absolute value.</div></details>
+  <details><summary>\(\int_a^b \sqrt{f(x)}\,dx=\sqrt{\int_a^b f(x)\,dx}\)</summary><div class="ans"><span class="F">FALSE.</span> Integrals don't pass through roots, powers, or fractions.</div></details>
+  <details><summary>The area between \(y=f(x)\) and \(y=g(x)\) on \([a,b]\) is always \(\int_a^b[f(x)-g(x)]\,dx\).</summary><div class="ans"><span class="F">FALSE.</span> Only when \(f\ge g\) on the whole interval. In general it is \(\int_a^b|f-g|\,dx\), so split where the curves cross.</div></details>
+  <details><summary>Rotating the region between \(y=f(x)\) (top) and \(y=g(x)\) about the x-axis gives \(V=\pi\int_a^b[f(x)-g(x)]^2dx\).</summary><div class="ans"><span class="F">FALSE.</span> Washer: \(\pi\int_a^b\left(f^2-g^2\right)dx\). Square each radius first, then subtract.</div></details>
+  <details><summary>\(\int_a^a f(x)\,dx=0\) and \(\int_a^b f=\int_a^c f+\int_c^b f\) for any \(c\).</summary><div class="ans"><span class="T">TRUE.</span> This is how quiz 5.2 #2 collapses to \(\int_{-3}^{5}f\).</div></details>
+  <details><summary>If \(g(x)=\int_0^x f(t)\,dt\) and \(f\) changes from + to − at \(x=5\), then \(g\) has a local maximum at \(x=5\).</summary><div class="ans"><span class="T">TRUE.</span> \(g'=f\) changes from + to −. First Derivative Test.</div></details>
+  </div>
+</section>
+
+<!-- U2 -->
+<section class="unit" id="u2">
+  <div class="unit-head"><div><div class="tag">Slot 2 · 5.2</div><h2>Integrals as labeled areas</h2></div><label class="chk"><input type="checkbox" id="c-u2" data-u="u2">Done</label></div>
+  <h3>Recognize it</h3><p>A picture with regions labeled A, B, C…, and "express in terms of A, B, …".</p>
+  <h3>Recipe</h3>
+  <ol class="recipe">
+    <li>For each region, note which curve bounds it and whether it sits above (+) or below (−) the axis.</li>
+    <li>\(\int f\): add the regions of \(f\) with their signs. \(\int|f|\): add them all as +.</li>
+    <li>\(\int(f-g)\): compute \(\int f\) and \(\int g\) separately, then subtract. Do not try to read it off the picture.</li>
+  </ol>
+  <div class="worked"><div class="src">REVIEW #1</div>
+  \(f\): \(+A\) on \((0,2)\), \(-B\) on \((2,4)\), \(+C\) on \((4,6)\). \(g\): \(-D,\ +E,\ -F\).
+  \[\int_2^6 (f-g)\,dx=\int_2^6 f-\int_2^6 g=(-B+C)-(E-F)=C-B-E+F\]</div>
+  <div class="trap"><b>Trap:</b> subtracting a negative. \(-(E-F)\) gives \(+F\). Write the bracket first, then expand it.</div>
+  <h3>Try it (same picture)</h3>
+  <details><summary>\(\int_0^6 f(x)\,dx\)</summary><div class="ans"><span class="final">\(A-B+C\)</span></div></details>
+  <details><summary>\(\int_2^4 [g(x)-f(x)]\,dx\)</summary><div class="ans">\(\int_2^4 g=E\) and \(\int_2^4 f=-B\), so \(E-(-B)=\) <span class="final">\(E+B\)</span></div></details>
+  <details><summary>\(\int_0^6|f(x)-g(x)|\,dx\) (total area between the curves)</summary><div class="ans"><span class="final">\(A+B+C+D+E+F\)</span>. Between the curves, each gap is the sum of the two regions on either side of the axis.</div></details>
+  <details><summary>\(\int_6^0 g(x)\,dx\)</summary><div class="ans">Flip the limits: \(-\int_0^6 g=-(-D+E-F)=\) <span class="final">\(D-E+F\)</span></div></details>
+</section>
+
+<!-- U3 -->
+<section class="unit" id="u3">
+  <div class="unit-head"><div><div class="tag">Slot 3 · 5.3</div><h2>\(g(x)=\int_0^x f(t)\,dt\) from a graph</h2></div><label class="chk"><input type="checkbox" id="c-u3" data-u="u3">Done</label></div>
+  <h3>Recipe: questions map to facts about \(f\)</h3>
+  <div class="tbl"><table>
+    <tr><th>They ask</th><th>You use</th></tr>
+    <tr><td>\(g(c)\)</td><td>Signed area under \(f\) from 0 to \(c\), using geometry (rectangles, triangles, \(\tfrac14\pi r^2\)).</td></tr>
+    <tr><td>\(g'(c)\)</td><td>\(f(c)\), read the height off the graph.</td></tr>
+    <tr><td>\(g''(c)\)</td><td>\(f'(c)\), the slope of \(f\) there.</td></tr>
+    <tr><td>\(g\) increasing / decreasing</td><td>Where \(f>0\) / \(f<0\).</td></tr>
+    <tr><td>local max / min of \(g\)</td><td>Where \(f\) crosses from + to − (max) or − to + (min).</td></tr>
+    <tr><td>\(g\) concave up / down</td><td>Where \(f\) is increasing / decreasing.</td></tr>
+    <tr><td>absolute max on \([0,\infty)\)</td><td>Compare \(g\) at the local max and at the endpoints.</td></tr>
+  </table></div>
+  <div class="worked"><div class="src">REVIEW #2 · quarter circle (r = 3) on [0,3] sitting on a 3×1 rectangle, then the line from (3,4) through (5,0) to (8,−6)</div>
+  \[g(3)=\underbrace{3\cdot1}_{\text{rectangle}}+\underbrace{\tfrac14\pi(3)^2}_{\text{quarter circle}}=3+\tfrac{9\pi}{4}\]
+  \[g(8)=g(3)+\underbrace{\tfrac12(2)(4)}_{[3,5]\text{ above}}-\underbrace{\tfrac12(3)(6)}_{[5,8]\text{ below}}=\tfrac{9\pi}{4}-2\]
+  \(g'(4)=f(4)=2\). \(g\) decreases on \((5,\infty)\). Absolute max at \(x=5\): \(g(5)=7+\tfrac{9\pi}{4}\).</div>
+  <div class="trap"><b>Trap:</b> the quarter circle doesn't start at height 0. It sits on top of a 3×1 rectangle (it starts at \(y=1\)), so the rectangle area counts too.</div>
+  <h3>Try it (same graph)</h3>
+  <details><summary>\(g''(4)\)</summary><div class="ans">\(g''=f'\), and the slope of the line is \(-2\). <span class="final">\(-2\)</span></div></details>
+  <details><summary>Where is \(g\) concave up? Where are its inflection points?</summary><div class="ans">\(f\) increases on \((0,3)\) and decreases after that. <span class="final">Concave up on \((0,3)\), concave down on \((3,\infty)\). Inflection point at \(x=3\).</span></div></details>
+  <details><summary>\(g(0)\) and \(g(5)\)</summary><div class="ans">\(g(0)=0\) always. <span class="final">\(g(5)=7+\tfrac{9\pi}{4}\approx 14.07\)</span></div></details>
+  <details><summary>For which \(x>5\) does \(g(x)=g(3)\)?</summary><div class="ans">You need the area lost after \(x=5\) to equal the 4 gained on \([3,5]\). Below the axis, \(f(t)=-2(t-5)\), so the lost area is \(\tfrac12(x-5)\cdot2(x-5)=(x-5)^2=4\). <span class="final">\(x=7\)</span></div></details>
+</section>
+
+<!-- U4 -->
+<section class="unit" id="u4">
+  <div class="unit-head"><div><div class="tag">Slot 4 · 5.3</div><h2>Derivative of an integral (FTC 1 + chain rule)</h2></div><label class="chk"><input type="checkbox" id="c-u4" data-u="u4">Done</label></div>
+  <div class="key">\[\frac{d}{dx}\int_{a}^{h(x)}f(t)\,dt=f\big(h(x)\big)\cdot h'(x)\qquad \frac{d}{dx}\int_{k(x)}^{h(x)}f(t)\,dt=f(h)\,h'-f(k)\,k'\]</div>
+  <p>Plug the upper limit into \(f\) and multiply by the derivative of the upper limit. If the variable is in the lower limit, subtract the same thing for it. Your notes already do this with \(u=\sin x\).</p>
+  <div class="trap"><b>Traps:</b> forgetting \(h'(x)\). A variable lower limit with a constant upper limit gives a minus sign. Never integrate first.</div>
+  <h3>Try it</h3>
+  <details><summary>\(\frac{d}{dx}\int_1^{\sin x}\cos t\,dt\)</summary><div class="ans"><span class="final">\(\cos(\sin x)\cdot\cos x\)</span></div></details>
+  <details><summary>\(\frac{d}{dx}\int_x^{3}\sqrt{1+t^3}\,dt\)</summary><div class="ans">Flip to \(-\int_3^x\). <span class="final">\(-\sqrt{1+x^3}\)</span></div></details>
+  <details><summary>\(F(x)=\int_x^{x^2}e^{t^2}\,dt\). Find \(F'(x)\).</summary><div class="ans"><span class="final">\(2x\,e^{x^4}-e^{x^2}\)</span> (your quiz answer)</div></details>
+  <details><summary>\(\frac{d}{dx}\int_0^{\sqrt x}t^2\sin t\,dt\)</summary><div class="ans">\((\sqrt x)^2\sin(\sqrt x)\cdot\frac{1}{2\sqrt x}=\) <span class="final">\(\tfrac{\sqrt x}{2}\sin\sqrt x\)</span></div></details>
+  <details><summary>\(g(x)=\int_{2x}^{3x}\frac{u^2-1}{u^2+1}\,du\). Find \(g'(x)\).</summary><div class="ans"><span class="final">\(3\cdot\frac{9x^2-1}{9x^2+1}-2\cdot\frac{4x^2-1}{4x^2+1}\)</span></div></details>
+</section>
+
+<!-- U5 -->
+<section class="unit" id="u5">
+  <div class="unit-head"><div><div class="tag">Slot 5 · 5.2 / 5.4</div><h2>Net area vs total area</h2></div><label class="chk"><input type="checkbox" id="c-u5" data-u="u5">Done</label></div>
+  <h3>Recipe</h3>
+  <ol class="recipe">
+    <li><b>Net</b> = just \(\int_a^b f\). No splitting.</li>
+    <li><b>Total</b> = \(\int_a^b|f|\): find the zeros of \(f\) in \([a,b]\), make a sign table, then split the integral at each zero.</li>
+    <li>Integrals over negative pieces get a minus sign in front (\(-\int\)), or take the absolute value of each piece at the end.</li>
+  </ol>
+  <div class="worked"><div class="src">REVIEW 5(h), corrected · \(\int_{-2}^{3}|x^2-x-2|\,dx\)</div>
+  \(x^2-x-2=(x+1)(x-2)\). Signs: \(+\) on \([-2,-1)\), \(-\) on \((-1,2)\), \(+\) on \((2,3]\). Let \(F=\tfrac{x^3}{3}-\tfrac{x^2}{2}-2x\).
+  \[=\big[F\big]_{-2}^{-1}-\big[F\big]_{-1}^{2}+\big[F\big]_{2}^{3}=\tfrac{11}{6}+\tfrac{9}{2}+\tfrac{11}{6}=\tfrac{49}{6}\]</div>
+  <div class="worked"><div class="src">REVIEW #3 · area under \(y=\frac{4}{\sqrt{1-x^2}}\) on \([0,\tfrac12]\)</div>
+  The function is positive, so area = integral: \(4\arcsin x\big|_0^{1/2}=4\cdot\tfrac{\pi}{6}=\tfrac{2\pi}{3}\).</div>
+  <h3>Try it</h3>
+  <details><summary>\(f(x)=x^3-x\) on \([-1,2]\): net area and total area</summary><div class="ans">Net: \(\left[\tfrac{x^4}{4}-\tfrac{x^2}{2}\right]_{-1}^{2}=2-(-\tfrac14)=\tfrac94\). Pieces: \((-1,0)\): \(+\tfrac14\), \((0,1)\): \(-\tfrac14\), \((1,2)\): \(+\tfrac94\). <span class="final">Net \(=\tfrac94\), total \(=\tfrac{11}{4}\)</span></div></details>
+  <details><summary>\(\int_0^{\pi}\cos x\,dx\) and \(\int_0^{\pi}|\cos x|\,dx\)</summary><div class="ans"><span class="final">0 and 2</span> (split at \(\pi/2\))</div></details>
+  <details><summary>\(\int_0^{3}(x^2-4)\,dx\) net and total (review #4)</summary><div class="ans"><span class="final">Net \(-3\), total \(\tfrac{16}{3}+\tfrac73=\tfrac{23}{3}\)</span></div></details>
+</section>
+
+<!-- U6 -->
+<section class="unit" id="u6">
+  <div class="unit-head"><div><div class="tag">Slot 6 · 5.4</div><h2>Integration toolbox</h2></div><label class="chk"><input type="checkbox" id="c-u6" data-u="u6">Done</label></div>
+  <h3>The table you must know cold (your textbook's Table 1, add +C to each)</h3>
+  <div class="two">
+  <div class="key">\[\int cf(x)\,dx=c\int f(x)\,dx\]\[\int k\,dx=kx\]\[\int x^n dx=\tfrac{x^{n+1}}{n+1}\ (n\neq-1)\]\[\int e^x dx=e^x\]\[\int \sin x\,dx=-\cos x\]\[\int\sec^2x\,dx=\tan x\]\[\int\sec x\tan x\,dx=\sec x\]\[\int\tfrac{1}{x^2+1}dx=\arctan x\]</div>
+  <div class="key">\[\int[f\pm g]\,dx=\int f\,dx\pm\int g\,dx\]\[\int \tfrac1x dx=\ln|x|\]\[\int b^x dx=\tfrac{b^x}{\ln b}\]\[\int\cos x\,dx=\sin x\]\[\int\csc^2x\,dx=-\cot x\]\[\int\csc x\cot x\,dx=-\csc x\]\[\int\tfrac{1}{\sqrt{1-x^2}}dx=\arcsin x\]\[\textit{bonus: }\int\tan x\,dx=\ln|\sec x|\]</div>
+  </div>
+  <h3>How to remember it, not just memorize it</h3>
+  <ol class="recipe">
+    <li><b>Every row is a derivative read backwards.</b> \((\tan x)'=\sec^2x\), so \(\int\sec^2x=\tan x\). If you blank on a row, differentiate your guess and check.</li>
+    <li><b>Left column vs right column:</b> the right-hand trig rows are the "co-" versions of the left ones (\(\sec\to\csc\), \(\tan\to\cot\)). Every co-version gets a <b>minus sign</b>: \(-\cot\), \(-\csc\). The one exception is \(\int\cos=+\sin\), because there it's \(\sin\) that carries the minus: \(\int\sin=-\cos\).</li>
+    <li><b>\(x^n\):</b> add 1 to the power, divide by the new power. It fails only at \(n=-1\), which is why \(\tfrac1x\) gets its own row (\(\ln|x|\)).</li>
+    <li><b>\(b^x\):</b> like \(e^x\) but divided by \(\ln b\) (for \(b=e\), \(\ln e=1\), which brings back the \(e^x\) row). Example: \(\int 2^x dx=\tfrac{2^x}{\ln2}+C\).</li>
+    <li><b>The two inverse-trig rows</b> are the ones that appear as "surprise" answers: \(1+x^2\) in a denominator gives arctan, and \(\sqrt{1-x^2}\) gives arcsin. Look for them in review #3 and 5(f).</li>
+  </ol>
+  <h3>Drill: say the antiderivative, then open</h3>
+  <details><summary>\(\int 7\,dx\)</summary><div class="ans"><span class="final">\(7x+C\)</span></div></details>
+  <details><summary>\(\int x^{-3}dx\)</summary><div class="ans"><span class="final">\(-\tfrac{1}{2x^2}+C\)</span></div></details>
+  <details><summary>\(\int \sqrt[3]{x}\,dx\)</summary><div class="ans">\(x^{1/3}\) gives <span class="final">\(\tfrac34x^{4/3}+C\)</span></div></details>
+  <details><summary>\(\int \tfrac{5}{x}\,dx\)</summary><div class="ans"><span class="final">\(5\ln|x|+C\)</span></div></details>
+  <details><summary>\(\int 3^x\,dx\)</summary><div class="ans"><span class="final">\(\tfrac{3^x}{\ln3}+C\)</span></div></details>
+  <details><summary>\(\int\csc^2x\,dx\)</summary><div class="ans"><span class="final">\(-\cot x+C\)</span></div></details>
+  <details><summary>\(\int\csc x\cot x\,dx\)</summary><div class="ans"><span class="final">\(-\csc x+C\)</span></div></details>
+  <details><summary>\(\int(4\sin x-2\cos x)\,dx\)</summary><div class="ans"><span class="final">\(-4\cos x-2\sin x+C\)</span></div></details>
+  <details><summary>\(\int\tfrac{3}{x^2+1}dx\)</summary><div class="ans"><span class="final">\(3\arctan x+C\)</span></div></details>
+  <details><summary>\(\int_0^{1/2}\tfrac{dx}{\sqrt{1-x^2}}\)</summary><div class="ans">\(\arcsin\tfrac12-\arcsin0=\) <span class="final">\(\tfrac\pi6\)</span></div></details>
+  <details><summary>\(\int\tfrac{\cos x}{\sin^2x}dx\)</summary><div class="ans">\(=\int\csc x\cot x\) gives <span class="final">\(-\csc x+C\)</span></div></details>
+  <details><summary>\(\int(e^x+x^e)\,dx\)</summary><div class="ans">\(x^e\) is a power (\(e\approx2.718\) is just a constant). <span class="final">\(e^x+\tfrac{x^{e+1}}{e+1}+C\)</span></div></details>
+  <h3>Exact values you'll need when you plug in limits</h3>
+  <div class="tbl"><table>
+    <tr><th>\(x\)</th><th>0</th><th>\(\pi/6\)</th><th>\(\pi/4\)</th><th>\(\pi/3\)</th><th>\(\pi/2\)</th></tr>
+    <tr><td>\(\sin\)</td><td>0</td><td>\(\tfrac12\)</td><td>\(\tfrac{\sqrt2}{2}\)</td><td>\(\tfrac{\sqrt3}{2}\)</td><td>1</td></tr>
+    <tr><td>\(\cos\)</td><td>1</td><td>\(\tfrac{\sqrt3}{2}\)</td><td>\(\tfrac{\sqrt2}{2}\)</td><td>\(\tfrac12\)</td><td>0</td></tr>
+    <tr><td>\(\tan\)</td><td>0</td><td>\(\tfrac{1}{\sqrt3}\)</td><td>1</td><td>\(\sqrt3\)</td><td>—</td></tr>
+    <tr><td>\(\sec\)</td><td>1</td><td>\(\tfrac{2}{\sqrt3}\)</td><td>\(\sqrt2\)</td><td>2</td><td>—</td></tr>
+  </table></div>
+  <p>Read the inverse functions backwards: \(\arcsin\tfrac12=\tfrac\pi6\), \(\arctan1=\tfrac\pi4\), \(\arctan\tfrac1{\sqrt3}=\tfrac\pi6\), \(\arctan\sqrt3=\tfrac\pi3\). Also \(\ln1=0\) and \(e^0=1\).</p>
+  <h3>Algebra moves to make before integrating</h3>
+  <ol class="recipe">
+    <li><b>Split a fraction</b> with a single-term denominator: \(\frac{x^3-x+\sqrt x}{x^2}=x-\frac1x+x^{-3/2}\).</li>
+    <li><b>Expand products:</b> \((u+3)(4u+7)=4u^2+19u+21\).</li>
+    <li><b>Factor and cancel:</b> \(\frac{t^2-1}{t^4-1}=\frac{1}{t^2+1}\).</li>
+    <li><b>Trig rewrite:</b> \(\frac{1}{\cos}=\sec\), \(\frac{\sin}{\cos^2}=\sec\tan\), \(\frac{8+9\cos^2}{\cos^2}=8\sec^2+9\).</li>
+  </ol>
+  <div class="trap"><b>Your quiz error (5.4 #3):</b> \(\int_1^2\left(\frac1{x^2}-\frac4{x^3}\right)dx=\left[-\frac1x+\frac2{x^2}\right]_1^2=(0)-(1)=-1\). You wrote 3.5. Every time, write \(\big[\ F(b)\ \big]-\big[\ F(a)\ \big]\) with brackets, and simplify each bracket on its own line.</div>
+  <h3>Try it</h3>
+  <details><summary>\(\int(2x+1)(x-3)\,dx\)</summary><div class="ans"><span class="final">\(\tfrac{2x^3}{3}-\tfrac{5x^2}{2}-3x+C\)</span></div></details>
+  <details><summary>\(\int_1^4\frac{x+1}{\sqrt x}\,dx\)</summary><div class="ans">\(\int(x^{1/2}+x^{-1/2})\), then \(\left[\tfrac23x^{3/2}+2x^{1/2}\right]_1^4=\tfrac{28}{3}-\tfrac83=\) <span class="final">\(\tfrac{20}{3}\)</span></div></details>
+  <details><summary>\(\int\frac{1+\cos^2\theta}{\cos^2\theta}\,d\theta\)</summary><div class="ans"><span class="final">\(\tan\theta+\theta+C\)</span></div></details>
+  <details><summary>\(\int\frac{\sin x}{\cos^2x}\,dx\)</summary><div class="ans">\(=\int\sec x\tan x\). <span class="final">\(\sec x+C\)</span></div></details>
+  <details><summary>\(\int_0^1\frac{6}{1+x^2}\,dx\)</summary><div class="ans">\(6\cdot\tfrac{\pi}{4}=\) <span class="final">\(\tfrac{3\pi}{2}\)</span></div></details>
+  <details><summary>\(\int_0^{\pi/4}\frac{\tan\theta+\sec\theta}{\cos\theta}\,d\theta\) (review 5e)</summary><div class="ans">\(=\int(\sec\theta\tan\theta+\sec^2\theta)\), then \([\sec\theta+\tan\theta]_0^{\pi/4}=(\sqrt2+1)-1=\) <span class="final">\(\sqrt2\)</span></div></details>
+</section>
+
+<!-- U7 -->
+<section class="unit" id="u7">
+  <div class="unit-head"><div><div class="tag">Slot 7 · 5.5</div><h2>Substitution</h2></div><label class="chk"><input type="checkbox" id="c-u7" data-u="u7">Done</label></div>
+  <h3>Recipe</h3>
+  <ol class="recipe">
+    <li>Pick \(u\) = the inside piece whose derivative also appears in the integrand (up to a constant).</li>
+    <li>Write \(du=u'\,dx\) and solve for the piece you see: \(x\,dx=\tfrac12du\).</li>
+    <li><b>Leftover \(x\)?</b> Rewrite it using \(u\): with \(u=x^2+3\), \(x^4=(u-3)^2\). With \(u=x+5\), \(x=u-5\).</li>
+    <li><b>Definite integral:</b> change the limits to \(u(a)\) and \(u(b)\), and never return to \(x\).</li>
+    <li>Indefinite: substitute \(u\) back at the end and add \(+C\).</li>
+  </ol>
+  <div class="tbl"><table>
+    <tr><th>When you see…</th><th>Let \(u=\)</th></tr>
+    <tr><td>\(\frac{\text{something}}{x}\) with \(\ln x\)</td><td>\(\ln x\) (or \(1+\ln x\))</td></tr>
+    <tr><td>\(\frac{f'(x)}{f(x)}\) (top is the derivative of the bottom, up to a constant)</td><td>bottom → answer \(\ln|\text{bottom}|\)</td></tr>
+    <tr><td>\(e^{\text{stuff}}\cdot(\text{stuff})'\)</td><td>the exponent (\(\sqrt x\), \(1/x\), \(-x^2\))</td></tr>
+    <tr><td>\(\sec^2x\cdot\) function of \(\tan x\)</td><td>\(\tan x\)</td></tr>
+    <tr><td>\(\cos x\cdot\) function of \(\sin x\)</td><td>\(\sin x\)</td></tr>
+    <tr><td>\(x^n\sqrt{x^2+c}\) or \(x\sqrt{x+c}\)</td><td>what's under the root, then rewrite the leftover \(x\)'s</td></tr>
+  </table></div>
+  <div class="worked"><div class="src">REVIEW 5(g) · definite, with limits changed</div>
+  \(\int_1^4\frac{e^{\sqrt x}}{\sqrt x}dx\). Let \(u=\sqrt x\), \(du=\frac{dx}{2\sqrt x}\), so \(\frac{dx}{\sqrt x}=2\,du\). Limits: \(x=1\to u=1\), \(x=4\to u=2\).
+  \[=2\int_1^2e^u\,du=2(e^2-e)\]</div>
+  <div class="worked"><div class="src">YOUR NOTES · \(\int\tan x\,dx\), the clean way</div>
+  \(\int\frac{\sin x}{\cos x}dx\). Let \(u=\cos x\), \(du=-\sin x\,dx\). Then \(-\int\frac{du}{u}=-\ln|\cos x|+C=\ln|\sec x|+C\). Your final answer was right. Write the \(du\) line like this so the grader sees the method.</div>
+  <div class="trap"><b>Traps:</b> (1) keeping old \(x\)-limits after switching to \(u\); (2) dropping the constant from \(du\) (the ½ or −⅓); (3) leaving an \(x\) inside a \(u\)-integral.</div>
+  <h3>Try it (your unanswered 5.5 quiz first)</h3>
+  <details><summary>\(\int y^2(3-y^3)^{2/3}\,dy\)</summary><div class="ans">\(u=3-y^3\), \(du=-3y^2dy\). \(-\tfrac13\int u^{2/3}du\). <span class="final">\(-\tfrac15(3-y^3)^{5/3}+C\)</span></div></details>
+  <details><summary>\(\int\frac{z^4}{z^5+4}\,dz\)</summary><div class="ans"><span class="final">\(\tfrac15\ln|z^5+4|+C\)</span></div></details>
+  <details><summary>\(\int\frac{(\ln x)^{46}}{x}\,dx\)</summary><div class="ans"><span class="final">\(\tfrac{(\ln x)^{47}}{47}+C\)</span></div></details>
+  <details><summary>\(\int x\sqrt{x+5}\,dx\)</summary><div class="ans">\(u=x+5\), \(x=u-5\). \(\int(u^{3/2}-5u^{1/2})du\). <span class="final">\(\tfrac25(x+5)^{5/2}-\tfrac{10}{3}(x+5)^{3/2}+C\)</span></div></details>
+  <details><summary>\(\int-\frac{3\sec^2\theta}{\tan\theta}\,d\theta\)</summary><div class="ans"><span class="final">\(-3\ln|\tan\theta|+C\)</span></div></details>
+  <details><summary>\(\int_1^6\frac{e^{1/x}}{x^2}\,dx\)</summary><div class="ans">\(u=\tfrac1x\), \(du=-\tfrac{dx}{x^2}\). Limits \(1\to1\), \(6\to\tfrac16\). \(-\int_1^{1/6}e^u du=\int_{1/6}^1e^u du\). <span class="final">\(e-e^{1/6}\)</span></div></details>
+  <details><summary>\(\int x^3\sqrt{x^2+1}\,dx\) (same shape as review 5d)</summary><div class="ans">\(u=x^2+1\), \(x^2=u-1\), \(x\,dx=\tfrac12du\). \(\tfrac12\int(u-1)u^{1/2}du\). <span class="final">\(\tfrac15(x^2+1)^{5/2}-\tfrac13(x^2+1)^{3/2}+C\)</span></div></details>
+  <details><summary>\(\int_0^1 x\,e^{-x^2}\,dx\)</summary><div class="ans"><span class="final">\(\tfrac12\left(1-\tfrac1e\right)\)</span></div></details>
+  <details><summary>\(\int_1^e\frac{(\ln x)^2}{x}\,dx\)</summary><div class="ans">\(u=\ln x\), limits \(0\to1\). <span class="final">\(\tfrac13\)</span></div></details>
+  <details><summary>\(\int_0^{\pi/2}\frac{\cos x}{1+\sin x}\,dx\)</summary><div class="ans"><span class="final">\(\ln 2\)</span></div></details>
+  <details><summary>\(\int_0^4\frac{x}{\sqrt{x^2+9}}\,dx\)</summary><div class="ans">\(u=x^2+9\), limits \(9\to25\). \(\tfrac12\int u^{-1/2}du=[\sqrt u]_9^{25}=\) <span class="final">2</span></div></details>
+  <details><summary>\(\int\sec^2x\,\tan^3x\,dx\)</summary><div class="ans"><span class="final">\(\tfrac{\tan^4x}{4}+C\)</span></div></details>
+</section>
+
+<!-- U8 -->
+<section class="unit" id="u8">
+  <div class="unit-head"><div><div class="tag">Slot 8 · 5.4</div><h2>Motion and rates (Net Change Theorem)</h2></div><label class="chk"><input type="checkbox" id="c-u8" data-u="u8">Done</label></div>
+  <ol class="recipe">
+    <li><b>Displacement</b> \(=\int_a^b v\,dt\). One integral.</li>
+    <li><b>Distance</b> \(=\int_a^b|v|\,dt\): solve \(v=0\), make a sign table, split, flip the negative pieces.</li>
+    <li><b>Rate graph</b> (kW, L/min…): total amount = area under the graph. Use rectangles and trapezoids \(\tfrac{(b_1+b_2)}{2}h\).</li>
+    <li><b>Units:</b> rate unit × time unit. Graders take points off for missing units.</li>
+  </ol>
+  <div class="worked"><div class="src">REVIEW #6 · \(v=\tfrac t2-\tfrac2t\) on \([1,4]\)</div>
+  Displacement: \(\left[\tfrac{t^2}{4}-2\ln t\right]_1^4=\tfrac{15}{4}-2\ln4\) m. \(v=0\) at \(t=2\): negative on \([1,2)\), positive on \((2,4]\).
+  \[\text{distance}=-\Big[\ \Big]_1^2+\Big[\ \Big]_2^4=\left(2\ln2-\tfrac34\right)+\left(3-2\ln2\right)=\tfrac94\text{ m}\]</div>
+  <div class="worked"><div class="src">REVIEW #7 · power graph</div>\(12+12+54+12+6=96\) kWh.</div>
+  <h3>Try it</h3>
+  <details><summary>\(v(t)=t^2-2t-15\), \(2\le t\le 8\). (a) displacement (b) distance</summary><div class="ans">\(F=\tfrac{t^3}{3}-t^2-15t\). (a) \(F(8)-F(2)=18\) m (your quiz answer). (b) \(v=0\) at \(t=5\). \(\int_2^5=-27\), \(\int_5^8=45\). <span class="final">Displacement 18 m, distance 72 m</span></div></details>
+  <details><summary>\(v(t)=t^2-2t-8\), \(1\le t\le6\). (a) displacement (b) distance</summary><div class="ans">\(v=(t-4)(t+2)\), zero at \(t=4\). \(\int_1^4=-18\), \(\int_4^6=\tfrac{44}{3}\). <span class="final">Displacement \(-\tfrac{10}{3}\) m, distance \(\tfrac{98}{3}\) m</span></div></details>
+  <details><summary>Water flows into a tank at 3 L/min for \(0\le t\le2\), then the rate rises linearly from 3 to 7 L/min over \(2\le t\le6\). How much water enters during \([0,6]\)?</summary><div class="ans">\(3\cdot2+\tfrac{3+7}{2}\cdot4=6+20=\) <span class="final">26 L</span></div></details>
+  <details><summary>\(w'(t)\) is a child's growth rate in kg/year. What does \(\int_7^{10}w'(t)\,dt\) mean?</summary><div class="ans"><span class="final">The change in the child's weight (kg) from age 7 to age 10.</span></div></details>
+</section>
+
+<!-- U9 -->
+<section class="unit" id="u9">
+  <div class="unit-head"><div><div class="tag">Slot 9 · 6.1 (the class you missed)</div><h2>Area between curves</h2></div><label class="chk"><input type="checkbox" id="c-u9" data-u="u9">Done</label></div>
+  <div class="key">\[A=\int_a^b\big[\text{top}(x)-\text{bottom}(x)\big]\,dx\qquad\text{or}\qquad A=\int_c^d\big[\text{right}(y)-\text{left}(y)\big]\,dy\]</div>
+  <h3>Recipe</h3>
+  <ol class="recipe">
+    <li>Set the curves equal and solve. The solutions are your limits (and the split points).</li>
+    <li>Plug a test point into each interval to see which curve is on top. Write a small table, as the official solution does.</li>
+    <li>If the top curve changes, use separate integrals.</li>
+    <li><b>Switch to \(dy\)</b> when the region is bounded by a horizontal line (\(y=9\)), when the curves are given as \(x=\dots\), or when \(dx\) would need two integrals. Solve each curve for \(x\).</li>
+    <li>A quick sketch is worth points, and it catches sign mistakes.</li>
+  </ol>
+  <div class="worked"><div class="src">REVIEW #8 · \(y=x^3-2x\), \(y=x^2\)</div>
+  \(x^3-x^2-2x=x(x+1)(x-2)=0\), so \(x=-1,0,2\). Test \(x=-\tfrac12\): the cubic is on top. Test \(x=1\): the parabola is on top.
+  \[A=\int_{-1}^0(x^3-x^2-2x)\,dx+\int_0^2(x^2-x^3+2x)\,dx=\tfrac{5}{12}+\tfrac83=\tfrac{37}{12}\]</div>
+  <div class="worked"><div class="src">REVIEW #9 · \(y=x^2\), \(y=4x^2\), \(y=9\), first quadrant</div>
+  In \(y\): right curve \(x=\sqrt y\), left curve \(x=\tfrac{\sqrt y}{2}\). \(\int_0^9\tfrac{\sqrt y}{2}dy=9\). (Using \(dx\) needs two integrals, because the top changes at \(x=\tfrac32\).)</div>
+  <div class="trap"><b>Trap:</b> top − bottom on one interval when the curves cross inside it. If you get a negative "area" or 0, you missed a crossing.</div>
+  <h3>Try it</h3>
+  <details><summary>\(y=x^2\) and \(y=2x\)</summary><div class="ans">Crossings at 0 and 2, \(2x\) on top. \(\int_0^2(2x-x^2)\). <span class="final">\(\tfrac43\)</span></div></details>
+  <details><summary>\(y=4-x^2\) and \(y=x+2\)</summary><div class="ans">\(x^2+x-2=0\) gives \(x=-2,1\). \(\int_{-2}^1(2-x-x^2)dx\). <span class="final">\(\tfrac92\)</span></div></details>
+  <details><summary>\(x=y^2\) and \(x=y+2\)</summary><div class="ans">Use \(dy\): \(y^2=y+2\) gives \(y=-1,2\). Right curve \(y+2\), left curve \(y^2\). <span class="final">\(\tfrac92\)</span></div></details>
+  <details><summary>\(y=\sin x\), \(y=\cos x\), \(0\le x\le\tfrac\pi2\)</summary><div class="ans">They cross at \(\tfrac\pi4\), and the halves are symmetric. \(2\int_0^{\pi/4}(\cos x-\sin x)\,dx=2[\sin x+\cos x]_0^{\pi/4}\). <span class="final">\(2\sqrt2-2\)</span></div></details>
+  <details><summary>\(y=\sqrt x\) and \(y=\tfrac x2\)</summary><div class="ans">Crossings at 0 and 4. \(\int_0^4(\sqrt x-\tfrac x2)dx=\tfrac{16}{3}-4\). <span class="final">\(\tfrac43\)</span></div></details>
+</section>
+
+<!-- U10 -->
+<section class="unit" id="u10">
+  <div class="unit-head"><div><div class="tag">Slot 10 · 6.2</div><h2>Volume by slicing</h2></div><label class="chk"><input type="checkbox" id="c-u10" data-u="u10">Done</label></div>
+  <div class="key">\[V=\int_a^b A(x)\,dx\quad\text{disk: }A=\pi r^2\quad\text{washer: }A=\pi\left(R^2-r^2\right)\]</div>
+  <h3>Recipe</h3>
+  <ol class="recipe">
+    <li><b>Slice perpendicular to the axis of rotation.</b> Axis horizontal (x-axis, \(y=k\)): slices are in \(x\), use \(dx\). Axis vertical (y-axis, \(x=k\)): solve the curves for \(x\) and use \(dy\).</li>
+    <li><b>Radius</b> = distance from the axis to the curve. About the x-axis that is just \(y\). About \(y=2\) it is \(2-y\). About \(x=4\) it is \(4-x\).</li>
+    <li>If the region doesn't touch the axis, there's a hole: washer with \(R\) = far curve and \(r\) = near curve.</li>
+    <li><b>Known cross-sections</b> (base region, slices are squares, semicircles…): side \(s\) = length of the slice across the base. Square: \(s^2\). Semicircle with diameter \(s\): \(\tfrac{\pi s^2}{8}\). Equilateral triangle: \(\tfrac{\sqrt3}{4}s^2\).</li>
+    <li>Integrals are often a substitution in disguise (review #10: \(u=\sin x\)).</li>
+  </ol>
+  <div class="worked"><div class="src">REVIEW #10 · \(y=\sin x\sqrt{\cos x}\) about the x-axis</div>
+  \(A(x)=\pi\sin^2x\cos x\). With \(u=\sin x\), \(V=\pi\int_0^1u^2du=\tfrac\pi3\).</div>
+  <div class="worked"><div class="src">REVIEW #11 · \(y=4-x^2\) about the y-axis</div>
+  Cross-sections are disks. \(r(y)=\sqrt{4-y}\), \(A(y)=\pi(4-y)\), \(V=\int_0^4\pi(4-y)\,dy=8\pi\).</div>
+  <div class="trap"><b>Traps:</b> \(\pi(R-r)^2\) instead of \(\pi(R^2-r^2)\). Forgetting \(\pi\). Using \(x\)-limits in a \(dy\) integral (for \(y=4-x^2\), \(x\) runs \(0\to2\) but \(y\) runs \(0\to4\)).</div>
+  <h3>Try it: your notebook's exam-type region \(R\): \(y=\sqrt x\), \(y=0\), \(x=4\)</h3>
+  <details><summary>(a) Revolve \(R\) about the x-axis.</summary><div class="ans">Disk, \(r=\sqrt x\). \(\pi\int_0^4x\,dx\). <span class="final">\(8\pi\)</span></div></details>
+  <details><summary>(b) Revolve \(R\) about the y-axis.</summary><div class="ans">Use \(dy\), \(y\) from 0 to 2. The region lies between \(x=y^2\) and \(x=4\). Washer: \(R=4\), \(r=y^2\). \(\pi\int_0^2(16-y^4)\,dy=\pi(32-\tfrac{32}{5})\). <span class="final">\(\tfrac{128\pi}{5}\)</span></div></details>
+  <details><summary>(c) Revolve \(R\) about the line \(x=4\).</summary><div class="ans">Disk in \(y\), radius \(4-y^2\). \(\pi\int_0^2(16-8y^2+y^4)\,dy=\pi(32-\tfrac{64}{3}+\tfrac{32}{5})\). <span class="final">\(\tfrac{256\pi}{15}\)</span></div></details>
+  <details><summary>(d) Revolve \(R\) about the line \(y=2\).</summary><div class="ans">Washer in \(x\): \(R=2-0=2\), \(r=2-\sqrt x\). \(\pi\int_0^4\left[4-(2-\sqrt x)^2\right]dx=\pi\int_0^4(4\sqrt x-x)\,dx=\pi(\tfrac{64}{3}-8)\). <span class="final">\(\tfrac{40\pi}{3}\)</span></div></details>
+  <details><summary>(e) \(R\) is the base of a solid whose cross-sections perpendicular to the x-axis are squares.</summary><div class="ans">Side \(s=\sqrt x\), \(A=x\). <span class="final">\(\int_0^4x\,dx=8\)</span> (no \(\pi\))</div></details>
+  <details><summary>Region between \(y=x\) and \(y=x^2\), revolved about the x-axis.</summary><div class="ans">Washer, \(R=x\), \(r=x^2\) on \([0,1]\). \(\pi\int_0^1(x^2-x^4)\). <span class="final">\(\tfrac{2\pi}{15}\)</span></div></details>
+</section>
+
+<!-- IDEAL -->
+<section class="unit" id="ideal">
+  <div class="tag">How the answer key writes it</div>
+  <h2>What a full-credit answer looks like</h2>
+  <p>Based on the official review solutions. Partial credit comes from the setup lines, so write them even when you can do the step in your head.</p>
+  <ol class="recipe">
+    <li><b>State the integral first.</b> "Area \(=\int_{-1}^{0}[f-g]\,dx+\int_0^2[g-f]\,dx\)" before any arithmetic.</li>
+    <li><b>Show the sign work:</b> zeros plus a small sign table (interval, test value, sign) for total area, distance, or area between curves.</li>
+    <li><b>Substitution block:</b> \(u=\dots\), \(du=\dots\,dx\), the new limits, then the new integral.</li>
+    <li><b>Evaluate in brackets:</b> \(\big[F(b)\big]-\big[F(a)\big]\), each bracket simplified on its own.</li>
+    <li><b>Name the geometry</b> for graph questions: "(area of right triangle over [3,5])".</li>
+    <li><b>Finish:</b> exact form (\(\tfrac{9\pi}{4}-2\), not 5.07), units where there's a context (m, kWh), \(+C\) on indefinite integrals.</li>
+  </ol>
+  <p>Send me the exam-type answer key photos and I'll compare your work to them line by line.</p>
+</section>
+
+<footer>Built for Math 1042 Test 1, Oct 6 2026. Answers checked against the official review solutions where they overlap.</footer>
+</div>
+
+<script>
+(function(){
+  var KEY="m1042-done";
+  var done={};
+  try{done=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){done={};}
+  function paint(){
+    document.querySelectorAll("#nav a").forEach(function(a){
+      var id=a.getAttribute("href").slice(1);
+      a.classList.toggle("done",!!done[id]);
+    });
+  }
+  document.querySelectorAll("input[data-u]").forEach(function(cb){
+    cb.checked=!!done[cb.dataset.u];
+    cb.addEventListener("change",function(){
+      done[cb.dataset.u]=cb.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(done));}catch(e){}
+      paint();
+    });
+  });
+  paint();
+})();
+</script>
+
+</body></html>

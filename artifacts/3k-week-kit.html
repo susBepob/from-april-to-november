@@ -1,0 +1,535 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>3K Week Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one sticky scoreboard strip (the score is the point), then four tabbed working views. */
+:root{
+  --bg:#f5f6f1; --surface:#ffffff; --fg:#191c14; --muted:#5f6656; --line:#dfe2d6;
+  --accent:#4f6f00; --accent-fill:#c6ff3d; --on-accent:#141a05;
+  --good:#2f7a3a; --warn:#a86a00; --bad:#b3372b;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12140f; --surface:#1b1e17; --fg:#eef0e6; --muted:#a2a894; --line:#2e3327;
+  --accent:#c6ff3d; --accent-fill:#c6ff3d; --on-accent:#141a05;
+  --good:#6fd17d; --warn:#f0b54a; --bad:#ff7a6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12140f; --surface:#1b1e17; --fg:#eef0e6; --muted:#a2a894; --line:#2e3327;
+  --accent:#c6ff3d; --accent-fill:#c6ff3d; --on-accent:#141a05;
+  --good:#6fd17d; --warn:#f0b54a; --bad:#ff7a6b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:22px;font-weight:800}
+h3{font-size:17px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.label{font:600 11px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+.clock{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.clock input{font:inherit;font-family:var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font:600 12px/1.6 var(--mono);border:1px solid var(--line);background:var(--surface)}
+.pill.live{background:var(--accent-fill);color:var(--on-accent);border-color:transparent}
+
+.strip{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px;margin-top:16px;border-bottom:1px solid var(--line)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{display:grid;gap:4px;min-width:0}
+.stat b{font:600 clamp(20px,3.4vw,28px)/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.stat b small{font-size:.55em;color:var(--muted);font-weight:400}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.bar.over i{background:var(--bad)}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+nav{display:flex;gap:4px;margin-top:20px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{font:600 14px var(--body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.view{display:grid;gap:20px;padding-top:20px}
+.note{font-size:14px;color:var(--muted);max-width:68ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td input,td select{font:inherit;font-family:var(--mono);width:100%;min-width:64px;padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg)}
+td.today{box-shadow:inset 3px 0 0 var(--accent)}
+tfoot td{font-weight:700;background:var(--bg)}
+.btn{font:600 14px var(--body);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent-fill);color:var(--on-accent);border-color:transparent}
+.btn.small{padding:4px 9px;font-size:12px}
+.btn.danger{color:var(--bad)}
+form.add{display:grid;gap:12px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fields label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.fields input,.fields select{font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.score{display:inline-grid;place-items:center;min-width:34px;padding:2px 6px;border-radius:6px;font:700 13px var(--mono)}
+.s-hi{background:var(--accent-fill);color:var(--on-accent)}
+.s-mid{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+.s-lo{background:var(--line);color:var(--muted)}
+.funnel{display:flex;flex-wrap:wrap;gap:8px}
+.funnel span{font:600 13px var(--mono);padding:4px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--line)}
+ol.crit,ul.plain{margin:0;padding-left:20px;display:grid;gap:6px}
+.tmpl{position:relative}
+.tmpl pre{white-space:pre-wrap;font:14px/1.6 var(--mono);margin:0;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+.tmpl .btn{position:absolute;top:8px;right:8px}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.tier{display:grid;gap:10px;align-content:start}
+.tier .price{font:700 30px var(--mono)}
+.tier.main{border:2px solid var(--accent)}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+.banner{font-size:13px;padding:8px 12px;border-radius:8px;background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--fg)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div style="display:grid;gap:6px">
+      <span class="label">Self-challenge · Shorts editing packs</span>
+      <h1>$3,000 in 7 days</h1>
+    </div>
+    <div class="clock">
+      <label class="label" for="start">Start</label>
+      <input type="date" id="start">
+      <span class="pill" id="dayPill">Not started</span>
+    </div>
+  </header>
+  <p class="banner" id="offline" hidden>Saving is off in this view. Changes last until you close the page.</p>
+
+  <div class="strip">
+    <div class="stats">
+      <div class="stat"><span class="label">Collected</span><b class="num" id="sMoney">$0<small> / 3,000</small></b><div class="bar"><i id="bMoney"></i></div></div>
+      <div class="stat"><span class="label">Pitches sent</span><b class="num" id="sPitch">0<small> / 50</small></b><div class="bar"><i id="bPitch"></i></div></div>
+      <div class="stat"><span class="label">Replies · paid</span><b class="num" id="sReply">0 · 0</b><div class="bar"><i id="bReply"></i></div></div>
+      <div class="stat"><span class="label">Hours (visa cap 28)</span><b class="num" id="sHours">0<small> / 28</small></b><div class="bar" id="hoursBar"><i id="bHours"></i></div></div>
+    </div>
+  </div>
+
+  <nav role="tablist">
+    <button role="tab" data-tab="board" aria-selected="true">Scoreboard</button>
+    <button role="tab" data-tab="targets" aria-selected="false">Targets</button>
+    <button role="tab" data-tab="pitch" aria-selected="false">Pitch</button>
+    <button role="tab" data-tab="pricing" aria-selected="false">Pricing</button>
+  </nav>
+
+  <!-- SCOREBOARD -->
+  <section class="view" id="v-board">
+    <p class="note">Log each day before you sleep. Pitches sent is the number you control. Money follows it by 2–4 days. Only cash in your account counts, not promised invoices.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Day</th><th>Date</th><th>Pitches</th><th>Replies</th><th>$ collected</th><th>Hours</th><th>Note</th></tr></thead>
+        <tbody id="days"></tbody>
+        <tfoot><tr><td colspan="2">Total</td><td class="num" id="tP">0</td><td class="num" id="tR">0</td><td class="num" id="tM">$0</td><td class="num" id="tH">0</td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="grid2">
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Daily pace</h3>
+        <ul class="plain">
+          <li><b>Days 1–2:</b> 3 handpicked candidates each day, done at full quality: audit, 1 sample Short, and an email that's read aloud and grade-checked. Write down what you'd reuse.</li>
+          <li><b>Day 3+:</b> turn the 6 emails into a template with fixed parts plus research slots, then send 10–15 a day at the same quality.</li>
+          <li><b>Day 3+:</b> follow up once on anyone silent for 72 hours.</li>
+          <li><b>Days 4–6:</b> deliver within 72h of the deposit and ask for a testimonial line.</li>
+          <li><b>Day 7:</b> collect balances. Offer the monthly plan to every happy client.</li>
+        </ul>
+      </div>
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Guardrails</h3>
+        <ul class="plain">
+          <li>Gym and Japanese speaking still happen, at minimum.</li>
+          <li>Render in daytime batches with capped threads. No overnight jobs.</li>
+          <li>Sleep 6.5h or more. Tired pitches get ignored.</li>
+          <li>Stay under 28 work hours for the week. The bar turns red past it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- TARGETS -->
+  <section class="view" id="v-targets" hidden>
+    <div class="grid2">
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Score each channel 0–2 on six things</h3>
+        <ol class="crit">
+          <li><b>Long-form cadence.</b> 2 = weekly or more, 1 = monthly, 0 = rarely.</li>
+          <li><b>Shorts gap.</b> 2 = no Shorts in 30 days, 1 = a few weak ones, 0 = already strong.</li>
+          <li><b>Size.</b> 2 = 5K–100K subs, 1 = 1–5K or 100–300K, 0 = outside that.</li>
+          <li><b>Clippable.</b> 2 = talking head or podcast, 1 = mixed, 0 = b-roll or gaming.</li>
+          <li><b>Budget signal.</b> 2 = sells a course, coaching or sponsors; 1 = maybe; 0 = none.</li>
+          <li><b>Reachable.</b> 2 = business email listed, 1 = DMs or a form only, 0 = none.</li>
+        </ol>
+        <p class="note">10 or more: pitch first. 7–9: pitch if you run short. 6 or less: skip.</p>
+      </div>
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Where to find them</h3>
+        <ul class="plain">
+          <li>Search YouTube for niche + "podcast" or "interview" and filter to the last month. Open channels in the 5K–100K range.</li>
+          <li>Niches that pay: business coaches, fitness coaches, real estate, finance educators, therapists, SaaS founders.</li>
+          <li>Check the Shorts tab. An empty or stale one is your opening.</li>
+          <li>Find the email on the About page or their website. Paste it into your mail client only, never into this page.</li>
+        </ul>
+      </div>
+    </div>
+
+    <form class="add card" id="addForm">
+      <h3>Add a target</h3>
+      <div class="fields">
+        <label>Channel name<input id="fName" required maxlength="80"></label>
+        <label>Channel link<input id="fLink" type="url" placeholder="https://youtube.com/@…"></label>
+        <label>Subscribers<input id="fSubs" inputmode="numeric" placeholder="24K"></label>
+        <label>Niche<input id="fNiche" maxlength="40" placeholder="Fitness coach"></label>
+      </div>
+      <div class="fields" id="critFields"></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn primary" type="submit">Add target</button>
+        <span class="label">Score <span class="score s-lo" id="fScore">0</span></span>
+      </div>
+    </form>
+
+    <div class="funnel" id="funnel"></div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Score</th><th>Channel</th><th>Subs</th><th>Niche</th><th>Status</th><th>$ paid</th><th></th></tr></thead>
+        <tbody id="targets"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PITCH -->
+  <section class="view" id="v-pitch" hidden>
+    <p class="note">The order is target, audit, gift, and only then pitch. Most of the work happens before you write anything. If you can describe their problem better than they can, they'll assume you can fix it.</p>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3>Before writing: answer six questions per target (5 minutes)</h3>
+      <div class="tablebox" style="border:0">
+        <table>
+          <thead><tr><th>Question</th><th>What to write down</th></tr></thead>
+          <tbody>
+            <tr><td><b>Who are they?</b></td><td>Their niche, and what they fear in their own words. Get it from their videos and comments, e.g. "I post every week and nobody new finds me."</td></tr>
+            <tr><td><b>Why you?</b></td><td>Facts that are true of you that nobody else says. You have two. First, your channel had 5 subscribers. Your second Short got 1,500 views with only background music added, and 7–8 Shorts took you from 5 to 15 subscribers. That shows the views come from the cut and the hook, not from an existing audience. Second, you broke down 511 of Mark Manson's Shorts, and the ones that open on a named idea broke out more than twice as often.</td></tr>
+            <tr><td><b>What do they get?</b></td><td>Keep asking "so what?" until you reach the outcome. 10 Shorts → their best moments get seen → strangers find the long videos → new clients without extra filming.</td></tr>
+            <tr><td><b>What can you point at?</b></td><td>Only things you can show, never adjectives: the sample Short, a timestamp from their video, a peer's Shorts views, and your own channel's Studio numbers (5 → 15 subs, 1,500 views on your second Short). Keep a screenshot ready for anyone who asks.</td></tr>
+            <tr><td><b>Why now?</b></td><td>The cost of waiting: every episode without Shorts is reach they won't get back. Also real scarcity, since your 28-hour cap means about 5 packs a week.</td></tr>
+            <tr><td><b>How does it work?</b></td><td>Most creators think Shorts means filming more. Wrong, because the Shorts are already in the episode, buried at minute 20. You cut them out on the strongest line.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Audit (10 minutes)</h3>
+        <ul class="plain">
+          <li>When was their last Short? How many in the last 30 days?</li>
+          <li>Find the one moment with the best hook: a big number, a turnaround story, or a question their audience argues about.</li>
+          <li>Find a peer in their niche who posts Shorts, and note one real view count.</li>
+          <li>Find the pain in their own words, from a video, their About page or a comment reply.</li>
+          <li>Note what they sell (course, coaching, sponsor), so you know what they get from more reach.</li>
+        </ul>
+      </div>
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Gift, then send</h3>
+        <ul class="plain">
+          <li>Cut 1 Short: the moment most likely to stop a scroll. Open on its strongest line.</li>
+          <li>Upload them unlisted. Links, never attachments.</li>
+          <li>Subject line: what they get, from their own video, with no effort on their part.</li>
+          <li>Read it out loud and cut anything you stumble on. Paste it into Hemingway (hemingwayapp.com) and aim for grade 6 or lower.</li>
+          <li>Under 130 words, one ask, and vary your sentence length.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3>Subject lines</h3>
+      <ul class="plain">
+        <li>A Short from your [episode name], ready to post</li>
+        <li>Your [topic] line at 23:40 is a Short</li>
+        <li>[Name], I cut a Short from your last episode (free)</li>
+      </ul>
+    </div>
+
+    <div class="card tmpl"><h3 style="margin-bottom:10px">First email</h3>
+<pre id="t1">Hi [Name],
+
+At [23:40] in [episode], you said "[their line]." That's a Short. Right now it sits 23 minutes in, where new viewers never get to.
+
+So I cut it:
+
+[link]
+
+It's yours to post free.
+
+Quick note: this is a rough cut I made in a short time. With more time, it would be even better.
+
+Your Shorts tab [hasn't moved since March]. [Peer in your niche] posts [4] a week, and [their last one hit 80K].
+
+I know because I tested it. My channel had 5 subscribers. My second Short got 1,500 views, and all I added was background music.
+
+I turn any episode into 10 Shorts in 72 hours for $450. On your first pack, if you wouldn't post at least 7 of the 10, you don't pay the second half.
+
+My hours cap me at 5 clients this week. Want 10 like this from your next episode?
+
+[Your name]
+
+P.S. I broke down 511 of Mark Manson's Shorts. The ones that open on a named idea broke out twice as often, so that's how I open yours.</pre>
+      <button class="btn small" type="button" data-copy="t1">Copy</button>
+    </div>
+    <div class="card tmpl"><h3 style="margin-bottom:10px">Follow-up, 72 hours later, with something new instead of "just bumping this"</h3>
+<pre id="t2">Hi [Name], here's one more from your new episode: [link]. It opens on "[their line]."
+
+Still free to post. If you want 10 like it every week, I've got [2] spots left this week.
+
+[Your name]</pre>
+      <button class="btn small" type="button" data-copy="t2">Copy</button>
+    </div>
+    <div class="card tmpl"><h3 style="margin-bottom:10px">DM version (X, Instagram, LinkedIn)</h3>
+<pre id="t3">Hey [Name], your line at [23:40] in [episode] is a Short, so I cut it: [link]. Free to post. Want 10 like it from your next episode?</pre>
+      <button class="btn small" type="button" data-copy="t3">Copy</button>
+    </div>
+    <div class="card tmpl"><h3 style="margin-bottom:10px">When they say yes</h3>
+<pre id="t4">Great! Here's how it works:
+
+1. I send a Payoneer invoice for 50% ($[amount]) and start as soon as it's paid.
+2. Send me the video link(s) and anything to avoid.
+3. You get 10 Shorts in 72 hours, with captions, hook titles and one round of revisions.
+4. If you wouldn't post at least 7, you don't pay the other 50%.
+
+Invoice coming in the next hour.</pre>
+      <button class="btn small" type="button" data-copy="t4">Copy</button>
+    </div>
+    <div class="card" style="display:grid;gap:10px">
+      <h3>No reply? Check three things</h3>
+      <ul class="plain">
+        <li><b>Hard to say yes?</b> Make the ask smaller: "want the other two?" beats "book a call."</li>
+        <li><b>No clear payoff?</b> Name what they sell and how more reach feeds it.</li>
+        <li><b>Doubt you can do it?</b> Make the sample better. It is your proof.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="view" id="v-pricing" hidden>
+    <div class="tiers">
+      <div class="card tier">
+        <span class="label">Trial</span>
+        <div class="price">$250</div>
+        <p>5 Shorts from one video. 72 hours. First-time clients only.</p>
+        <p class="muted num">≈2h editing → $125/h</p>
+      </div>
+      <div class="card tier main">
+        <span class="label">Core pack · lead with this</span>
+        <div class="price">$450</div>
+        <p>10 Shorts from 1–2 videos. Captions, hook title cards, one revision round, 72 hours.</p>
+        <p class="muted num">≈4h editing → $112/h</p>
+      </div>
+      <div class="card tier">
+        <span class="label">Monthly</span>
+        <div class="price">$1,200<small class="muted">/mo</small></div>
+        <p>30 Shorts a month, posted-ready every week. Offer it on delivery day, never in the first pitch.</p>
+        <p class="muted num">≈12h/month → $100/h</p>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Ways to reach $3,000</h3>
+        <div class="tablebox" style="border:0">
+          <table>
+            <thead><tr><th>Mix</th><th>Cash</th><th>Edit hours</th></tr></thead>
+            <tbody>
+              <tr><td>5 core + 3 trials</td><td class="num">$3,000</td><td class="num">≈26h</td></tr>
+              <tr><td>4 core + 1 monthly (paid upfront)</td><td class="num">$3,000</td><td class="num">≈19h this week</td></tr>
+              <tr><td>2 core + 1 monthly + 3 trials</td><td class="num">$2,850</td><td class="num">≈17h this week</td></tr>
+              <tr><td>7 core</td><td class="num">$3,150</td><td class="num">≈28h, at the cap</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Pitching takes hours too, so mixes with a monthly client leave room under the 28-hour cap.</p>
+      </div>
+      <div class="card" style="display:grid;gap:10px">
+        <h3>Terms</h3>
+        <ul class="plain">
+          <li>50% deposit before you start, 50% on delivery. Don't start a pack unpaid.</li>
+          <li>First-pack guarantee: if they wouldn't post at least 7 of the 10, they skip the second half. Your risk is the balance. Theirs drops to half a pack.</li>
+          <li>Limit yourself to 5 packs a week. It's true because of the 28-hour cap, so say it.</li>
+          <li>Invoice through Payoneer. It's already set up and US clients can pay by card or ACH.</li>
+          <li>One revision round included. More cost $30 per Short.</li>
+          <li>Only their own footage, with no outside music or memes unless they send it.</li>
+          <li>Never discount the core pack. Steer anyone who balks to the trial.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt$ = n => "$" + Math.round(n).toLocaleString("en-US");
+  const CRIT = [["cad","Long-form cadence"],["gap","Shorts gap"],["size","Size"],["clip","Clippable"],["budget","Budget signal"],["reach","Reachable"]];
+  const STATUSES = ["found","samples built","pitched","followed up","replied","paid","no"];
+  const GOAL = {money:3000, pitches:50, hours:28};
+
+  let db = null;
+  const state = {start:"2026-10-26", days:{}, targets:[]};
+
+  // Tabs, with a bookmarkable hash
+  const tabs = [...document.querySelectorAll("nav button")];
+  function showTab(name){
+    if(!tabs.some(t=>t.dataset.tab===name)) name="board";
+    tabs.forEach(t=>t.setAttribute("aria-selected", String(t.dataset.tab===name)));
+    document.querySelectorAll("section.view").forEach(s=>s.hidden = s.id!=="v-"+name);
+  }
+  tabs.forEach(t=>t.addEventListener("click",()=>{showTab(t.dataset.tab); try{history.replaceState(null,"","#"+t.dataset.tab)}catch(e){}}));
+  showTab((location.hash||"").slice(1));
+
+  // Criteria selects in the add form
+  $("critFields").innerHTML = CRIT.map(([k,l])=>`<label>${l}<select id="c_${k}"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select></label>`).join("");
+  const formScore = () => CRIT.reduce((s,[k])=>s+Number($("c_"+k).value),0);
+  const scoreClass = s => s>=10?"s-hi":s>=7?"s-mid":"s-lo";
+  function paintFormScore(){const s=formScore(); const el=$("fScore"); el.textContent=s; el.className="score "+scoreClass(s);}
+  $("critFields").addEventListener("change",paintFormScore); paintFormScore();
+
+  // Dates
+  function dayDate(i){const d=new Date(state.start+"T00:00:00"); d.setDate(d.getDate()+i); return d;}
+  function todayIndex(){const t=new Date(); t.setHours(0,0,0,0); return Math.floor((t-new Date(state.start+"T00:00:00"))/864e5);}
+
+  function renderDays(){
+    const ti = todayIndex();
+    $("days").innerHTML = Array.from({length:7},(_,i)=>{
+      const d = state.days["d"+(i+1)]||{};
+      const date = dayDate(i).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+      const v = k => d[k]==null?"":d[k];
+      return `<tr data-day="d${i+1}"><td class="num ${i===ti?"today":""}">${i+1}</td><td class="num">${date}</td>
+        <td><input id="p${i}" data-k="pitches" inputmode="numeric" value="${v("pitches")}"></td>
+        <td><input id="r${i}" data-k="replies" inputmode="numeric" value="${v("replies")}"></td>
+        <td><input id="m${i}" data-k="money" inputmode="decimal" value="${v("money")}"></td>
+        <td><input id="h${i}" data-k="hours" inputmode="decimal" value="${v("hours")}"></td>
+        <td><input id="n${i}" data-k="note" maxlength="140" value="${String(v("note")).replace(/"/g,"&quot;")}"></td></tr>`;
+    }).join("");
+    const pill=$("dayPill");
+    if(ti<0){pill.textContent=`Starts in ${-ti} day${ti===-1?"":"s"}`; pill.className="pill";}
+    else if(ti<7){pill.textContent=`Day ${ti+1} of 7`; pill.className="pill live";}
+    else {pill.textContent="Finished"; pill.className="pill";}
+  }
+
+  function totals(){
+    const t={pitches:0,replies:0,money:0,hours:0};
+    Object.values(state.days).forEach(d=>{for(const k in t) t[k]+=Number(d[k])||0;});
+    return t;
+  }
+  function renderTotals(){
+    const t=totals();
+    const paid = state.targets.filter(x=>x.status==="paid").length;
+    $("tP").textContent=t.pitches; $("tR").textContent=t.replies; $("tM").textContent=fmt$(t.money); $("tH").textContent=t.hours;
+    $("sMoney").innerHTML=`${fmt$(t.money)}<small> / 3,000</small>`;
+    $("sPitch").innerHTML=`${t.pitches}<small> / ${GOAL.pitches}</small>`;
+    $("sReply").textContent=`${t.replies} · ${paid}`;
+    $("sHours").innerHTML=`${t.hours}<small> / 28</small>`;
+    const w=(v,g)=>Math.min(100,v/g*100)+"%";
+    $("bMoney").style.width=w(t.money,GOAL.money);
+    $("bPitch").style.width=w(t.pitches,GOAL.pitches);
+    $("bReply").style.width=t.pitches?w(t.replies,t.pitches):"0%";
+    $("bHours").style.width=w(t.hours,GOAL.hours);
+    $("hoursBar").classList.toggle("over",t.hours>GOAL.hours);
+  }
+
+  function renderTargets(){
+    const rows=[...state.targets].sort((a,b)=>(b.score||0)-(a.score||0));
+    const counts=STATUSES.map(s=>[s,state.targets.filter(t=>t.status===s).length]);
+    $("funnel").innerHTML = `<span>${state.targets.length} total</span>`+counts.filter(c=>c[1]).map(([s,n])=>`<span>${n} ${s}</span>`).join("");
+    if(!rows.length){$("targets").innerHTML=`<tr><td colspan="7" class="empty">No targets yet. Score your first channel above. Aim for 40 on Day 1.</td></tr>`;return;}
+    $("targets").innerHTML = rows.map(t=>{
+      const name = esc(t.name);
+      const link = /^https:\/\//.test(t.link||"") ? `<a href="${esc(t.link)}" target="_blank" rel="noopener">${name}</a>` : name;
+      return `<tr data-id="${t.id}"><td><span class="score ${scoreClass(t.score)}">${t.score}</span></td><td>${link}</td><td class="num">${esc(t.subs||"")}</td><td>${esc(t.niche||"")}</td>
+        <td><select id="st_${t.id}" data-f="status">${STATUSES.map(s=>`<option${s===t.status?" selected":""}>${s}</option>`).join("")}</select></td>
+        <td><input id="pd_${t.id}" data-f="paid" inputmode="decimal" value="${t.paid??""}"></td>
+        <td><button class="btn small danger" type="button" data-del="${t.id}">Remove</button></td></tr>`;
+    }).join("");
+  }
+  const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function renderAll(){ $("start").value=state.start; renderDays(); renderTotals(); renderTargets(); }
+
+  // Edits: day rows
+  $("days").addEventListener("change", async e=>{
+    const inp=e.target; const tr=inp.closest("tr"); if(!tr) return;
+    const id=tr.dataset.day, k=inp.dataset.k;
+    const val = k==="note" ? inp.value.trim() : (inp.value.trim()===""?null:Number(inp.value)||0);
+    const d = {...(state.days[id]||{}), [k]:val}; state.days[id]=d; renderTotals();
+    if(db) try{ await db.doc("days/"+id).set(d); }catch(err){ console.warn(err); }
+  });
+
+  $("start").addEventListener("change", async e=>{
+    if(!e.target.value) return; state.start=e.target.value; renderDays();
+    if(db) try{ await db.doc("config/challenge").set({start:state.start}); }catch(err){ console.warn(err); }
+  });
+
+  // Targets
+  $("addForm").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const crit={}; CRIT.forEach(([k])=>crit[k]=Number($("c_"+k).value));
+    const t={name:$("fName").value.trim(), link:$("fLink").value.trim(), subs:$("fSubs").value.trim(), niche:$("fNiche").value.trim(), crit, score:formScore(), status:"found", paid:null, added:Date.now()};
+    if(!t.name) return;
+    e.target.reset(); CRIT.forEach(([k])=>$("c_"+k).value="2"); paintFormScore();
+    if(db){ try{ await db.collection("targets").add(t); }catch(err){ console.warn(err); } }
+    else { t.id="local"+Date.now(); state.targets.push(t); renderTargets(); renderTotals(); }
+  });
+
+  $("targets").addEventListener("change", async e=>{
+    const el=e.target, tr=el.closest("tr"); if(!tr||!el.dataset.f) return;
+    const id=tr.dataset.id, f=el.dataset.f;
+    const val = f==="paid" ? (el.value.trim()===""?null:Number(el.value)||0) : el.value;
+    const t=state.targets.find(x=>x.id===id); if(t) t[f]=val; renderTotals(); renderTargets();
+    if(db) try{ await db.doc("targets/"+id).update({[f]:val}); }catch(err){ console.warn(err); }
+  });
+
+  // Two-step remove (no confirm dialogs in the viewer)
+  $("targets").addEventListener("click", async e=>{
+    const b=e.target.closest("[data-del]"); if(!b) return;
+    if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="Confirm"; setTimeout(()=>{ if(b.isConnected){b.dataset.armed="";b.textContent="Remove";} },3000); return; }
+    const id=b.dataset.del;
+    if(db) try{ await db.doc("targets/"+id).delete(); }catch(err){ console.warn(err); }
+    else { state.targets=state.targets.filter(x=>x.id!==id); renderTargets(); renderTotals(); }
+  });
+
+  // Copy buttons
+  document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>{
+    const pre=$(b.dataset.copy);
+    const done=()=>{b.textContent="Copied"; setTimeout(()=>b.textContent="Copy",1500);};
+    try{ navigator.clipboard.writeText(pre.textContent).then(done,()=>selectText(pre)); }catch(err){ selectText(pre); }
+  }));
+  function selectText(el){const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r);}
+
+  renderAll();
+
+  // Live store
+  (async()=>{
+    try{ db = window.claude && await window.claude.use("db"); }catch(e){ db=null; }
+    if(!db){ $("offline").hidden=false; return; }
+    db.doc("config/challenge").onSnapshot(s=>{ if(s.exists && s.data().start){ state.start=s.data().start; $("start").value=state.start; renderDays(); } }, err=>console.warn(err));
+    db.collection("days").onSnapshot(q=>{
+      state.days={}; q.docs.forEach(d=>state.days[d.id]={...d.data()});
+      const a=document.activeElement; if(!(a && a.closest && a.closest("#days"))) renderDays();
+      renderTotals();
+    }, err=>console.warn(err));
+    db.collection("targets").onSnapshot(q=>{
+      state.targets=q.docs.map(d=>({id:d.id,...d.data()}));
+      const a=document.activeElement; if(!(a && a.closest && a.closest("#targets"))) renderTargets();
+      renderTotals();
+    }, err=>console.warn(err));
+  })();
+})();
+</script>
+
+</body></html>
